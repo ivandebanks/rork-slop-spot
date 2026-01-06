@@ -11,7 +11,7 @@ import { useLocalSearchParams, router } from "expo-router";
 import { useScans } from "@/contexts/ScanContext";
 import { getGradeColor } from "@/types/scan";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Trash2 } from "lucide-react-native";
+import { ArrowLeft, Trash2, Info } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 
@@ -62,6 +62,17 @@ export default function ResultScreen() {
         </View>
 
         <View style={[styles.resultCard, { backgroundColor: theme.card }]}>
+          {/* ENTERTAINMENT DISCLAIMER - REQUIRED BY APPLE */}
+          <View style={styles.disclaimerCard}>
+            <Info size={18} color="#FFA500" strokeWidth={2.5} />
+            <View style={styles.disclaimerContent}>
+              <Text style={[styles.disclaimerTitle, { fontSize: scaleFont(13) }]}>For Entertainment Only</Text>
+              <Text style={[styles.disclaimerText, { fontSize: scaleFont(12) }]}>
+                Ingredient ratings are for informational and entertainment purposes only. This is not medical advice, nutritional guidance, or professionally validated health information. Consult healthcare professionals for dietary decisions.
+              </Text>
+            </View>
+          </View>
+
           <View style={[styles.scoreCircle, { backgroundColor: gradeColor }]}>
             <Text style={[styles.scoreNumber, { fontSize: scaleFont(48) }]}>{Math.round(scan.overallScore)}</Text>
             <Text style={[styles.scoreOutOf, { fontSize: scaleFont(16) }]}>/100</Text>
@@ -164,6 +175,31 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 5,
+  },
+  disclaimerCard: {
+    flexDirection: "row",
+    backgroundColor: "rgba(255, 165, 0, 0.1)",
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 165, 0, 0.3)",
+    gap: 10,
+    width: "100%",
+  },
+  disclaimerContent: {
+    flex: 1,
+  },
+  disclaimerTitle: {
+    fontSize: 13,
+    fontWeight: "700" as const,
+    color: "#FFA500",
+    marginBottom: 4,
+  },
+  disclaimerText: {
+    fontSize: 12,
+    color: "#666666",
+    lineHeight: 16,
   },
   scoreCircle: {
     width: 120,

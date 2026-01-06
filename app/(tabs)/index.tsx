@@ -100,7 +100,7 @@ export default function ScannerScreen() {
           Slop Spot needs camera access to scan product labels
         </Text>
         <TouchableOpacity style={[styles.permissionButton, { backgroundColor: theme.primary }]} onPress={requestPermission}>
-          <Text style={[styles.permissionButtonText, { fontSize: scaleFont(16) }]}>Grant Permission</Text>
+          <Text style={[styles.permissionButtonText, { fontSize: scaleFont(16) }]}>Continue</Text>
         </TouchableOpacity>
       </View>
     );
