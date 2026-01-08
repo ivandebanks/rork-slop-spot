@@ -6,19 +6,26 @@ import {
   Image,
   TouchableOpacity,
   Platform,
+  Linking,
+  Modal,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useScans } from "@/contexts/ScanContext";
 import { getGradeColor } from "@/types/scan";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Trash2, Info } from "lucide-react-native";
+import { ArrowLeft, Trash2, Info, ExternalLink, X } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useState } from "react";
+import { Citation } from "@/types/scan";
 
 export default function ResultScreen() {
   const { scanId } = useLocalSearchParams<{ scanId: string }>();
   const { scans, deleteScan } = useScans();
   const { theme, scaleFont } = useTheme();
+  const [citationsModalVisible, setCitationsModalVisible] = useState(false);
+  const [selectedCitations, setSelectedCitations] = useState<Citation[]>([]);
+  const [citationTitle, setCitationTitle] = useState("");
 
   const scan = scans.find((s) => s.id === scanId);
 
@@ -46,6 +53,26 @@ export default function ResultScreen() {
     }
     deleteScan(scan.id);
     router.back();
+  };
+
+  const openCitationsModal = (citations: Citation[], title: string) => {
+    setSelectedCitations(citations);
+    setCitationTitle(title);
+    setCitationsModalVisible(true);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
+  const openURL = async (url: string) => {
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+      }
+    } catch (error) {
+      console.error("Error opening URL:", error);
+    }
   };
 
   return (
@@ -91,6 +118,7 @@ export default function ResultScreen() {
 
             {scan.ingredients.map((ingredient, index) => {
               const ingredientColor = getGradeColor(ingredient.rating);
+              const hasCitations = ingredient.citations && ingredient.citations.length > 0;
 
               return (
                 <View key={index} style={[styles.ingredientCard, { backgroundColor: theme.surface }]}>
@@ -118,6 +146,19 @@ export default function ResultScreen() {
 
                   <Text style={[styles.healthImpact, { color: theme.text, fontSize: scaleFont(14) }]}>{ingredient.healthImpact}</Text>
                   <Text style={[styles.explanation, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>{ingredient.explanation}</Text>
+
+                  {/* CITATIONS BUTTON - REQUIRED BY APPLE */}
+                  {hasCitations && (
+                    <TouchableOpacity
+                      style={styles.citationsButton}
+                      onPress={() => openCitationsModal(ingredient.citations!, ingredient.name)}
+                    >
+                      <ExternalLink size={14} color="#118AB2" />
+                      <Text style={[styles.citationsButtonText, { fontSize: scaleFont(12) }]}>
+                        View Sources ({ingredient.citations!.length})
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               );
             })}
@@ -129,6 +170,57 @@ export default function ResultScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* CITATIONS MODAL */}
+      <Modal
+        visible={citationsModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setCitationsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.text, fontSize: scaleFont(18) }]}>
+                Sources: {citationTitle}
+              </Text>
+              <TouchableOpacity onPress={() => setCitationsModalVisible(false)}>
+                <X size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.citationsList}>
+              {selectedCitations.map((citation, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.citationItem, { backgroundColor: theme.surface }]}
+                  onPress={() => openURL(citation.url)}
+                >
+                  <View style={styles.citationTextContainer}>
+                    <Text style={[styles.citationSource, { color: theme.primary, fontSize: scaleFont(12) }]}>
+                      {citation.source}
+                    </Text>
+                    <Text style={[styles.citationTitle, { color: theme.text, fontSize: scaleFont(14) }]}>
+                      {citation.title}
+                    </Text>
+                    <Text style={[styles.citationUrl, { color: theme.textSecondary, fontSize: scaleFont(12) }]} numberOfLines={1}>
+                      {citation.url}
+                    </Text>
+                  </View>
+                  <ExternalLink size={16} color={theme.primary} />
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity
+              style={[styles.closeButton, { backgroundColor: theme.primary }]}
+              onPress={() => setCitationsModalVisible(false)}
+            >
+              <Text style={[styles.closeButtonText, { fontSize: scaleFont(16) }]}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -283,6 +375,22 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
   },
+  citationsButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: "rgba(17, 138, 178, 0.1)",
+    borderRadius: 8,
+    alignSelf: "flex-start",
+  },
+  citationsButtonText: {
+    fontSize: 12,
+    fontWeight: "600" as const,
+    color: "#118AB2",
+  },
   deleteButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -316,6 +424,73 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   backButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600" as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    maxHeight: "80%",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    flex: 1,
+  },
+  citationsList: {
+    maxHeight: 400,
+  },
+  citationItem: {
+    flexDirection: "row",
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    gap: 12,
+    alignItems: "center",
+  },
+  citationTextContainer: {
+    flex: 1,
+    gap: 4,
+  },
+  citationSource: {
+    fontSize: 12,
+    fontWeight: "700" as const,
+    textTransform: "uppercase",
+  },
+  citationTitle: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    lineHeight: 18,
+  },
+  citationUrl: {
+    fontSize: 12,
+    fontStyle: "italic",
+  },
+  closeButton: {
+    marginTop: 16,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  closeButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600" as const,

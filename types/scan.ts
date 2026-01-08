@@ -1,8 +1,15 @@
+export interface Citation {
+  title: string;
+  url: string;
+  source: string; // e.g., "FDA", "NIH", "WHO", "PubMed"
+}
+
 export interface Ingredient {
   name: string;
   rating: number;
   healthImpact: string;
   explanation: string;
+  citations?: Citation[]; // Add citations for each ingredient's health claims
 }
 
 export interface ScanResult {
@@ -13,6 +20,7 @@ export interface ScanResult {
   overallScore: number;
   gradeLabel: string;
   timestamp: number;
+  citations?: Citation[]; // Overall citations for general health information
 }
 
 export function getGradeLabel(score: number): string {

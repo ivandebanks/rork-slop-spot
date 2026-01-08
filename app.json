@@ -29,7 +29,8 @@
       "package": "app.rork.slop_spot",
       "permissions": [
         "CAMERA",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "RECORD_AUDIO"
       ]
     },
     "web": {
@@ -47,7 +48,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Slop Spot uses your camera to scan product labels and barcodes to provide ingredient analysis and health ratings. All scanning happens on your device, and images are immediately deleted after analysis."
+          "cameraPermission": "Slop Spot uses your camera to scan product labels and barcodes to provide ingredient analysis and health ratings. All scanning happens on your device, and images are immediately deleted after analysis.",
+          "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
+          "recordAudioAndroid": true
         }
       ]
     ],

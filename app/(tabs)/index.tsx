@@ -18,11 +18,18 @@ import { getGradeLabel, ScanResult } from "@/types/scan";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 
+const citationSchema = z.object({
+  title: z.string(),
+  url: z.string(),
+  source: z.string(),
+});
+
 const ingredientSchema = z.object({
   name: z.string(),
   rating: z.number().min(0).max(100),
   healthImpact: z.string(),
   explanation: z.string(),
+  citations: z.array(citationSchema).optional(),
 });
 
 const analysisSchema = z.object({
@@ -51,7 +58,19 @@ export default function ScannerScreen() {
               },
               {
                 type: "text",
-                text: "Analyze this food/beverage/product label. Extract the product name and all ingredients. For each ingredient, rate it from 0-100 based on health impact (100 = excellent, 0 = very harmful). Provide a brief explanation of health impact. Then calculate an overall score (average of all ingredient ratings).",
+                text: `Analyze this food/beverage/product label. Extract the product name and all ingredients. 
+
+For each ingredient:
+1. Rate it from 0-100 based on health impact (100 = excellent, 0 = very harmful)
+2. Provide a brief explanation of health impact
+3. IMPORTANT: Include 1-3 scientific citations that support your health assessment. Citations must include:
+   - title: A descriptive title of the source
+   - url: A valid URL to a reputable source (FDA, NIH, WHO, PubMed, peer-reviewed journals, medical organizations)
+   - source: The organization name (e.g., "FDA", "NIH", "WHO", "Mayo Clinic", "PubMed")
+
+Then calculate an overall score (average of all ingredient ratings).
+
+Ensure all health claims are backed by credible scientific sources.`,
               },
             ],
           },
