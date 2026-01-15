@@ -69,6 +69,14 @@ export default function HistoryScreen() {
     setSelectedItems(new Set());
   };
 
+  const selectAll = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    const allIds = new Set(filteredAndSortedScans.map(scan => scan.id));
+    setSelectedItems(allIds);
+  };
+
   const deleteSelected = () => {
     if (Platform.OS !== "web") {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -367,13 +375,20 @@ export default function HistoryScreen() {
       {/* Select Mode Header */}
       {selectMode && (
         <View style={[styles.selectModeHeader, { backgroundColor: theme.primary }]}>
-          <TouchableOpacity onPress={cancelSelectMode}>
+          <TouchableOpacity onPress={cancelSelectMode} style={styles.selectModeButton}>
             <X size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={[styles.selectModeText, { fontSize: scaleFont(16) }]}>
-            {selectedItems.size} selected
-          </Text>
-          <TouchableOpacity onPress={deleteSelected} disabled={selectedItems.size === 0}>
+          <View style={styles.selectModeCenter}>
+            <Text style={[styles.selectModeText, { fontSize: scaleFont(16) }]}>
+              {selectedItems.size} selected
+            </Text>
+            <TouchableOpacity onPress={selectAll} style={styles.selectAllButton}>
+              <Text style={[styles.selectAllText, { fontSize: scaleFont(13) }]}>
+                Select All
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={deleteSelected} disabled={selectedItems.size === 0} style={styles.selectModeButton}>
             <Trash2 size={24} color={selectedItems.size > 0 ? "#FFFFFF" : "rgba(255,255,255,0.5)"} />
           </TouchableOpacity>
         </View>
@@ -644,10 +659,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
+  selectModeButton: {
+    padding: 4,
+  },
+  selectModeCenter: {
+    flex: 1,
+    alignItems: "center",
+    gap: 2,
+  },
   selectModeText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600" as const,
+  },
+  selectAllButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  selectAllText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "500" as const,
+    opacity: 0.9,
   },
   resultsCount: {
     paddingHorizontal: 16,
