@@ -1,5 +1,5 @@
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -7,8 +7,10 @@ import {
   View,
   ActivityIndicator,
   Platform,
+  Dimensions,
+  ScrollView,
 } from "react-native";
-import { Camera, Sparkles, FlipHorizontal } from "lucide-react-native";
+import { Camera, Sparkles, FlipHorizontal, X } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
 import { generateObject } from "@rork-ai/toolkit-sdk";
 import { z } from "zod";
@@ -17,6 +19,10 @@ import { router } from "expo-router";
 import { getGradeLabel, ScanResult } from "@/types/scan";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const { width } = Dimensions.get("window");
+const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
 
 const citationSchema = z.object({
   title: z.string(),
@@ -38,12 +44,61 @@ const analysisSchema = z.object({
   overallScore: z.number().min(0).max(100),
 });
 
+const tutorialSteps = [
+  {
+    title: "Welcome to Slop Spot",
+    description: "Scan any food or beverage label to instantly analyze its ingredients and health impact.",
+    icon: "✨",
+  },
+  {
+    title: "Point & Scan",
+    description: "Align the product label within the frame and tap the capture button to scan.",
+    icon: "📸",
+  },
+  {
+    title: "Get Instant Results",
+    description: "Receive detailed ingredient analysis with health ratings and scientific citations.",
+    icon: "📊",
+  },
+  {
+    title: "Track Your Scans",
+    description: "View your scan history and compare products to make healthier choices.",
+    icon: "📝",
+  },
+];
+
 export default function ScannerScreen() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraRef, setCameraRef] = useState<CameraView | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [currentStep, setCurrentStep] = useState(0);
   const { addScan } = useScans();
   const { theme, scaleFont } = useTheme();
+
+  useEffect(() => {
+    checkTutorialStatus();
+  }, []);
+
+  const checkTutorialStatus = async () => {
+    try {
+      const completed = await AsyncStorage.getItem(TUTORIAL_KEY);
+      if (!completed) {
+        setShowTutorial(true);
+      }
+    } catch (error) {
+      console.log("Error checking tutorial status:", error);
+    }
+  };
+
+  const completeTutorial = async () => {
+    try {
+      await AsyncStorage.setItem(TUTORIAL_KEY, "true");
+      setShowTutorial(false);
+    } catch (error) {
+      console.log("Error saving tutorial status:", error);
+    }
+  };
 
   const analyzeMutation = useMutation({
     mutationFn: async (imageUri: string) => {
@@ -146,6 +201,65 @@ Ensure all health claims are backed by credible scientific sources.`,
     }
     setFacing((current) => (current === "back" ? "front" : "back"));
   };
+
+  const handleNext = () => {
+    if (currentStep < tutorialSteps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
+      completeTutorial();
+    }
+  };
+
+  const handleSkip = () => {
+    completeTutorial();
+  };
+
+  if (showTutorial) {
+    const step = tutorialSteps[currentStep];
+    return (
+      <View style={[styles.tutorialContainer, { backgroundColor: theme.background }]}>
+        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+          <X size={24} color={theme.textSecondary} />
+        </TouchableOpacity>
+
+        <View style={styles.tutorialContent}>
+          <Text style={styles.tutorialIcon}>{step.icon}</Text>
+          <Text style={[styles.tutorialTitle, { color: theme.text, fontSize: scaleFont(28) }]}>
+            {step.title}
+          </Text>
+          <Text style={[styles.tutorialDescription, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
+            {step.description}
+          </Text>
+        </View>
+
+        <View style={styles.tutorialFooter}>
+          <View style={styles.dotsContainer}>
+            {tutorialSteps.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor: index === currentStep ? theme.primary : theme.border,
+                    width: index === currentStep ? 24 : 8,
+                  },
+                ]}
+              />
+            ))}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.nextButton, { backgroundColor: theme.primary }]}
+            onPress={handleNext}
+          >
+            <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
+              {currentStep < tutorialSteps.length - 1 ? "Next" : "Get Started"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -297,6 +411,64 @@ const styles = StyleSheet.create({
   analyzingText: {
     color: "#FFFFFF",
     fontSize: 18,
+    fontWeight: "600" as const,
+  },
+  tutorialContainer: {
+    flex: 1,
+    paddingTop: 60,
+  },
+  skipButton: {
+    position: "absolute",
+    top: 60,
+    right: 24,
+    zIndex: 10,
+    padding: 8,
+  },
+  tutorialContent: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  tutorialIcon: {
+    fontSize: 80,
+    marginBottom: 32,
+  },
+  tutorialTitle: {
+    fontSize: 28,
+    fontWeight: "700" as const,
+    textAlign: "center",
+    marginBottom: 16,
+  },
+  tutorialDescription: {
+    fontSize: 16,
+    textAlign: "center",
+    lineHeight: 24,
+    maxWidth: 320,
+  },
+  tutorialFooter: {
+    paddingHorizontal: 32,
+    paddingBottom: 60,
+    gap: 32,
+  },
+  dotsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+  },
+  dot: {
+    height: 8,
+    borderRadius: 4,
+    transition: "all 0.3s ease",
+  },
+  nextButton: {
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  nextButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
     fontWeight: "600" as const,
   },
 });
