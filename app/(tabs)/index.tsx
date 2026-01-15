@@ -9,8 +9,10 @@ import {
   Platform,
   Dimensions,
   ScrollView,
+  Image,
+  Animated,
 } from "react-native";
-import { Camera, Sparkles, FlipHorizontal, X } from "lucide-react-native";
+import { Camera, Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
 import { generateObject } from "@rork-ai/toolkit-sdk";
 import { z } from "zod";
@@ -20,6 +22,7 @@ import { getGradeLabel, ScanResult } from "@/types/scan";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as ImagePicker from "expo-image-picker";
 
 const { width } = Dimensions.get("window");
 const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
@@ -73,12 +76,41 @@ export default function ScannerScreen() {
   const [cameraRef, setCameraRef] = useState<CameraView | null>(null);
   const [showTutorial, setShowTutorial] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
+  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
+  const [analysisProgress, setAnalysisProgress] = useState(0);
+  const [flashEnabled, setFlashEnabled] = useState(false);
   const { addScan } = useScans();
   const { theme, scaleFont } = useTheme();
+
+  // Animation values for progress circle
+  const progressAnim = useState(new Animated.Value(0))[0];
 
   useEffect(() => {
     checkTutorialStatus();
   }, []);
+
+  // Animate progress circle
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: analysisProgress,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [analysisProgress]);
+
+  // Simulate progress when analyzing
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (analyzeMutation.isPending && analysisProgress < 95) {
+      interval = setInterval(() => {
+        setAnalysisProgress((prev) => {
+          const increment = prev < 50 ? 8 : prev < 80 ? 4 : 2;
+          return Math.min(prev + increment, 95);
+        });
+      }, 200);
+    }
+    return () => clearInterval(interval);
+  }, [analyzeMutation.isPending, analysisProgress]);
 
   const checkTutorialStatus = async () => {
     try {
@@ -97,6 +129,41 @@ export default function ScannerScreen() {
       setShowTutorial(false);
     } catch (error) {
       console.log("Error saving tutorial status:", error);
+    }
+  };
+
+  const replayTutorial = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setCurrentStep(0);
+    setShowTutorial(true);
+  };
+
+  const toggleFlash = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setFlashEnabled(!flashEnabled);
+  };
+
+  const pickImageFromGallery = async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      const imageUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      setCapturedPhoto(imageUri);
+      setAnalysisProgress(0);
+      analyzeMutation.mutate(imageUri);
     }
   };
 
@@ -147,13 +214,24 @@ Ensure all health claims are backed by credible scientific sources.`,
       return scanResult;
     },
     onSuccess: (data) => {
+      setAnalysisProgress(100);
+      
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      router.push({
-        pathname: "/result",
-        params: { scanId: data.id },
-      });
+      
+      setTimeout(() => {
+        router.push({
+          pathname: "/result",
+          params: { scanId: data.id },
+        });
+        setCapturedPhoto(null);
+        setAnalysisProgress(0);
+      }, 500);
+    },
+    onError: () => {
+      setCapturedPhoto(null);
+      setAnalysisProgress(0);
     },
   });
 
@@ -188,11 +266,24 @@ Ensure all health claims are backed by credible scientific sources.`,
       const photo = await cameraRef.takePictureAsync({
         quality: 0.8,
         base64: true,
+        flash: flashEnabled ? "on" : "off",
       });
       if (photo && photo.base64) {
-        analyzeMutation.mutate(`data:image/jpeg;base64,${photo.base64}`);
+        const imageUri = `data:image/jpeg;base64,${photo.base64}`;
+        setCapturedPhoto(imageUri);
+        setAnalysisProgress(0);
+        analyzeMutation.mutate(imageUri);
       }
     }
+  };
+
+  const retakePhoto = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setCapturedPhoto(null);
+    setAnalysisProgress(0);
+    analyzeMutation.reset();
   };
 
   const toggleCameraFacing = () => {
@@ -213,6 +304,13 @@ Ensure all health claims are backed by credible scientific sources.`,
   const handleSkip = () => {
     completeTutorial();
   };
+
+  // Calculate circle stroke offset for progress animation
+  const circleCircumference = 2 * Math.PI * 70; // radius = 70
+  const strokeDashoffset = progressAnim.interpolate({
+    inputRange: [0, 100],
+    outputRange: [circleCircumference, 0],
+  });
 
   if (showTutorial) {
     const step = tutorialSteps[currentStep];
@@ -263,42 +361,134 @@ Ensure all health claims are backed by credible scientific sources.`,
 
   return (
     <View style={styles.container}>
-      <CameraView style={styles.camera} facing={facing} ref={setCameraRef}>
-        <View style={styles.overlay}>
-          <View style={styles.header}>
-            <Text style={[styles.headerTitle, { fontSize: scaleFont(32) }]}>Slop Spot</Text>
-            <Text style={[styles.headerSubtitle, { fontSize: scaleFont(16) }]}>Scan product label</Text>
-          </View>
+      {capturedPhoto ? (
+        <View style={styles.photoPreviewContainer}>
+          <Image source={{ uri: capturedPhoto }} style={styles.photoPreview} resizeMode="contain" />
+          
+          <View style={styles.photoOverlay}>
+            <View style={styles.header}>
+              <Text style={[styles.headerTitle, { fontSize: scaleFont(32) }]}>Analyzing...</Text>
+            </View>
 
-          <View style={styles.scanFrame} />
-
-          <View style={styles.controls}>
-            {analyzeMutation.isPending ? (
-              <View style={styles.analyzing}>
-                <ActivityIndicator size="large" color="#FFFFFF" />
-                <Text style={[styles.analyzingText, { fontSize: scaleFont(18) }]}>Analyzing ingredients...</Text>
+            <View style={styles.progressContainer}>
+              {/* Animated Progress Circle */}
+              <View style={styles.progressCircleContainer}>
+                <svg width="180" height="180" style={{ transform: [{ rotate: '-90deg' }] }}>
+                  {/* Background circle */}
+                  <circle
+                    cx="90"
+                    cy="90"
+                    r="70"
+                    stroke="rgba(255, 255, 255, 0.2)"
+                    strokeWidth="10"
+                    fill="none"
+                  />
+                  {/* Progress circle */}
+                  <Animated.circle
+                    cx="90"
+                    cy="90"
+                    r="70"
+                    stroke="#118AB2"
+                    strokeWidth="10"
+                    fill="none"
+                    strokeDasharray={circleCircumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                  />
+                </svg>
+                <View style={styles.progressTextContainer}>
+                  <Text style={[styles.progressText, { fontSize: scaleFont(48) }]}>
+                    {Math.round(analysisProgress)}%
+                  </Text>
+                  <Text style={[styles.progressLabel, { fontSize: scaleFont(14) }]}>
+                    Scanning ingredients
+                  </Text>
+                </View>
               </View>
-            ) : (
-              <>
-                <TouchableOpacity
-                  style={styles.flipButton}
-                  onPress={toggleCameraFacing}
-                >
-                  <FlipHorizontal size={28} color="#FFFFFF" />
-                </TouchableOpacity>
 
-                <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-                  <View style={styles.captureButtonInner}>
-                    <Sparkles size={32} color="#118AB2" />
-                  </View>
-                </TouchableOpacity>
+              {/* Progress bar */}
+              <View style={styles.progressBarContainer}>
+                <View 
+                  style={[
+                    styles.progressBarFill, 
+                    { width: `${analysisProgress}%` }
+                  ]} 
+                />
+              </View>
+            </View>
 
-                <View style={styles.flipButton} />
-              </>
-            )}
+            <View style={styles.retakeButtonContainer}>
+              <TouchableOpacity
+                style={styles.retakeButton}
+                onPress={retakePhoto}
+                disabled={analyzeMutation.isPending}
+              >
+                <RotateCcw size={24} color="#FFFFFF" />
+                <Text style={[styles.retakeButtonText, { fontSize: scaleFont(16) }]}>
+                  Retake
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </CameraView>
+      ) : (
+        <CameraView style={styles.camera} facing={facing} ref={setCameraRef}>
+          <View style={styles.overlay}>
+            <View style={styles.header}>
+              <View style={styles.headerLeft}>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={replayTutorial}
+                >
+                  <HelpCircle size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.headerCenter}>
+                <Text style={[styles.headerTitle, { fontSize: scaleFont(32) }]}>Slop Spot</Text>
+                <Text style={[styles.headerSubtitle, { fontSize: scaleFont(16) }]}>Scan product label</Text>
+              </View>
+
+              <View style={styles.headerRight}>
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={toggleFlash}
+                >
+                  {flashEnabled ? (
+                    <Zap size={24} color="#FFD700" fill="#FFD700" />
+                  ) : (
+                    <ZapOff size={24} color="#FFFFFF" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            <View style={styles.scanFrame} />
+
+            <View style={styles.controls}>
+              <TouchableOpacity
+                style={styles.flipButton}
+                onPress={pickImageFromGallery}
+              >
+                <ImageIcon size={28} color="#FFFFFF" />
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+                <View style={styles.captureButtonInner}>
+                  <Sparkles size={32} color="#118AB2" />
+                </View>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.flipButton}
+                onPress={toggleCameraFacing}
+              >
+                <FlipHorizontal size={28} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </CameraView>
+      )}
     </View>
   );
 }
@@ -347,7 +537,20 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: 60,
     paddingHorizontal: 24,
+    flexDirection: "row",
     alignItems: "center",
+    justifyContent: "space-between",
+  },
+  headerLeft: {
+    width: 40,
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: "center",
+  },
+  headerRight: {
+    width: 40,
+    alignItems: "flex-end",
   },
   headerTitle: {
     fontSize: 32,
@@ -364,6 +567,9 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
+  },
+  iconButton: {
+    padding: 4,
   },
   scanFrame: {
     flex: 1,
@@ -403,14 +609,84 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  analyzing: {
+  photoPreviewContainer: {
     flex: 1,
-    alignItems: "center",
-    gap: 16,
+    backgroundColor: "#000000",
   },
-  analyzingText: {
+  photoPreview: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
+  photoOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "space-between",
+  },
+  progressContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  progressCircleContainer: {
+    width: 180,
+    height: 180,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 40,
+  },
+  progressTextContainer: {
+    position: "absolute",
+    alignItems: "center",
+  },
+  progressText: {
+    fontSize: 48,
+    fontWeight: "800" as const,
     color: "#FFFFFF",
-    fontSize: 18,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  },
+  progressLabel: {
+    fontSize: 14,
+    color: "#FFFFFF",
+    marginTop: 8,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  progressBarContainer: {
+    width: "100%",
+    height: 6,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  progressBarFill: {
+    height: "100%",
+    backgroundColor: "#118AB2",
+    borderRadius: 3,
+  },
+  retakeButtonContainer: {
+    paddingHorizontal: 32,
+    paddingBottom: 120,
+    alignItems: "center",
+  },
+  retakeButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
+  },
+  retakeButtonText: {
+    color: "#FFFFFF",
+    fontSize: 16,
     fontWeight: "600" as const,
   },
   tutorialContainer: {
