@@ -84,6 +84,7 @@ export default function ScannerScreen() {
 
   // Animation values for progress circle
   const progressAnim = useState(new Animated.Value(0))[0];
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     checkTutorialStatus();
@@ -101,7 +102,7 @@ export default function ScannerScreen() {
   // Simulate progress when analyzing
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    if (analyzeMutation.isPending && analysisProgress < 95) {
+    if (isAnalyzing && analysisProgress < 95) {
       interval = setInterval(() => {
         setAnalysisProgress((prev) => {
           const increment = prev < 50 ? 8 : prev < 80 ? 4 : 2;
@@ -110,7 +111,7 @@ export default function ScannerScreen() {
       }, 200);
     }
     return () => clearInterval(interval);
-  }, [analyzeMutation.isPending, analysisProgress]);
+  }, [isAnalyzing, analysisProgress]);
 
   const checkTutorialStatus = async () => {
     try {
@@ -132,43 +133,9 @@ export default function ScannerScreen() {
     }
   };
 
-  const replayTutorial = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setCurrentStep(0);
-    setShowTutorial(true);
-  };
-
-  const toggleFlash = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setFlashEnabled(!flashEnabled);
-  };
-
-  const pickImageFromGallery = async () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false,
-      quality: 0.8,
-      base64: true,
-    });
-
-    if (!result.canceled && result.assets[0].base64) {
-      const imageUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
-      setCapturedPhoto(imageUri);
-      setAnalysisProgress(0);
-      analyzeMutation.mutate(imageUri);
-    }
-  };
-
   const analyzeMutation = useMutation({
     mutationFn: async (imageUri: string) => {
+      setIsAnalyzing(true);
       const result = await generateObject({
         messages: [
           {
@@ -215,6 +182,7 @@ Ensure all health claims are backed by credible scientific sources.`,
     },
     onSuccess: (data) => {
       setAnalysisProgress(100);
+      setIsAnalyzing(false);
       
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -232,8 +200,44 @@ Ensure all health claims are backed by credible scientific sources.`,
     onError: () => {
       setCapturedPhoto(null);
       setAnalysisProgress(0);
+      setIsAnalyzing(false);
     },
   });
+
+  const replayTutorial = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setCurrentStep(0);
+    setShowTutorial(true);
+  };
+
+  const toggleFlash = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setFlashEnabled(!flashEnabled);
+  };
+
+  const pickImageFromGallery = async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      const imageUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      setCapturedPhoto(imageUri);
+      setAnalysisProgress(0);
+      analyzeMutation.mutate(imageUri);
+    }
+  };
 
   if (!permission) {
     return (
@@ -259,7 +263,7 @@ Ensure all health claims are backed by credible scientific sources.`,
   }
 
   const takePicture = async () => {
-    if (cameraRef && !analyzeMutation.isPending) {
+    if (cameraRef && !isAnalyzing) {
       if (Platform.OS !== "web") {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
