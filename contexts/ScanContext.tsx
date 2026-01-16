@@ -54,10 +54,25 @@ export const [ScanProvider, useScans] = createContextHook(() => {
     saveMutation.mutate(updated);
   };
 
+  const toggleFavorite = (id: string) => {
+    const updated = scans.map((scan) =>
+      scan.id === id ? { ...scan, isFavorite: !scan.isFavorite } : scan
+    );
+    setScans(updated);
+    saveMutation.mutate(updated);
+  };
+
+  const clearAllScans = () => {
+    setScans([]);
+    saveMutation.mutate([]);
+  };
+
   return {
     scans,
     addScan,
     deleteScan,
+    toggleFavorite,
+    clearAllScans,
     isLoading: scansQuery.isLoading,
   };
 });
