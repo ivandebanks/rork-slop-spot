@@ -10,7 +10,6 @@ import {
   Dimensions,
   ScrollView,
   Image,
-  Animated,
 } from "react-native";
 import { Camera, Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
@@ -83,21 +82,11 @@ export default function ScannerScreen() {
   const { theme, scaleFont } = useTheme();
 
   // Animation values for progress circle
-  const progressAnim = useState(new Animated.Value(0))[0];
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     checkTutorialStatus();
   }, []);
-
-  // Animate progress circle
-  useEffect(() => {
-    Animated.timing(progressAnim, {
-      toValue: analysisProgress,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  }, [analysisProgress]);
 
   // Simulate progress when analyzing
   useEffect(() => {
@@ -309,13 +298,6 @@ Ensure all health claims are backed by credible scientific sources.`,
     completeTutorial();
   };
 
-  // Calculate circle stroke offset for progress animation
-  const circleCircumference = 2 * Math.PI * 70; // radius = 70
-  const strokeDashoffset = progressAnim.interpolate({
-    inputRange: [0, 100],
-    outputRange: [circleCircumference, 0],
-  });
-
   if (showTutorial) {
     const step = tutorialSteps[currentStep];
     return (
@@ -375,31 +357,39 @@ Ensure all health claims are backed by credible scientific sources.`,
             </View>
 
             <View style={styles.progressContainer}>
-              {/* Animated Progress Circle */}
+              {/* Circular Progress Indicator */}
               <View style={styles.progressCircleContainer}>
-                <svg width="180" height="180" style={{ transform: [{ rotate: '-90deg' }] }}>
-                  {/* Background circle */}
-                  <circle
-                    cx="90"
-                    cy="90"
-                    r="70"
-                    stroke="rgba(255, 255, 255, 0.2)"
-                    strokeWidth="10"
-                    fill="none"
-                  />
-                  {/* Progress circle */}
-                  <Animated.circle
-                    cx="90"
-                    cy="90"
-                    r="70"
-                    stroke="#118AB2"
-                    strokeWidth="10"
-                    fill="none"
-                    strokeDasharray={circleCircumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                  />
-                </svg>
+                {/* Background circle */}
+                <View style={[styles.progressCircleBg, { borderColor: "rgba(255, 255, 255, 0.2)" }]} />
+                {/* Progress circle overlay */}
+                <View style={styles.progressCircleWrapper}>
+                  <View 
+                    style={[
+                      styles.progressCircle,
+                      { 
+                        borderColor: "#118AB2",
+                        transform: [
+                          { rotate: '-90deg' }
+                        ]
+                      }
+                    ]}
+                  >
+                    <View 
+                      style={[
+                        styles.progressCircleFill,
+                        {
+                          borderColor: "#118AB2",
+                          borderRightColor: "transparent",
+                          borderBottomColor: "transparent",
+                          transform: [
+                            { rotate: `${(analysisProgress / 100) * 360}deg` }
+                          ]
+                        }
+                      ]}
+                    />
+                  </View>
+                </View>
+                
                 <View style={styles.progressTextContainer}>
                   <Text style={[styles.progressText, { fontSize: scaleFont(48) }]}>
                     {Math.round(analysisProgress)}%
@@ -639,6 +629,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 40,
+    position: "relative",
+  },
+  progressCircleBg: {
+    position: "absolute",
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 10,
+  },
+  progressCircleWrapper: {
+    position: "absolute",
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    overflow: "hidden",
+  },
+  progressCircle: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 10,
+  },
+  progressCircleFill: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 10,
   },
   progressTextContainer: {
     position: "absolute",
