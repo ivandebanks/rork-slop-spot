@@ -1,498 +1,550 @@
-import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
-import { useState, useEffect } from "react";
-import {
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  ActivityIndicator,
-  Platform,
-  Dimensions,
-  ScrollView,
-  Image,
-  Animated,
-} from "react-native";
-import { Camera, Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon } from "lucide-react-native";
-import { useMutation } from "@tanstack/react-query";
-import { generateObject } from "@rork-ai/toolkit-sdk";
-import { z } from "zod";
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Platform, TextInput, Alert, Modal } from "react-native";
 import { useScans } from "@/contexts/ScanContext";
 import { router } from "expo-router";
-import { getGradeLabel, ScanResult } from "@/types/scan";
+import { getGradeColor, getGradeLabel } from "@/types/scan";
+import { Clock, ChevronRight, Package, Search, SlidersHorizontal, X, Trash2, Star, Calendar, ArrowUpDown, CheckSquare, Square } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as ImagePicker from "expo-image-picker";
+import { useState, useMemo } from "react";
+import { Swipeable } from "react-native-gesture-handler";
 
-const { width } = Dimensions.get("window");
-const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
+type SortOption = "newest" | "oldest" | "highest" | "lowest";
+type DateFilter = "all" | "today" | "week" | "month";
 
-const citationSchema = z.object({
-  title: z.string(),
-  url: z.string(),
-  source: z.string(),
-});
-
-const ingredientSchema = z.object({
-  name: z.string(),
-  rating: z.number().min(0).max(100),
-  healthImpact: z.string(),
-  explanation: z.string(),
-  citations: z.array(citationSchema).optional(),
-});
-
-const analysisSchema = z.object({
-  productName: z.string(),
-  ingredients: z.array(ingredientSchema),
-  overallScore: z.number().min(0).max(100),
-});
-
-const tutorialSteps = [
-  {
-    title: "Welcome to Slop Spot",
-    description: "Scan any food or beverage label to instantly analyze its ingredients and health impact.",
-    icon: "✨",
-  },
-  {
-    title: "Point & Scan",
-    description: "Align the product label within the frame and tap the capture button to scan.",
-    icon: "📸",
-  },
-  {
-    title: "Get Instant Results",
-    description: "Receive detailed ingredient analysis with health ratings and scientific citations.",
-    icon: "📊",
-  },
-  {
-    title: "Track Your Scans",
-    description: "View your scan history and compare products to make healthier choices.",
-    icon: "📝",
-  },
-];
-
-export default function ScannerScreen() {
-  const [facing, setFacing] = useState<CameraType>("back");
-  const [permission, requestPermission] = useCameraPermissions();
-  const [cameraRef, setCameraRef] = useState<CameraView | null>(null);
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
-  const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [flashEnabled, setFlashEnabled] = useState(false);
-  const { addScan } = useScans();
+export default function HistoryScreen() {
+  const { scans, isLoading, deleteScan, toggleFavorite, clearAllScans } = useScans();
   const { theme, scaleFont } = useTheme();
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [gradeFilter, setGradeFilter] = useState<string[]>([]);
+  const [dateFilter, setDateFilter] = useState<DateFilter>("all");
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  // Animation values for progress circle
-  const progressAnim = useState(new Animated.Value(0))[0];
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const grades = ["A+", "A", "B", "C", "D", "F"];
 
-  useEffect(() => {
-    checkTutorialStatus();
-  }, []);
-
-  // Animate progress circle
-  useEffect(() => {
-    Animated.timing(progressAnim, {
-      toValue: analysisProgress,
-      duration: 200,
-      useNativeDriver: false,
-    }).start();
-  }, [analysisProgress]);
-
-  // Simulate progress when analyzing
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isAnalyzing && analysisProgress < 95) {
-      interval = setInterval(() => {
-        setAnalysisProgress((prev) => {
-          const increment = prev < 50 ? 8 : prev < 80 ? 4 : 2;
-          return Math.min(prev + increment, 95);
-        });
-      }, 200);
+  const handleScanPress = (scanId: string) => {
+    if (selectMode) {
+      toggleSelection(scanId);
+      return;
     }
-    return () => clearInterval(interval);
-  }, [isAnalyzing, analysisProgress]);
 
-  const checkTutorialStatus = async () => {
-    try {
-      const completed = await AsyncStorage.getItem(TUTORIAL_KEY);
-      if (!completed) {
-        setShowTutorial(true);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.push({
+      pathname: "/result",
+      params: { scanId },
+    });
+  };
+
+  const handleLongPress = (scanId: string) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    setSelectMode(true);
+    setSelectedItems(new Set([scanId]));
+  };
+
+  const toggleSelection = (scanId: string) => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(scanId)) {
+        newSet.delete(scanId);
+      } else {
+        newSet.add(scanId);
       }
-    } catch (error) {
-      console.log("Error checking tutorial status:", error);
-    }
+      return newSet;
+    });
   };
 
-  const completeTutorial = async () => {
-    try {
-      await AsyncStorage.setItem(TUTORIAL_KEY, "true");
-      setShowTutorial(false);
-    } catch (error) {
-      console.log("Error saving tutorial status:", error);
-    }
+  const cancelSelectMode = () => {
+    setSelectMode(false);
+    setSelectedItems(new Set());
   };
 
-  const replayTutorial = () => {
+  const selectAll = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    const allIds = new Set(filteredAndSortedScans.map(scan => scan.id));
+    setSelectedItems(allIds);
+  };
+
+  const deleteSelected = () => {
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+    selectedItems.forEach(id => deleteScan(id));
+    cancelSelectMode();
+  };
+
+  const handleDelete = (scanId: string) => {
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
+    deleteScan(scanId);
+  };
+
+  const handleFavorite = (scanId: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    setCurrentStep(0);
-    setShowTutorial(true);
+    toggleFavorite(scanId);
   };
 
-  const toggleFlash = () => {
+  const handleClearAll = () => {
+    setShowClearConfirm(true);
+  };
+
+  const confirmClearAll = () => {
+    if (Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
+    clearAllScans();
+    setShowClearConfirm(false);
+  };
+
+  const toggleGradeFilter = (grade: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    setFlashEnabled(!flashEnabled);
+    setGradeFilter(prev => 
+      prev.includes(grade) 
+        ? prev.filter(g => g !== grade)
+        : [...prev, grade]
+    );
   };
 
-  const pickImageFromGallery = async () => {
+  const cycleSortOption = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
+    const options: SortOption[] = ["newest", "oldest", "highest", "lowest"];
+    const currentIndex = options.indexOf(sortBy);
+    setSortBy(options[(currentIndex + 1) % options.length]);
+  };
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: false,
-      quality: 0.8,
-      base64: true,
+  const filteredAndSortedScans = useMemo(() => {
+    let filtered = [...scans];
+
+    // Search filter
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(scan => 
+        scan.productName.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Grade filter
+    if (gradeFilter.length > 0) {
+      filtered = filtered.filter(scan => gradeFilter.includes(scan.gradeLabel));
+    }
+
+    // Date filter
+    if (dateFilter !== "all") {
+      const now = Date.now();
+      const day = 24 * 60 * 60 * 1000;
+      filtered = filtered.filter(scan => {
+        const diff = now - scan.timestamp;
+        switch (dateFilter) {
+          case "today":
+            return diff < day;
+          case "week":
+            return diff < 7 * day;
+          case "month":
+            return diff < 30 * day;
+          default:
+            return true;
+        }
+      });
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return b.timestamp - a.timestamp;
+        case "oldest":
+          return a.timestamp - b.timestamp;
+        case "highest":
+          return b.overallScore - a.overallScore;
+        case "lowest":
+          return a.overallScore - b.overallScore;
+        default:
+          return 0;
+      }
     });
 
-    if (!result.canceled && result.assets[0].base64) {
-      const imageUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
-      setCapturedPhoto(imageUri);
-      setAnalysisProgress(0);
-      analyzeMutation.mutate(imageUri);
-    }
+    return filtered;
+  }, [scans, searchQuery, gradeFilter, dateFilter, sortBy]);
+
+  const renderRightActions = (scanId: string, isFavorite: boolean) => {
+    return (
+      <View style={styles.swipeActions}>
+        <TouchableOpacity
+          style={[styles.swipeButton, styles.favoriteButton]}
+          onPress={() => handleFavorite(scanId)}
+        >
+          <Star size={24} color="#FFFFFF" fill={isFavorite ? "#FFFFFF" : "none"} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.swipeButton, styles.deleteButton]}
+          onPress={() => handleDelete(scanId)}
+        >
+          <Trash2 size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+      </View>
+    );
   };
 
-  const analyzeMutation = useMutation({
-    mutationFn: async (imageUri: string) => {
-      setIsAnalyzing(true);
-      const result = await generateObject({
-        messages: [
-          {
-            role: "user",
-            content: [
-              {
-                type: "image",
-                image: imageUri,
-              },
-              {
-                type: "text",
-                text: `Analyze this food/beverage/product label. Extract the product name and all ingredients. 
-
-For each ingredient:
-1. Rate it from 0-100 based on health impact (100 = excellent, 0 = very harmful)
-2. Provide a brief explanation of health impact
-3. IMPORTANT: Include 1-3 scientific citations that support your health assessment. Citations must include:
-   - title: A descriptive title of the source
-   - url: A valid URL to a reputable source (FDA, NIH, WHO, PubMed, peer-reviewed journals, medical organizations)
-   - source: The organization name (e.g., "FDA", "NIH", "WHO", "Mayo Clinic", "PubMed")
-
-Then calculate an overall score (average of all ingredient ratings).
-
-Ensure all health claims are backed by credible scientific sources.`,
-              },
-            ],
-          },
-        ],
-        schema: analysisSchema,
-      });
-
-      const scanResult: ScanResult = {
-        id: Date.now().toString(),
-        productName: result.productName,
-        imageUri,
-        ingredients: result.ingredients,
-        overallScore: result.overallScore,
-        gradeLabel: getGradeLabel(result.overallScore),
-        timestamp: Date.now(),
-      };
-
-      addScan(scanResult);
-      return scanResult;
-    },
-    onSuccess: (data) => {
-      setAnalysisProgress(100);
-      setIsAnalyzing(false);
-      
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      
-      setTimeout(() => {
-        router.push({
-          pathname: "/result",
-          params: { scanId: data.id },
-        });
-        setCapturedPhoto(null);
-        setAnalysisProgress(0);
-      }, 500);
-    },
-    onError: () => {
-      setCapturedPhoto(null);
-      setAnalysisProgress(0);
-      setIsAnalyzing(false);
-    },
-  });
-
-  if (!permission) {
+  if (isLoading) {
     return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.primary} />
+      <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
+        <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>Loading...</Text>
       </View>
     );
   }
 
-  if (!permission.granted) {
+  const getSortLabel = () => {
+    switch (sortBy) {
+      case "newest": return "Newest First";
+      case "oldest": return "Oldest First";
+      case "highest": return "Highest Score";
+      case "lowest": return "Lowest Score";
+    }
+  };
+
+  if (scans.length === 0) {
     return (
-      <View style={[styles.permissionContainer, { backgroundColor: theme.background }]}>
-        <Camera size={64} color={theme.primary} />
-        <Text style={[styles.permissionTitle, { color: theme.text, fontSize: scaleFont(24) }]}>Camera Access Required</Text>
-        <Text style={[styles.permissionText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
-          Slop Spot needs camera access to scan product labels
+      <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
+        <Package size={64} color={theme.textSecondary} />
+        <Text style={[styles.emptyTitle, { color: theme.text, fontSize: scaleFont(24) }]}>No Scans Yet</Text>
+        <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
+          Start scanning products to see your history here
         </Text>
-        <TouchableOpacity style={[styles.permissionButton, { backgroundColor: theme.primary }]} onPress={requestPermission}>
-          <Text style={[styles.permissionButtonText, { fontSize: scaleFont(16) }]}>Continue</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const takePicture = async () => {
-    if (cameraRef && !isAnalyzing) {
-      if (Platform.OS !== "web") {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
-      const photo = await cameraRef.takePictureAsync({
-        quality: 0.8,
-        base64: true,
-        flash: flashEnabled ? "on" : "off",
-      });
-      if (photo && photo.base64) {
-        const imageUri = `data:image/jpeg;base64,${photo.base64}`;
-        setCapturedPhoto(imageUri);
-        setAnalysisProgress(0);
-        analyzeMutation.mutate(imageUri);
-      }
-    }
-  };
-
-  const retakePhoto = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setCapturedPhoto(null);
-    setAnalysisProgress(0);
-    analyzeMutation.reset();
-  };
-
-  const toggleCameraFacing = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setFacing((current) => (current === "back" ? "front" : "back"));
-  };
-
-  const handleNext = () => {
-    if (currentStep < tutorialSteps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      completeTutorial();
-    }
-  };
-
-  const handleSkip = () => {
-    completeTutorial();
-  };
-
-  // Calculate circle stroke offset for progress animation
-  const circleCircumference = 2 * Math.PI * 70; // radius = 70
-  const strokeDashoffset = progressAnim.interpolate({
-    inputRange: [0, 100],
-    outputRange: [circleCircumference, 0],
-  });
-
-  if (showTutorial) {
-    const step = tutorialSteps[currentStep];
-    return (
-      <View style={[styles.tutorialContainer, { backgroundColor: theme.background }]}>
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <X size={24} color={theme.textSecondary} />
-        </TouchableOpacity>
-
-        <View style={styles.tutorialContent}>
-          <Text style={styles.tutorialIcon}>{step.icon}</Text>
-          <Text style={[styles.tutorialTitle, { color: theme.text, fontSize: scaleFont(28) }]}>
-            {step.title}
-          </Text>
-          <Text style={[styles.tutorialDescription, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
-            {step.description}
-          </Text>
-        </View>
-
-        <View style={styles.tutorialFooter}>
-          <View style={styles.dotsContainer}>
-            {tutorialSteps.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: index === currentStep ? theme.primary : theme.border,
-                    width: index === currentStep ? 24 : 8,
-                  },
-                ]}
-              />
-            ))}
-          </View>
-
-          <TouchableOpacity
-            style={[styles.nextButton, { backgroundColor: theme.primary }]}
-            onPress={handleNext}
-          >
-            <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
-              {currentStep < tutorialSteps.length - 1 ? "Next" : "Get Started"}
-            </Text>
-          </TouchableOpacity>
-        </View>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      {capturedPhoto ? (
-        <View style={styles.photoPreviewContainer}>
-          <Image source={{ uri: capturedPhoto }} style={styles.photoPreview} resizeMode="contain" />
-          
-          <View style={styles.photoOverlay}>
-            <View style={styles.header}>
-              <Text style={[styles.headerTitle, { fontSize: scaleFont(32) }]}>Analyzing...</Text>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {/* Header Controls */}
+      <View style={[styles.controls, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
+        {/* Search Bar */}
+        <View style={[styles.searchContainer, { backgroundColor: theme.card }]}>
+          <Search size={20} color={theme.textSecondary} />
+          <TextInput
+            style={[styles.searchInput, { color: theme.text, fontSize: scaleFont(16) }]}
+            placeholder="Search products..."
+            placeholderTextColor={theme.textSecondary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <X size={20} color={theme.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Filter & Sort Row */}
+        <View style={styles.filterRow}>
+          <TouchableOpacity
+            style={[styles.filterButton, { backgroundColor: theme.card }]}
+            onPress={() => setShowFilters(!showFilters)}
+          >
+            <SlidersHorizontal size={18} color={theme.text} />
+            <Text style={[styles.filterButtonText, { color: theme.text, fontSize: scaleFont(14) }]}>
+              Filters
+            </Text>
+            {(gradeFilter.length > 0 || dateFilter !== "all") && (
+              <View style={[styles.filterBadge, { backgroundColor: theme.primary }]}>
+                <Text style={[styles.filterBadgeText, { fontSize: scaleFont(10) }]}>
+                  {gradeFilter.length + (dateFilter !== "all" ? 1 : 0)}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.filterButton, { backgroundColor: theme.card }]}
+            onPress={cycleSortOption}
+          >
+            <ArrowUpDown size={18} color={theme.text} />
+            <Text style={[styles.filterButtonText, { color: theme.text, fontSize: scaleFont(14) }]}>
+              {getSortLabel()}
+            </Text>
+          </TouchableOpacity>
+
+          {scans.length > 0 && (
+            <TouchableOpacity
+              style={[styles.clearButton, { backgroundColor: theme.card }]}
+              onPress={handleClearAll}
+            >
+              <Trash2 size={18} color="#EF4444" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Filter Options */}
+        {showFilters && (
+          <View style={styles.filterOptions}>
+            {/* Grade Filters */}
+            <View style={styles.filterSection}>
+              <Text style={[styles.filterSectionTitle, { color: theme.text, fontSize: scaleFont(13) }]}>
+                Grade
+              </Text>
+              <View style={styles.gradeChips}>
+                {grades.map(grade => (
+                  <TouchableOpacity
+                    key={grade}
+                    style={[
+                      styles.gradeChip,
+                      { 
+                        backgroundColor: gradeFilter.includes(grade) ? getGradeColor(grade === "A+" ? 95 : grade === "A" ? 85 : grade === "B" ? 75 : grade === "C" ? 65 : grade === "D" ? 55 : 45) : theme.card,
+                        borderColor: theme.border,
+                      }
+                    ]}
+                    onPress={() => toggleGradeFilter(grade)}
+                  >
+                    <Text style={[
+                      styles.gradeChipText,
+                      { 
+                        color: gradeFilter.includes(grade) ? "#FFFFFF" : theme.text,
+                        fontSize: scaleFont(13),
+                      }
+                    ]}>
+                      {grade}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
 
-            <View style={styles.progressContainer}>
-              {/* Animated Progress Circle */}
-              <View style={styles.progressCircleContainer}>
-                <svg width="180" height="180" style={{ transform: [{ rotate: '-90deg' }] }}>
-                  {/* Background circle */}
-                  <circle
-                    cx="90"
-                    cy="90"
-                    r="70"
-                    stroke="rgba(255, 255, 255, 0.2)"
-                    strokeWidth="10"
-                    fill="none"
-                  />
-                  {/* Progress circle */}
-                  <Animated.circle
-                    cx="90"
-                    cy="90"
-                    r="70"
-                    stroke="#118AB2"
-                    strokeWidth="10"
-                    fill="none"
-                    strokeDasharray={circleCircumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                  />
-                </svg>
-                <View style={styles.progressTextContainer}>
-                  <Text style={[styles.progressText, { fontSize: scaleFont(48) }]}>
-                    {Math.round(analysisProgress)}%
-                  </Text>
-                  <Text style={[styles.progressLabel, { fontSize: scaleFont(14) }]}>
-                    Scanning ingredients
-                  </Text>
-                </View>
-              </View>
-
-              {/* Progress bar */}
-              <View style={styles.progressBarContainer}>
-                <View 
-                  style={[
-                    styles.progressBarFill, 
-                    { width: `${analysisProgress}%` }
-                  ]} 
-                />
+            {/* Date Filters */}
+            <View style={styles.filterSection}>
+              <Text style={[styles.filterSectionTitle, { color: theme.text, fontSize: scaleFont(13) }]}>
+                Date
+              </Text>
+              <View style={styles.dateChips}>
+                {[
+                  { value: "all", label: "All Time" },
+                  { value: "today", label: "Today" },
+                  { value: "week", label: "This Week" },
+                  { value: "month", label: "This Month" },
+                ].map(option => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.dateChip,
+                      { 
+                        backgroundColor: dateFilter === option.value ? theme.primary : theme.card,
+                        borderColor: theme.border,
+                      }
+                    ]}
+                    onPress={() => {
+                      if (Platform.OS !== "web") {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }
+                      setDateFilter(option.value as DateFilter);
+                    }}
+                  >
+                    <Text style={[
+                      styles.dateChipText,
+                      { 
+                        color: dateFilter === option.value ? "#FFFFFF" : theme.text,
+                        fontSize: scaleFont(13),
+                      }
+                    ]}>
+                      {option.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
+          </View>
+        )}
+      </View>
 
-            <View style={styles.retakeButtonContainer}>
-              <TouchableOpacity
-                style={styles.retakeButton}
-                onPress={retakePhoto}
-                disabled={analyzeMutation.isPending}
+      {/* Select Mode Header */}
+      {selectMode && (
+        <View style={[styles.selectModeHeader, { backgroundColor: theme.primary }]}>
+          <TouchableOpacity onPress={cancelSelectMode} style={styles.selectModeButton}>
+            <X size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <View style={styles.selectModeCenter}>
+            <Text style={[styles.selectModeText, { fontSize: scaleFont(16) }]}>
+              {selectedItems.size} selected
+            </Text>
+            <TouchableOpacity onPress={selectAll} style={styles.selectAllButton}>
+              <Text style={[styles.selectAllText, { fontSize: scaleFont(13) }]}>
+                Select All
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity onPress={deleteSelected} disabled={selectedItems.size === 0} style={styles.selectModeButton}>
+            <Trash2 size={24} color={selectedItems.size > 0 ? "#FFFFFF" : "rgba(255,255,255,0.5)"} />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Results Count */}
+      <View style={styles.resultsCount}>
+        <Text style={[styles.resultsCountText, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+          {filteredAndSortedScans.length} {filteredAndSortedScans.length === 1 ? "scan" : "scans"}
+        </Text>
+      </View>
+
+      {/* Scan List */}
+      {filteredAndSortedScans.length === 0 ? (
+        <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
+          <Search size={64} color={theme.textSecondary} />
+          <Text style={[styles.emptyTitle, { color: theme.text, fontSize: scaleFont(24) }]}>No Results</Text>
+          <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
+            Try adjusting your filters or search query
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredAndSortedScans}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.list}
+          renderItem={({ item }) => {
+            const date = new Date(item.timestamp);
+            const formattedDate = date.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            });
+            const formattedTime = date.toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+
+            const isSelected = selectedItems.has(item.id);
+
+            return (
+              <Swipeable
+                renderRightActions={() => renderRightActions(item.id, item.isFavorite || false)}
+                overshootRight={false}
               >
-                <RotateCcw size={24} color="#FFFFFF" />
-                <Text style={[styles.retakeButtonText, { fontSize: scaleFont(16) }]}>
-                  Retake
+                <TouchableOpacity
+                  style={[
+                    styles.card,
+                    { 
+                      backgroundColor: theme.card,
+                      borderLeftWidth: 4,
+                      borderLeftColor: getGradeColor(item.overallScore),
+                    }
+                  ]}
+                  onPress={() => handleScanPress(item.id)}
+                  onLongPress={() => handleLongPress(item.id)}
+                  activeOpacity={0.7}
+                >
+                  {selectMode && (
+                    <View style={styles.checkbox}>
+                      {isSelected ? (
+                        <CheckSquare size={24} color={theme.primary} />
+                      ) : (
+                        <Square size={24} color={theme.textSecondary} />
+                      )}
+                    </View>
+                  )}
+
+                  <Image source={{ uri: item.imageUri }} style={styles.thumbnail} />
+                  
+                  <View style={styles.cardContent}>
+                    <View style={styles.productNameRow}>
+                      <Text style={[styles.productName, { color: theme.text, fontSize: scaleFont(16) }]} numberOfLines={1}>
+                        {item.productName}
+                      </Text>
+                      {item.isFavorite && (
+                        <Star size={16} color="#FFD700" fill="#FFD700" />
+                      )}
+                    </View>
+                    <View style={styles.metadata}>
+                      <Clock size={14} color={theme.textSecondary} />
+                      <Text style={[styles.timestamp, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+                        {formattedDate} at {formattedTime}
+                      </Text>
+                    </View>
+                    <View style={styles.ingredientCount}>
+                      <Text style={[styles.ingredientCountText, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+                        {item.ingredients.length} ingredients
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.scoreContainer}>
+                    <View
+                      style={[
+                        styles.scoreBadge,
+                        { backgroundColor: getGradeColor(item.overallScore) },
+                      ]}
+                    >
+                      <Text style={[styles.scoreText, { fontSize: scaleFont(18) }]}>{Math.round(item.overallScore)}</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.gradeLabel,
+                        { color: getGradeColor(item.overallScore), fontSize: scaleFont(11) },
+                      ]}
+                    >
+                      {item.gradeLabel}
+                    </Text>
+                    {!selectMode && (
+                      <ChevronRight size={20} color={theme.textSecondary} style={styles.chevron} />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </Swipeable>
+            );
+          }}
+        />
+      )}
+
+      {/* Clear All Confirmation Modal */}
+      <Modal
+        visible={showClearConfirm}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowClearConfirm(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.text, fontSize: scaleFont(20) }]}>
+              Clear All Scans?
+            </Text>
+            <Text style={[styles.modalMessage, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
+              This will permanently delete all {scans.length} scans from your history. This action cannot be undone.
+            </Text>
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.background }]}
+                onPress={() => setShowClearConfirm(false)}
+              >
+                <Text style={[styles.cancelButtonText, { color: theme.text, fontSize: scaleFont(16) }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.confirmButton]}
+                onPress={confirmClearAll}
+              >
+                <Text style={[styles.confirmButtonText, { fontSize: scaleFont(16) }]}>
+                  Clear All
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
-      ) : (
-        <CameraView style={styles.camera} facing={facing} ref={setCameraRef}>
-          <View style={styles.overlay}>
-            <View style={styles.header}>
-              <View style={styles.headerLeft}>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={replayTutorial}
-                >
-                  <HelpCircle size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.headerCenter}>
-                <Text style={[styles.headerTitle, { fontSize: scaleFont(32) }]}>Slop Spot</Text>
-                <Text style={[styles.headerSubtitle, { fontSize: scaleFont(16) }]}>Scan product label</Text>
-              </View>
-
-              <View style={styles.headerRight}>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={toggleFlash}
-                >
-                  {flashEnabled ? (
-                    <Zap size={24} color="#FFD700" fill="#FFD700" />
-                  ) : (
-                    <ZapOff size={24} color="#FFFFFF" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.scanFrame} />
-
-            <View style={styles.controls}>
-              <TouchableOpacity
-                style={styles.flipButton}
-                onPress={pickImageFromGallery}
-              >
-                <ImageIcon size={28} color="#FFFFFF" />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-                <View style={styles.captureButtonInner}>
-                  <Sparkles size={32} color="#118AB2" />
-                </View>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.flipButton}
-                onPress={toggleCameraFacing}
-              >
-                <FlipHorizontal size={28} color="#FFFFFF" />
-              </TouchableOpacity>
-            </View>
-          </View>
-        </CameraView>
-      )}
+      </Modal>
     </View>
   );
 }
@@ -500,253 +552,301 @@ Ensure all health claims are backed by credible scientific sources.`,
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000000",
   },
-  permissionContainer: {
+  controls: {
+    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    gap: 12,
+    borderBottomWidth: 1,
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 12,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+  },
+  filterRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  filterButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    gap: 6,
+  },
+  filterButtonText: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+  },
+  filterBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  filterBadgeText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "700" as const,
+  },
+  clearButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  filterOptions: {
+    gap: 16,
+    paddingTop: 8,
+  },
+  filterSection: {
+    gap: 8,
+  },
+  filterSectionTitle: {
+    fontSize: 13,
+    fontWeight: "600" as const,
+    textTransform: "uppercase",
+    opacity: 0.7,
+  },
+  gradeChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  gradeChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  gradeChipText: {
+    fontSize: 13,
+    fontWeight: "600" as const,
+  },
+  dateChips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  dateChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  dateChipText: {
+    fontSize: 13,
+    fontWeight: "600" as const,
+  },
+  selectModeHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  selectModeButton: {
+    padding: 4,
+  },
+  selectModeCenter: {
+    flex: 1,
+    alignItems: "center",
+    gap: 2,
+  },
+  selectModeText: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600" as const,
+  },
+  selectAllButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  selectAllText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "500" as const,
+    opacity: 0.9,
+  },
+  resultsCount: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  resultsCountText: {
+    fontSize: 13,
+  },
+  list: {
+    padding: 16,
+    paddingTop: 8,
+    gap: 12,
+  },
+  card: {
+    flexDirection: "row",
+    borderRadius: 16,
+    padding: 12,
+    alignItems: "center",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  checkbox: {
+    marginRight: 12,
+  },
+  thumbnail: {
+    width: 70,
+    height: 70,
+    borderRadius: 12,
+    backgroundColor: "#F0F0F0",
+  },
+  cardContent: {
+    flex: 1,
+    marginLeft: 12,
+    gap: 4,
+  },
+  productNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  productName: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "600" as const,
+  },
+  metadata: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  timestamp: {
+    fontSize: 13,
+  },
+  ingredientCount: {
+    marginTop: 2,
+  },
+  ingredientCountText: {
+    fontSize: 13,
+  },
+  scoreContainer: {
+    alignItems: "center",
+    gap: 4,
+  },
+  scoreBadge: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scoreText: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    color: "#FFFFFF",
+  },
+  gradeLabel: {
+    fontSize: 11,
+    fontWeight: "600" as const,
+  },
+  chevron: {
+    marginTop: 4,
+  },
+  swipeActions: {
+    flexDirection: "row",
+    marginVertical: 12,
+  },
+  swipeButton: {
+    width: 80,
+    justifyContent: "center",
+    alignItems: "center",
+    marginLeft: 8,
+    borderRadius: 12,
+  },
+  favoriteButton: {
+    backgroundColor: "#FFD700",
+  },
+  deleteButton: {
+    backgroundColor: "#EF4444",
+  },
+  emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 32,
   },
-  permissionTitle: {
+  emptyTitle: {
     fontSize: 24,
     fontWeight: "700" as const,
     marginTop: 24,
-    marginBottom: 12,
-    textAlign: "center",
+    marginBottom: 8,
   },
-  permissionText: {
+  emptyText: {
     fontSize: 16,
     textAlign: "center",
-    marginBottom: 32,
     lineHeight: 24,
   },
-  permissionButton: {
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  permissionButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600" as const,
-  },
-  camera: {
+  modalOverlay: {
     flex: 1,
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
-  },
-  header: {
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    flexDirection: "row",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
     alignItems: "center",
-    justifyContent: "space-between",
+    padding: 24,
   },
-  headerLeft: {
-    width: 40,
-  },
-  headerCenter: {
-    flex: 1,
-    alignItems: "center",
-  },
-  headerRight: {
-    width: 40,
-    alignItems: "flex-end",
-  },
-  headerTitle: {
-    fontSize: 32,
-    fontWeight: "800" as const,
-    color: "#FFFFFF",
-    textShadowColor: "rgba(0, 0, 0, 0.5)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: "#FFFFFF",
-    marginTop: 4,
-    textShadowColor: "rgba(0, 0, 0, 0.5)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 2,
-  },
-  iconButton: {
-    padding: 4,
-  },
-  scanFrame: {
-    flex: 1,
-    marginHorizontal: 32,
-    marginVertical: 100,
-    borderWidth: 3,
-    borderColor: "#FFFFFF",
+  modalContent: {
+    width: "100%",
+    maxWidth: 400,
     borderRadius: 20,
-    borderStyle: "dashed",
+    padding: 24,
+    gap: 16,
   },
-  controls: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 32,
-    paddingBottom: 120,
-  },
-  flipButton: {
-    width: 56,
-    height: 56,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  captureButton: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  captureButtonInner: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#F0F0F0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  photoPreviewContainer: {
-    flex: 1,
-    backgroundColor: "#000000",
-  },
-  photoPreview: {
-    flex: 1,
-    width: "100%",
-    height: "100%",
-  },
-  photoOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    justifyContent: "space-between",
-  },
-  progressContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 40,
-  },
-  progressCircleContainer: {
-    width: 180,
-    height: 180,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 40,
-  },
-  progressTextContainer: {
-    position: "absolute",
-    alignItems: "center",
-  },
-  progressText: {
-    fontSize: 48,
-    fontWeight: "800" as const,
-    color: "#FFFFFF",
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
-  },
-  progressLabel: {
-    fontSize: 14,
-    color: "#FFFFFF",
-    marginTop: 8,
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  progressBarContainer: {
-    width: "100%",
-    height: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressBarFill: {
-    height: "100%",
-    backgroundColor: "#118AB2",
-    borderRadius: 3,
-  },
-  retakeButtonContainer: {
-    paddingHorizontal: 32,
-    paddingBottom: 120,
-    alignItems: "center",
-  },
-  retakeButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
-  retakeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600" as const,
-  },
-  tutorialContainer: {
-    flex: 1,
-    paddingTop: 60,
-  },
-  skipButton: {
-    position: "absolute",
-    top: 60,
-    right: 24,
-    zIndex: 10,
-    padding: 8,
-  },
-  tutorialContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 40,
-  },
-  tutorialIcon: {
-    fontSize: 80,
-    marginBottom: 32,
-  },
-  tutorialTitle: {
-    fontSize: 28,
+  modalTitle: {
+    fontSize: 20,
     fontWeight: "700" as const,
     textAlign: "center",
-    marginBottom: 16,
   },
-  tutorialDescription: {
+  modalMessage: {
     fontSize: 16,
     textAlign: "center",
     lineHeight: 24,
-    maxWidth: 320,
   },
-  tutorialFooter: {
-    paddingHorizontal: 32,
-    paddingBottom: 60,
-    gap: 32,
-  },
-  dotsContainer: {
+  modalButtons: {
     flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
+    gap: 12,
+    marginTop: 8,
   },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-    transition: "all 0.3s ease",
-  },
-  nextButton: {
-    paddingVertical: 16,
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",
   },
-  nextButtonText: {
+  cancelButton: {
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+  },
+  confirmButton: {
+    backgroundColor: "#EF4444",
+  },
+  confirmButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600" as const,
