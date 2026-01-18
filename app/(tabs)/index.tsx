@@ -7,8 +7,6 @@ import {
   View,
   ActivityIndicator,
   Platform,
-  Dimensions,
-  ScrollView,
   Image,
 } from "react-native";
 import { Camera, Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon } from "lucide-react-native";
@@ -23,7 +21,6 @@ import { useTheme } from "@/contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 
-const { width } = Dimensions.get("window");
 const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
 
 const citationSchema = z.object({
@@ -90,7 +87,7 @@ export default function ScannerScreen() {
 
   // Simulate progress when analyzing
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (isAnalyzing && analysisProgress < 95) {
       interval = setInterval(() => {
         setAnalysisProgress((prev) => {
@@ -259,7 +256,7 @@ Ensure all health claims are backed by credible scientific sources.`,
       const photo = await cameraRef.takePictureAsync({
         quality: 0.8,
         base64: true,
-        flash: flashEnabled ? "on" : "off",
+        // flash is controlled by the CameraView prop
       });
       if (photo && photo.base64) {
         const imageUri = `data:image/jpeg;base64,${photo.base64}`;
@@ -426,7 +423,12 @@ Ensure all health claims are backed by credible scientific sources.`,
           </View>
         </View>
       ) : (
-        <CameraView style={styles.camera} facing={facing} ref={setCameraRef}>
+        <CameraView
+          style={styles.camera}
+          facing={facing}
+          ref={setCameraRef}
+          flash={flashEnabled ? "on" : "off"}
+        >
           <View style={styles.overlay}>
             <View style={styles.header}>
               <View style={styles.headerLeft}>
@@ -745,7 +747,7 @@ const styles = StyleSheet.create({
   },
   tutorialFooter: {
     paddingHorizontal: 32,
-    paddingBottom: 60,
+    paddingBottom: 100,
     gap: 32,
   },
   dotsContainer: {

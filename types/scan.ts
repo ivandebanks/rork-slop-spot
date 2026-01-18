@@ -21,6 +21,7 @@ export interface ScanResult {
   gradeLabel: string;
   timestamp: number;
   citations?: Citation[]; // Overall citations for general health information
+  isFavorite?: boolean;
 }
 
 export function getGradeLabel(score: number): string {
