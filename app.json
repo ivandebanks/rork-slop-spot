@@ -18,7 +18,8 @@
       "bundleIdentifier": "app.rork.slop-spot",
       "infoPlist": {
         "NSCameraUsageDescription": "Slop Spot uses your camera to scan product labels and barcodes to provide ingredient analysis and health ratings. For example, the app reads ingredient lists from food packaging to calculate a health score. All scanning happens on your device, and images are immediately deleted after analysis. No photos or data are uploaded or stored.",
-        "NSMicrophoneUsageDescription": "Slop Spot does not use your microphone"
+        "NSMicrophoneUsageDescription": "Slop Spot does not use your microphone",
+        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos"
       }
     },
     "android": {
@@ -30,7 +31,9 @@
       "permissions": [
         "CAMERA",
         "android.permission.VIBRATE",
-        "RECORD_AUDIO"
+        "RECORD_AUDIO",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
       ]
     },
     "web": {
@@ -51,6 +54,12 @@
           "cameraPermission": "Slop Spot uses your camera to scan product labels and barcodes to provide ingredient analysis and health ratings. All scanning happens on your device, and images are immediately deleted after analysis.",
           "microphonePermission": "Allow $(PRODUCT_NAME) to access your microphone",
           "recordAudioAndroid": true
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you share them with your friends."
         }
       ]
     ],
