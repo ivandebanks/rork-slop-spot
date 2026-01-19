@@ -1,12 +1,13 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Platform, TextInput, Alert, Modal } from "react-native";
+import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Platform, TextInput, Modal } from "react-native";
 import { useScans } from "@/contexts/ScanContext";
 import { router } from "expo-router";
-import { getGradeColor, getGradeLabel } from "@/types/scan";
-import { Clock, ChevronRight, Package, Search, SlidersHorizontal, X, Trash2, Star, Calendar, ArrowUpDown, CheckSquare, Square } from "lucide-react-native";
+import { getGradeColor } from "@/types/scan";
+import { Clock, ChevronRight, Package, Search, SlidersHorizontal, X, Trash2, Star, ArrowUpDown, CheckSquare, Square } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useState, useMemo } from "react";
 import { Swipeable } from "react-native-gesture-handler";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type SortOption = "newest" | "oldest" | "highest" | "lowest";
 type DateFilter = "all" | "today" | "week" | "month";
@@ -14,6 +15,7 @@ type DateFilter = "all" | "today" | "week" | "month";
 export default function HistoryScreen() {
   const { scans, isLoading, deleteScan, toggleFavorite, clearAllScans } = useScans();
   const { theme, scaleFont } = useTheme();
+  const insets = useSafeAreaInsets();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -205,7 +207,7 @@ export default function HistoryScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
+      <View style={[styles.emptyContainer, { backgroundColor: theme.background, paddingTop: insets.top }]}>
         <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>Loading...</Text>
       </View>
     );
@@ -222,7 +224,7 @@ export default function HistoryScreen() {
 
   if (scans.length === 0) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
+      <View style={[styles.emptyContainer, { backgroundColor: theme.background, paddingTop: insets.top }]}>
         <Package size={64} color={theme.textSecondary} />
         <Text style={[styles.emptyTitle, { color: theme.text, fontSize: scaleFont(24) }]}>No Scans Yet</Text>
         <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
@@ -235,7 +237,7 @@ export default function HistoryScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header Controls */}
-      <View style={[styles.controls, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
+      <View style={[styles.controls, { backgroundColor: theme.background, borderBottomColor: theme.border, paddingTop: insets.top + 16 }]}>
         {/* Search Bar */}
         <View style={[styles.searchContainer, { backgroundColor: theme.card }]}>
           <Search size={20} color={theme.textSecondary} />
@@ -554,7 +556,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   controls: {
-    paddingTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 12,
     gap: 12,
