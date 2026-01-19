@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   controls: {
-    paddingTop: 16,
+    paddingTop: 24,
     paddingHorizontal: 16,
     paddingBottom: 12,
     gap: 12,
