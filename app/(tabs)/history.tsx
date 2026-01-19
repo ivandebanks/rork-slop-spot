@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Platform, TextInput, Modal } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useScans } from "@/contexts/ScanContext";
 import { router } from "expo-router";
 import { getGradeColor } from "@/types/scan";
@@ -7,7 +8,6 @@ import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useState, useMemo } from "react";
 import { Swipeable } from "react-native-gesture-handler";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type SortOption = "newest" | "oldest" | "highest" | "lowest";
 type DateFilter = "all" | "today" | "week" | "month";
@@ -15,7 +15,6 @@ type DateFilter = "all" | "today" | "week" | "month";
 export default function HistoryScreen() {
   const { scans, isLoading, deleteScan, toggleFavorite, clearAllScans } = useScans();
   const { theme, scaleFont } = useTheme();
-  const insets = useSafeAreaInsets();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("newest");
@@ -207,9 +206,11 @@ export default function HistoryScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: theme.background, paddingTop: insets.top }]}>
-        <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>Loading...</Text>
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+        <View style={styles.emptyContainer}>
+          <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>Loading...</Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
@@ -224,20 +225,22 @@ export default function HistoryScreen() {
 
   if (scans.length === 0) {
     return (
-      <View style={[styles.emptyContainer, { backgroundColor: theme.background, paddingTop: insets.top }]}>
-        <Package size={64} color={theme.textSecondary} />
-        <Text style={[styles.emptyTitle, { color: theme.text, fontSize: scaleFont(24) }]}>No Scans Yet</Text>
-        <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
-          Start scanning products to see your history here
-        </Text>
-      </View>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+        <View style={styles.emptyContainer}>
+          <Package size={64} color={theme.textSecondary} />
+          <Text style={[styles.emptyTitle, { color: theme.text, fontSize: scaleFont(24) }]}>No Scans Yet</Text>
+          <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
+            Start scanning products to see your history here
+          </Text>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
       {/* Header Controls */}
-      <View style={[styles.controls, { backgroundColor: theme.background, borderBottomColor: theme.border, paddingTop: insets.top + 16 }]}>
+      <View style={[styles.controls, { backgroundColor: theme.background, borderBottomColor: theme.border }]}>
         {/* Search Bar */}
         <View style={[styles.searchContainer, { backgroundColor: theme.card }]}>
           <Search size={20} color={theme.textSecondary} />
@@ -405,7 +408,7 @@ export default function HistoryScreen() {
 
       {/* Scan List */}
       {filteredAndSortedScans.length === 0 ? (
-        <View style={[styles.emptyContainer, { backgroundColor: theme.background }]}>
+        <View style={styles.emptyContainer}>
           <Search size={64} color={theme.textSecondary} />
           <Text style={[styles.emptyTitle, { color: theme.text, fontSize: scaleFont(24) }]}>No Results</Text>
           <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
@@ -547,7 +550,7 @@ export default function HistoryScreen() {
           </View>
         </View>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -556,6 +559,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   controls: {
+    paddingTop: 16,
     paddingHorizontal: 16,
     paddingBottom: 12,
     gap: 12,
