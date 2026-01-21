@@ -8,7 +8,7 @@ import { BlurView } from "expo-blur";
 
 export default function TabLayout() {
   const { theme, activeColorScheme } = useTheme();
-
+  
   return (
     <Tabs
       screenOptions={{
@@ -19,8 +19,8 @@ export default function TabLayout() {
           position: "absolute" as const,
           backgroundColor: Platform.OS === "ios" ? "transparent" : theme.tabBar,
           borderTopWidth: 0,
-          height: 88,
-          paddingBottom: 32,
+          height: 98,
+          paddingBottom: 42,
           paddingTop: 8,
           elevation: 0,
         },
