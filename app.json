@@ -2,7 +2,7 @@
   "expo": {
     "name": "Slop Spot",
     "slug": "slop-spot",
-    "version": "1.2.1",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "rork-app",
