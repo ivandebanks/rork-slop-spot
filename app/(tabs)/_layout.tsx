@@ -19,15 +19,15 @@ export default function TabLayout() {
           position: "absolute" as const,
           backgroundColor: Platform.OS === "ios" ? "transparent" : theme.tabBar,
           borderTopWidth: 0,
-          height: 100,
-          paddingBottom: 34,
+          height: 110,
+          paddingBottom: 40,
           paddingTop: 12,
           elevation: 0,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "600" as const,
-          marginBottom: 4,
+          marginBottom: 8,
         },
         tabBarBackground: () => (
           Platform.OS === "ios" ? (
