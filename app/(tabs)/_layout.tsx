@@ -20,7 +20,7 @@ export default function TabLayout() {
           backgroundColor: Platform.OS === "ios" ? "transparent" : theme.tabBar,
           borderTopWidth: 0,
           height: 110,
-          paddingBottom: 44,
+          paddingBottom: 30,
           paddingTop: 16,
           elevation: 0,
         },
