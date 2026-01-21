@@ -46,23 +46,33 @@ const analysisSchema = z.object({
 const tutorialSteps = [
   {
     title: "Welcome to Slop Spot",
-    description: "Scan any food or beverage label to instantly analyze its ingredients and health impact.",
+    description: "Scan any food, beverage, or product label to instantly analyze its ingredients and health impact.",
     icon: "✨",
+    image: null,
   },
   {
-    title: "Point & Scan",
-    description: "Align the product label within the frame and tap the capture button to scan.",
-    icon: "📸",
+    title: "Scan Food",
+    description: "Point your camera at any food label to get detailed ingredient analysis and health ratings.",
+    icon: "🍞",
+    image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/5lwra13123vx6zrqzy6zp",
   },
   {
-    title: "Get Instant Results",
-    description: "Receive detailed ingredient analysis with health ratings and scientific citations.",
-    icon: "📊",
+    title: "Scan Drinks",
+    description: "Analyze beverages to understand what's really in your drinks and make informed choices.",
+    icon: "🥤",
+    image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/m5ufizp4beycm4pnv0xy3",
+  },
+  {
+    title: "Scan Products",
+    description: "Check household and personal care products for ingredient safety and quality ratings.",
+    icon: "🧴",
+    image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/hh0rm1tln46vaublx4hjd",
   },
   {
     title: "Track Your Scans",
     description: "View your scan history and compare products to make healthier choices.",
-    icon: "📝",
+    icon: "📋",
+    image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gwbb9y93ep6lhc77n3j8k",
   },
 ];
 
@@ -304,7 +314,17 @@ Ensure all health claims are backed by credible scientific sources.`,
         </TouchableOpacity>
 
         <View style={styles.tutorialContent}>
-          <Text style={styles.tutorialIcon}>{step.icon}</Text>
+          {step.image ? (
+            <View style={styles.tutorialImageContainer}>
+              <Image 
+                source={{ uri: step.image }} 
+                style={styles.tutorialImage} 
+                resizeMode="contain"
+              />
+            </View>
+          ) : (
+            <Text style={styles.tutorialIcon}>{step.icon}</Text>
+          )}
           <Text style={[styles.tutorialTitle, { color: theme.text, fontSize: scaleFont(28) }]}>
             {step.title}
           </Text>
@@ -728,6 +748,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 40,
+  },
+  tutorialImageContainer: {
+    width: "100%",
+    height: 320,
+    marginBottom: 24,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  tutorialImage: {
+    width: "100%",
+    height: "100%",
   },
   tutorialIcon: {
     fontSize: 80,
