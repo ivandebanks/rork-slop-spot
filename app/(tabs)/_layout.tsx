@@ -21,13 +21,13 @@ export default function TabLayout() {
           borderTopWidth: 0,
           height: 110,
           paddingBottom: 40,
-          paddingTop: 12,
+          paddingTop: 16,
           elevation: 0,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: "600" as const,
-          marginBottom: 8,
+          marginTop: 4,
         },
         tabBarBackground: () => (
           Platform.OS === "ios" ? (
