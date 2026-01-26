@@ -10,8 +10,9 @@ import {
   Image,
   Animated,
   Linking,
+  Dimensions,
 } from "react-native";
-import { Camera, Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon } from "lucide-react-native";
+import { Camera, Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
 import { generateObject } from "@rork-ai/toolkit-sdk";
 import { z } from "zod";
@@ -22,8 +23,10 @@ import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
+import { GestureDetector, Gesture } from "react-native-gesture-handler";
 
 const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const citationSchema = z.object({
   title: z.string(),
@@ -100,6 +103,8 @@ export default function ScannerScreen() {
   const burstAnim = useRef(new Animated.Value(0)).current;
   const redFillAnim = useRef(new Animated.Value(0)).current;
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const translateX = useRef(new Animated.Value(0)).current;
+  const swipeHintOpacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (analysisProgress >= 100) {
@@ -125,6 +130,28 @@ export default function ScannerScreen() {
   useEffect(() => {
     checkTutorialStatus();
   }, []);
+
+  // Animate swipe hint
+  useEffect(() => {
+    if (showTutorial && currentStep < tutorialSteps.length - 1) {
+      // Reset and pulse the swipe hint
+      swipeHintOpacity.setValue(1);
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(swipeHintOpacity, {
+            toValue: 0.3,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(swipeHintOpacity, {
+            toValue: 1,
+            duration: 1500,
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    }
+  }, [showTutorial, currentStep]);
 
   // Simulate progress when analyzing
   useEffect(() => {
@@ -333,14 +360,39 @@ Ensure all health claims are backed by credible scientific sources.`,
   };
 
   const handleNext = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     if (currentStep < tutorialSteps.length - 1) {
-      setCurrentStep(currentStep + 1);
+      animateToStep(currentStep + 1);
     } else {
       completeTutorial();
     }
   };
 
+  const handlePrevious = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    if (currentStep > 0) {
+      animateToStep(currentStep - 1);
+    }
+  };
+
+  const animateToStep = (step: number) => {
+    Animated.timing(translateX, {
+      toValue: -step * SCREEN_WIDTH,
+      duration: 300,
+      useNativeDriver: true,
+    }).start(() => {
+      setCurrentStep(step);
+    });
+  };
+
   const handleSkip = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     completeTutorial();
   };
 
@@ -370,81 +422,125 @@ Ensure all health claims are backed by credible scientific sources.`,
     }
   };
 
+  // Swipe gesture for tutorial
+  const swipeGesture = Gesture.Pan()
+    .onEnd((event) => {
+      const SWIPE_THRESHOLD = 50;
+      
+      if (event.translationX < -SWIPE_THRESHOLD && currentStep < tutorialSteps.length - 1) {
+        // Swipe left - go to next step
+        handleNext();
+      } else if (event.translationX > SWIPE_THRESHOLD && currentStep > 0) {
+        // Swipe right - go to previous step
+        handlePrevious();
+      }
+    });
+
   if (showTutorial) {
     const step = tutorialSteps[currentStep];
     return (
-      <View style={[styles.tutorialContainer, { backgroundColor: theme.background }]}>
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <X size={24} color={theme.textSecondary} />
-        </TouchableOpacity>
+      <GestureDetector gesture={swipeGesture}>
+        <View style={[styles.tutorialContainer, { backgroundColor: theme.background }]}>
+          <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+            <X size={24} color={theme.textSecondary} />
+          </TouchableOpacity>
 
-        <View style={styles.tutorialContent}>
-          {step.image ? (
-            <View style={styles.tutorialImageContainer}>
-              <Image 
-                source={{ uri: step.image }} 
-                style={styles.tutorialImage} 
-                resizeMode="contain"
-              />
-            </View>
-          ) : (
-            <Text style={styles.tutorialIcon}>{step.icon}</Text>
-          )}
-          <Text style={[styles.tutorialTitle, { color: theme.text, fontSize: scaleFont(28) }]}>
-            {step.title}
-          </Text>
-          <Text style={[styles.tutorialDescription, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
-            {step.description}
-          </Text>
-        </View>
+          <View style={styles.tutorialContent}>
+            {step.image ? (
+              <View style={styles.tutorialImageContainer}>
+                <Image 
+                  source={{ uri: step.image }} 
+                  style={styles.tutorialImage} 
+                  resizeMode="contain"
+                />
+              </View>
+            ) : (
+              <Text style={styles.tutorialIcon}>{step.icon}</Text>
+            )}
+            <Text style={[styles.tutorialTitle, { color: theme.text, fontSize: scaleFont(28) }]}>
+              {step.title}
+            </Text>
+            <Text style={[styles.tutorialDescription, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
+              {step.description}
+            </Text>
 
-        <View style={styles.tutorialFooter}>
-          <View style={styles.dotsContainer}>
-            {tutorialSteps.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: index === currentStep ? theme.primary : theme.border,
-                    width: index === currentStep ? 24 : 8,
-                  },
-                ]}
-              />
-            ))}
+            {/* Swipe hint - only show on first few steps */}
+            {currentStep < tutorialSteps.length - 1 && (
+              <Animated.View style={[styles.swipeHint, { opacity: swipeHintOpacity }]}>
+                <ChevronLeft size={20} color={theme.textSecondary} />
+                <Text style={[styles.swipeHintText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
+                  Swipe to navigate
+                </Text>
+                <ChevronRight size={20} color={theme.textSecondary} />
+              </Animated.View>
+            )}
           </View>
 
-          {currentStep === tutorialSteps.length - 1 ? (
-            <View style={{ width: "100%", gap: 12 }}>
-              <TouchableOpacity
-                style={[styles.nextButton, { backgroundColor: theme.primary }]}
-                onPress={handleRate}
-              >
-                <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
-                  Leave a Review
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.nextButton, { backgroundColor: "transparent", borderWidth: 1, borderColor: theme.border }]}
-                onPress={completeTutorial}
-              >
-                <Text style={[styles.nextButtonText, { fontSize: scaleFont(16), color: theme.text }]}>
-                  Get Started
-                </Text>
-              </TouchableOpacity>
+          <View style={styles.tutorialFooter}>
+            <View style={styles.dotsContainer}>
+              {tutorialSteps.map((_, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.dot,
+                    {
+                      backgroundColor: index === currentStep ? theme.primary : theme.border,
+                      width: index === currentStep ? 24 : 8,
+                    },
+                  ]}
+                />
+              ))}
             </View>
-          ) : (
-            <TouchableOpacity
-              style={[styles.nextButton, { backgroundColor: theme.primary }]}
-              onPress={handleNext}
-            >
-              <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
-                Next
-              </Text>
-            </TouchableOpacity>
-          )}
+
+            {currentStep === tutorialSteps.length - 1 ? (
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={[styles.nextButton, { backgroundColor: theme.primary }]}
+                  onPress={handleRate}
+                >
+                  <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
+                    Leave a Review
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.nextButton, { backgroundColor: "transparent", borderWidth: 1, borderColor: theme.border }]}
+                  onPress={completeTutorial}
+                >
+                  <Text style={[styles.nextButtonText, { fontSize: scaleFont(16), color: theme.text }]}>
+                    Get Started
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={styles.navigationContainer}>
+                <TouchableOpacity
+                  style={[styles.navButton, currentStep === 0 && styles.navButtonDisabled]}
+                  onPress={handlePrevious}
+                  disabled={currentStep === 0}
+                >
+                  <ChevronLeft size={24} color={currentStep === 0 ? theme.border : theme.text} />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.nextButton, { backgroundColor: theme.primary, flex: 1 }]}
+                  onPress={handleNext}
+                >
+                  <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
+                    Next
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.navButton}
+                  onPress={handleNext}
+                >
+                  <ChevronRight size={24} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
         </View>
-      </View>
+      </GestureDetector>
     );
   }
 
@@ -856,8 +952,8 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     backgroundColor: "#E63946",
-    bottom: 155, // Center position relative to where icon appears
-    zIndex: 9, // Behind the icon but above everything else
+    bottom: 155,
+    zIndex: 9,
   },
   burstContainer: {
     position: "absolute",
@@ -865,7 +961,7 @@ const styles = StyleSheet.create({
     height: 150,
     justifyContent: "center",
     alignItems: "center",
-    bottom: 130, // Adjusted slightly to center better with the burst
+    bottom: 130,
     zIndex: 10,
   },
   iconSplatContainer: {
@@ -873,15 +969,11 @@ const styles = StyleSheet.create({
     height: 120,
     justifyContent: "center",
     alignItems: "center",
-    // shadowColor: "#E63946",
-    // shadowOffset: { width: 0, height: 0 },
-    // shadowOpacity: 0.5,
-    // shadowRadius: 20,
   },
   burstIcon: {
     width: "100%",
     height: "100%",
-    borderRadius: 60, // Crop the white background (assuming square icon)
+    borderRadius: 60,
   },
   progressTextContainer: {
     alignItems: "center",
@@ -984,9 +1076,23 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     maxWidth: 320,
   },
+  swipeHint: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 24,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    backgroundColor: "rgba(128, 128, 128, 0.1)",
+  },
+  swipeHintText: {
+    fontSize: 14,
+    fontWeight: "500" as const,
+  },
   tutorialFooter: {
     paddingHorizontal: 32,
-    paddingBottom: 100,
+    paddingBottom: 140,
     gap: 32,
   },
   dotsContainer: {
@@ -997,7 +1103,27 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
-    transition: "all 0.3s ease",
+  },
+  buttonContainer: {
+    width: "100%",
+    gap: 12,
+  },
+  navigationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    width: "100%",
+  },
+  navButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(128, 128, 128, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  navButtonDisabled: {
+    opacity: 0.3,
   },
   nextButton: {
     paddingVertical: 16,
