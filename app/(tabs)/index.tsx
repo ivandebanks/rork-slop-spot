@@ -98,13 +98,13 @@ export default function ScannerScreen() {
   // Simulate progress when analyzing
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
-    if (isAnalyzing && analysisProgress < 90) {
+    if (isAnalyzing && analysisProgress < 85) {
       interval = setInterval(() => {
         setAnalysisProgress((prev) => {
-          const increment = prev < 50 ? 10 : prev < 70 ? 6 : prev < 85 ? 3 : 1;
-          return Math.min(prev + increment, 90);
+          const increment = prev < 30 ? 3 : prev < 50 ? 2.5 : prev < 70 ? 2 : 1;
+          return Math.min(prev + increment, 85);
         });
-      }, 150);
+      }, 200);
     }
     return () => clearInterval(interval);
   }, [isAnalyzing, analysisProgress]);
@@ -178,24 +178,6 @@ Ensure all health claims are backed by credible scientific sources.`,
     },
     onSuccess: (data) => {
       // Smoothly animate from current progress to 100
-      const animateToComplete = () => {
-        setAnalysisProgress((prev) => {
-          if (prev >= 100) {
-            setIsAnalyzing(false);
-            setTimeout(() => {
-              router.push({
-                pathname: "/result",
-                params: { scanId: data.id },
-              });
-              setCapturedPhoto(null);
-              setAnalysisProgress(0);
-            }, 300);
-            return 100;
-          }
-          return Math.min(prev + 5, 100);
-        });
-      };
-
       const completeInterval = setInterval(() => {
         setAnalysisProgress((prev) => {
           if (prev >= 100) {
@@ -214,9 +196,9 @@ Ensure all health claims are backed by credible scientific sources.`,
             }, 300);
             return 100;
           }
-          return Math.min(prev + 5, 100);
+          return Math.min(prev + 3, 100);
         });
-      }, 30);
+      }, 25);
     },
     onError: () => {
       setCapturedPhoto(null);
