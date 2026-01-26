@@ -10,6 +10,9 @@ import {
   Modal,
   Share,
   Alert,
+  Animated,
+  Dimensions,
+  Easing,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useScans } from "@/contexts/ScanContext";
@@ -18,7 +21,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Trash2, Info, ExternalLink, X, Share2 } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Citation } from "@/types/scan";
 
 export default function ResultScreen() {
@@ -28,6 +31,20 @@ export default function ResultScreen() {
   const [citationsModalVisible, setCitationsModalVisible] = useState(false);
   const [selectedCitations, setSelectedCitations] = useState<Citation[]>([]);
   const [citationTitle, setCitationTitle] = useState("");
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Start with a small delay to ensure the user sees the red screen
+    const timer = setTimeout(() => {
+      Animated.timing(slideAnim, {
+        toValue: Dimensions.get('window').height,
+        duration: 2500, // Slow drip
+        useNativeDriver: true,
+        easing: Easing.in(Easing.exp), // Accelerate downwards like a drip
+      }).start();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const scan = scans.find((s) => s.id === scanId);
 
@@ -117,6 +134,12 @@ Scanned with Slop Spot`;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <Animated.View 
+        style={[
+          styles.dripOverlay, 
+          { transform: [{ translateY: slideAnim }] }
+        ]} 
+      />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: scan.imageUri }} style={styles.image} />
@@ -576,5 +599,15 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600" as const,
+  },
+  dripOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: "100%",
+    backgroundColor: "#FF6347", // Tomato red
+    zIndex: 9999,
+    elevation: 100,
   },
 });
