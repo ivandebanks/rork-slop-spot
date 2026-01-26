@@ -105,7 +105,32 @@ export default function ScannerScreen() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const swipeHintOpacity = useRef(new Animated.Value(1)).current;
 
-  // PanResponder for swipe gestures
+  // Handler functions - must be declared before panResponder
+  const animateToStep = (step: number) => {
+    setCurrentStep(step);
+  };
+
+  const handleNext = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    if (currentStep < tutorialSteps.length - 1) {
+      animateToStep(currentStep + 1);
+    } else {
+      completeTutorial();
+    }
+  };
+
+  const handlePrevious = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    if (currentStep > 0) {
+      animateToStep(currentStep - 1);
+    }
+  };
+
+  // PanResponder for swipe gestures - now handlers are defined
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
@@ -377,30 +402,6 @@ Ensure all health claims are backed by credible scientific sources.`,
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     setFacing((current) => (current === "back" ? "front" : "back"));
-  };
-
-  const handleNext = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    if (currentStep < tutorialSteps.length - 1) {
-      animateToStep(currentStep + 1);
-    } else {
-      completeTutorial();
-    }
-  };
-
-  const handlePrevious = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    if (currentStep > 0) {
-      animateToStep(currentStep - 1);
-    }
-  };
-
-  const animateToStep = (step: number) => {
-    setCurrentStep(step);
   };
 
   const handleSkip = () => {
