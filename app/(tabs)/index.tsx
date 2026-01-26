@@ -399,47 +399,68 @@ Ensure all health claims are backed by credible scientific sources.`,
             </View>
 
             <View style={styles.progressContainer}>
-              {/* Circular Progress Indicator */}
-              <View style={styles.progressCircleContainer}>
-                {/* Background circle */}
-                <View style={[styles.progressCircleBg, { borderColor: "rgba(255, 255, 255, 0.2)" }]} />
-                {/* Progress circle overlay */}
-                <View style={styles.progressCircleWrapper}>
-                  <View 
-                    style={[
-                      styles.progressCircle,
-                      { 
-                        borderColor: "#118AB2",
-                        transform: [
-                          { rotate: '-90deg' }
-                        ]
-                      }
-                    ]}
-                  >
-                    <View 
-                      style={[
-                        styles.progressCircleFill,
-                        {
-                          borderColor: "#118AB2",
-                          borderRightColor: "transparent",
-                          borderBottomColor: "transparent",
-                          transform: [
-                            { rotate: `${(analysisProgress / 100) * 360}deg` }
-                          ]
-                        }
-                      ]}
-                    />
+              {/* Plant Growing Animation */}
+              <View style={styles.plantContainer}>
+                {/* Pot */}
+                <View style={styles.pot}>
+                  <View style={styles.potRim} />
+                </View>
+
+                {/* Stem - grows from 0 to 100% */}
+                <View style={[styles.stem, { height: `${analysisProgress * 0.6}%` }]} />
+
+                {/* Leaves - appear at different stages */}
+                {analysisProgress > 20 && (
+                  <View style={[styles.leafLeft, { 
+                    opacity: Math.min((analysisProgress - 20) / 10, 1),
+                    bottom: `${20 + (analysisProgress * 0.3)}%`
+                  }]} />
+                )}
+                {analysisProgress > 40 && (
+                  <View style={[styles.leafRight, { 
+                    opacity: Math.min((analysisProgress - 40) / 10, 1),
+                    bottom: `${30 + (analysisProgress * 0.3)}%`
+                  }]} />
+                )}
+                {analysisProgress > 60 && (
+                  <View style={[styles.leafLeft, { 
+                    opacity: Math.min((analysisProgress - 60) / 10, 1),
+                    bottom: `${40 + (analysisProgress * 0.3)}%`
+                  }]} />
+                )}
+
+                {/* Burst effect at 100% */}
+                {analysisProgress >= 100 && (
+                  <View style={styles.burstContainer}>
+                    {/* Center splat */}
+                    <View style={styles.splatCenter} />
+                    {/* 8 splat drops in all directions */}
+                    {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, index) => (
+                      <View
+                        key={angle}
+                        style={[
+                          styles.splatDrop,
+                          {
+                            transform: [
+                              { rotate: `${angle}deg` },
+                              { translateY: -50 }
+                            ]
+                          }
+                        ]}
+                      />
+                    ))}
                   </View>
-                </View>
-                
-                <View style={styles.progressTextContainer}>
-                  <Text style={[styles.progressText, { fontSize: scaleFont(48) }]}>
-                    {Math.round(analysisProgress)}%
-                  </Text>
-                  <Text style={[styles.progressLabel, { fontSize: scaleFont(14) }]}>
-                    Scanning ingredients
-                  </Text>
-                </View>
+                )}
+              </View>
+
+              {/* Progress text */}
+              <View style={styles.progressTextContainer}>
+                <Text style={[styles.progressText, { fontSize: scaleFont(48) }]}>
+                  {Math.round(analysisProgress)}%
+                </Text>
+                <Text style={[styles.progressLabel, { fontSize: scaleFont(14) }]}>
+                  {analysisProgress >= 100 ? 'Complete!' : 'Scanning ingredients'}
+                </Text>
               </View>
 
               {/* Progress bar */}
@@ -447,7 +468,10 @@ Ensure all health claims are backed by credible scientific sources.`,
                 <View 
                   style={[
                     styles.progressBarFill, 
-                    { width: `${analysisProgress}%` }
+                    { 
+                      width: `${analysisProgress}%`,
+                      backgroundColor: analysisProgress >= 100 ? '#06D6A0' : '#118AB2'
+                    }
                   ]} 
                 />
               </View>
@@ -670,43 +694,108 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 40,
   },
-  progressCircleContainer: {
-    width: 180,
-    height: 180,
-    justifyContent: "center",
+  plantContainer: {
+    width: 200,
+    height: 300,
+    justifyContent: "flex-end",
     alignItems: "center",
     marginBottom: 40,
     position: "relative",
   },
-  progressCircleBg: {
+  pot: {
+    width: 80,
+    height: 60,
+    backgroundColor: "#8B4513",
+    borderBottomLeftRadius: 10,
+    borderBottomRightRadius: 10,
     position: "absolute",
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 10,
+    bottom: 0,
+    zIndex: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
-  progressCircleWrapper: {
+  potRim: {
+    width: 90,
+    height: 15,
+    backgroundColor: "#A0522D",
+    borderRadius: 10,
     position: "absolute",
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    overflow: "hidden",
+    top: -8,
+    left: -5,
   },
-  progressCircle: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 10,
+  stem: {
+    width: 8,
+    backgroundColor: "#2D5016",
+    borderRadius: 4,
+    position: "absolute",
+    bottom: 50,
+    zIndex: 1,
+    shadowColor: "#2D5016",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
   },
-  progressCircleFill: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 10,
+  leafLeft: {
+    width: 30,
+    height: 20,
+    backgroundColor: "#4A7C2E",
+    borderRadius: 15,
+    position: "absolute",
+    left: 85,
+    transform: [{ rotate: "-30deg" }],
+    shadowColor: "#000",
+    shadowOffset: { width: -2, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  leafRight: {
+    width: 30,
+    height: 20,
+    backgroundColor: "#4A7C2E",
+    borderRadius: 15,
+    position: "absolute",
+    right: 85,
+    transform: [{ rotate: "30deg" }],
+    shadowColor: "#000",
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  burstContainer: {
+    position: "absolute",
+    width: 150,
+    height: 150,
+    justifyContent: "center",
+    alignItems: "center",
+    top: 20,
+  },
+  splatCenter: {
+    width: 60,
+    height: 60,
+    backgroundColor: "#E63946",
+    borderRadius: 30,
+    position: "absolute",
+    shadowColor: "#E63946",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 15,
+  },
+  splatDrop: {
+    width: 25,
+    height: 40,
+    backgroundColor: "#E63946",
+    borderRadius: 12.5,
+    position: "absolute",
+    shadowColor: "#E63946",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.6,
+    shadowRadius: 4,
   },
   progressTextContainer: {
-    position: "absolute",
     alignItems: "center",
+    marginBottom: 30,
   },
   progressText: {
     fontSize: 48,
@@ -734,7 +823,11 @@ const styles = StyleSheet.create({
   progressBarFill: {
     height: "100%",
     backgroundColor: "#118AB2",
-    borderRadius: 3,
+    borderRadius: 4,
+    shadowColor: "#118AB2",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
   },
   retakeButtonContainer: {
     paddingHorizontal: 32,
