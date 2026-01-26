@@ -1,5 +1,5 @@
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Platform,
   Image,
+  Animated,
 } from "react-native";
 import { Camera, Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
@@ -88,8 +89,22 @@ export default function ScannerScreen() {
   const { addScan } = useScans();
   const { theme, scaleFont } = useTheme();
 
-  // Animation values for progress circle
+  // Animation values
+  const burstAnim = useRef(new Animated.Value(0)).current;
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+
+  useEffect(() => {
+    if (analysisProgress >= 100) {
+      Animated.spring(burstAnim, {
+        toValue: 1,
+        friction: 5,
+        tension: 40,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      burstAnim.setValue(0);
+    }
+  }, [analysisProgress]);
 
   useEffect(() => {
     checkTutorialStatus();
@@ -101,10 +116,11 @@ export default function ScannerScreen() {
     if (isAnalyzing && analysisProgress < 85) {
       interval = setInterval(() => {
         setAnalysisProgress((prev) => {
-          const increment = prev < 30 ? 3 : prev < 50 ? 2.5 : prev < 70 ? 2 : 1;
+          // Smoother, smaller increments for better animation
+          const increment = prev < 30 ? 1 : prev < 50 ? 0.8 : prev < 70 ? 0.5 : 0.2;
           return Math.min(prev + increment, 85);
         });
-      }, 200);
+      }, 50);
     }
     return () => clearInterval(interval);
   }, [isAnalyzing, analysisProgress]);
@@ -388,50 +404,42 @@ Ensure all health claims are backed by credible scientific sources.`,
                   <View style={styles.potRim} />
                 </View>
 
-                {/* Stem - grows from 0 to 100% */}
-                <View style={[styles.stem, { height: `${analysisProgress * 0.6}%` }]} />
+                {/* Stem - grows from 0 to 100% (max 180px) */}
+                <View style={[styles.stem, { height: Math.min(analysisProgress, 100) * 1.8 }]} />
 
                 {/* Leaves - appear at different stages */}
                 {analysisProgress > 20 && (
                   <View style={[styles.leafLeft, { 
                     opacity: Math.min((analysisProgress - 20) / 10, 1),
-                    bottom: `${20 + (analysisProgress * 0.3)}%`
+                    bottom: 50 + (Math.min(analysisProgress, 100) * 1.8 * 0.3)
                   }]} />
                 )}
-                {analysisProgress > 40 && (
+                {analysisProgress > 45 && (
                   <View style={[styles.leafRight, { 
-                    opacity: Math.min((analysisProgress - 40) / 10, 1),
-                    bottom: `${30 + (analysisProgress * 0.3)}%`
+                    opacity: Math.min((analysisProgress - 45) / 10, 1),
+                    bottom: 50 + (Math.min(analysisProgress, 100) * 1.8 * 0.6)
                   }]} />
                 )}
-                {analysisProgress > 60 && (
-                  <View style={[styles.leafLeft, { 
-                    opacity: Math.min((analysisProgress - 60) / 10, 1),
-                    bottom: `${40 + (analysisProgress * 0.3)}%`
+                
+                {/* Flower Bud */}
+                {analysisProgress > 60 && analysisProgress < 100 && (
+                  <View style={[styles.flowerBud, {
+                    bottom: 50 + (analysisProgress * 1.8) - 8,
+                    transform: [{ scale: (analysisProgress - 60) / 30 }]
                   }]} />
                 )}
 
                 {/* Burst effect at 100% */}
                 {analysisProgress >= 100 && (
-                  <View style={styles.burstContainer}>
-                    {/* Center splat */}
-                    <View style={styles.splatCenter} />
-                    {/* 8 splat drops in all directions */}
-                    {[0, 45, 90, 135, 180, 225, 270, 315].map((angle, index) => (
-                      <View
-                        key={angle}
-                        style={[
-                          styles.splatDrop,
-                          {
-                            transform: [
-                              { rotate: `${angle}deg` },
-                              { translateY: -50 }
-                            ]
-                          }
-                        ]}
+                  <Animated.View style={[styles.burstContainer, { transform: [{ scale: burstAnim }] }]}>
+                    <View style={styles.iconSplatContainer}>
+                      <Image 
+                        source={require('../../assets/images/icon.png')} 
+                        style={styles.burstIcon}
+                        resizeMode="contain"
                       />
-                    ))}
-                  </View>
+                    </View>
+                  </Animated.View>
                 )}
               </View>
 
@@ -745,35 +753,42 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 2,
   },
+  flowerBud: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#E63946",
+    position: "absolute",
+    zIndex: 3,
+    borderWidth: 3,
+    borderColor: "#FFFFFF",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
   burstContainer: {
     position: "absolute",
     width: 150,
     height: 150,
     justifyContent: "center",
     alignItems: "center",
-    top: 20,
+    bottom: 155,
+    zIndex: 10,
   },
-  splatCenter: {
-    width: 60,
-    height: 60,
-    backgroundColor: "#E63946",
-    borderRadius: 30,
-    position: "absolute",
+  iconSplatContainer: {
+    width: 120,
+    height: 120,
+    justifyContent: "center",
+    alignItems: "center",
     shadowColor: "#E63946",
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 15,
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
   },
-  splatDrop: {
-    width: 25,
-    height: 40,
-    backgroundColor: "#E63946",
-    borderRadius: 12.5,
-    position: "absolute",
-    shadowColor: "#E63946",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.6,
-    shadowRadius: 4,
+  burstIcon: {
+    width: "100%",
+    height: "100%",
   },
   progressTextContainer: {
     alignItems: "center",
