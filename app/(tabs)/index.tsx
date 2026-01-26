@@ -9,6 +9,7 @@ import {
   Platform,
   Image,
   Animated,
+  Linking,
 } from "react-native";
 import { Camera, Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
@@ -74,6 +75,12 @@ const tutorialSteps = [
     description: "View your scan history and compare products to make healthier choices.",
     icon: "📋",
     image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gwbb9y93ep6lhc77n3j8k",
+  },
+  {
+    title: "Rate Us",
+    description: "Enjoying the app? Please leave a review on the App Store. It helps us a lot!",
+    icon: "⭐",
+    image: null,
   },
 ];
 
@@ -337,6 +344,16 @@ Ensure all health claims are backed by credible scientific sources.`,
     completeTutorial();
   };
 
+  const handleRate = () => {
+    if (Platform.OS === "ios") {
+      // Replace with actual App Store ID
+      Linking.openURL("https://apps.apple.com/app/id6441234567?action=write-review");
+    } else {
+      Linking.openURL("market://details?id=app.rork.slop_spot");
+    }
+    completeTutorial();
+  };
+
   if (showTutorial) {
     const step = tutorialSteps[currentStep];
     return (
@@ -381,14 +398,35 @@ Ensure all health claims are backed by credible scientific sources.`,
             ))}
           </View>
 
-          <TouchableOpacity
-            style={[styles.nextButton, { backgroundColor: theme.primary }]}
-            onPress={handleNext}
-          >
-            <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
-              {currentStep < tutorialSteps.length - 1 ? "Next" : "Get Started"}
-            </Text>
-          </TouchableOpacity>
+          {currentStep === tutorialSteps.length - 1 ? (
+            <View style={{ width: "100%", gap: 12 }}>
+              <TouchableOpacity
+                style={[styles.nextButton, { backgroundColor: theme.primary }]}
+                onPress={handleRate}
+              >
+                <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
+                  Leave a Review
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.nextButton, { backgroundColor: "transparent", borderWidth: 1, borderColor: theme.border }]}
+                onPress={completeTutorial}
+              >
+                <Text style={[styles.nextButtonText, { fontSize: scaleFont(16), color: theme.text }]}>
+                  Get Started
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.nextButton, { backgroundColor: theme.primary }]}
+              onPress={handleNext}
+            >
+              <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
+                Next
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     );
