@@ -12,6 +12,18 @@ import { Swipeable } from "react-native-gesture-handler";
 type SortOption = "newest" | "oldest" | "highest" | "lowest";
 type DateFilter = "all" | "today" | "week" | "month";
 
+// Helper function to get representative score for each grade
+const getScoreForGrade = (grade: string): number => {
+  switch (grade) {
+    case "A Grade": return 95;
+    case "B Grade": return 80;
+    case "Premium Slop": return 60;
+    case "Slop": return 40;
+    case "Health Hazard": return 20;
+    default: return 50;
+  }
+};
+
 export default function HistoryScreen() {
   const { scans, isLoading, deleteScan, toggleFavorite, clearAllScans } = useScans();
   const { theme, scaleFont } = useTheme();
@@ -25,7 +37,7 @@ export default function HistoryScreen() {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  const grades = ["A+", "A", "B", "C", "D", "F"];
+  const grades = ["A Grade", "B Grade", "Premium Slop", "Slop", "Health Hazard"];
 
   const handleScanPress = (scanId: string) => {
     if (selectMode) {
@@ -306,29 +318,34 @@ export default function HistoryScreen() {
                 Grade
               </Text>
               <View style={styles.gradeChips}>
-                {grades.map(grade => (
-                  <TouchableOpacity
-                    key={grade}
-                    style={[
-                      styles.gradeChip,
-                      { 
-                        backgroundColor: gradeFilter.includes(grade) ? getGradeColor(grade === "A+" ? 95 : grade === "A" ? 85 : grade === "B" ? 75 : grade === "C" ? 65 : grade === "D" ? 55 : 45) : theme.card,
-                        borderColor: theme.border,
-                      }
-                    ]}
-                    onPress={() => toggleGradeFilter(grade)}
-                  >
-                    <Text style={[
-                      styles.gradeChipText,
-                      { 
-                        color: gradeFilter.includes(grade) ? "#FFFFFF" : theme.text,
-                        fontSize: scaleFont(13),
-                      }
-                    ]}>
-                      {grade}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {grades.map(grade => {
+                  const isSelected = gradeFilter.includes(grade);
+                  const gradeColor = getGradeColor(getScoreForGrade(grade));
+                  
+                  return (
+                    <TouchableOpacity
+                      key={grade}
+                      style={[
+                        styles.gradeChip,
+                        { 
+                          backgroundColor: isSelected ? gradeColor : theme.card,
+                          borderColor: theme.border,
+                        }
+                      ]}
+                      onPress={() => toggleGradeFilter(grade)}
+                    >
+                      <Text style={[
+                        styles.gradeChipText,
+                        { 
+                          color: isSelected ? "#FFFFFF" : theme.text,
+                          fontSize: scaleFont(13),
+                        }
+                      ]}>
+                        {grade}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
 
@@ -846,14 +863,4 @@ const styles = StyleSheet.create({
   },
   cancelButtonText: {
     fontSize: 16,
-    fontWeight: "600" as const,
-  },
-  confirmButton: {
-    backgroundColor: "#EF4444",
-  },
-  confirmButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600" as const,
-  },
-});
+    fontWeight:
