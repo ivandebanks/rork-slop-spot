@@ -442,104 +442,103 @@ Ensure all health claims are backed by credible scientific sources.`,
     const step = tutorialSteps[currentStep];
     return (
       <View style={[styles.tutorialContainer, { backgroundColor: theme.background }]} {...panResponder.panHandlers}>
-          <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-            <X size={24} color={theme.textSecondary} />
-          </TouchableOpacity>
+        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+          <X size={24} color={theme.textSecondary} />
+        </TouchableOpacity>
 
-          <View style={styles.tutorialContent}>
-            {step.image ? (
-              <View style={styles.tutorialImageContainer}>
-                <Image 
-                  source={{ uri: step.image }} 
-                  style={styles.tutorialImage} 
-                  resizeMode="contain"
-                />
-              </View>
-            ) : (
-              <Text style={styles.tutorialIcon}>{step.icon}</Text>
-            )}
-            <Text style={[styles.tutorialTitle, { color: theme.text, fontSize: scaleFont(28) }]}>
-              {step.title}
-            </Text>
-            <Text style={[styles.tutorialDescription, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
-              {step.description}
-            </Text>
-
-            {/* Swipe hint - only show on first few steps */}
-            {currentStep < tutorialSteps.length - 1 && (
-              <Animated.View style={[styles.swipeHint, { opacity: swipeHintOpacity }]}>
-                <ChevronLeft size={20} color={theme.textSecondary} />
-                <Text style={[styles.swipeHintText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
-                  Swipe to navigate
-                </Text>
-                <ChevronRight size={20} color={theme.textSecondary} />
-              </Animated.View>
-            )}
-          </View>
-
-          <View style={styles.tutorialFooter}>
-            <View style={styles.dotsContainer}>
-              {tutorialSteps.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.dot,
-                    {
-                      backgroundColor: index === currentStep ? theme.primary : theme.border,
-                      width: index === currentStep ? 24 : 8,
-                    },
-                  ]}
-                />
-              ))}
+        <View style={styles.tutorialContent}>
+          {step.image ? (
+            <View style={styles.tutorialImageContainer}>
+              <Image 
+                source={{ uri: step.image }} 
+                style={styles.tutorialImage} 
+                resizeMode="contain"
+              />
             </View>
+          ) : (
+            <Text style={styles.tutorialIcon}>{step.icon}</Text>
+          )}
+          <Text style={[styles.tutorialTitle, { color: theme.text, fontSize: scaleFont(28) }]}>
+            {step.title}
+          </Text>
+          <Text style={[styles.tutorialDescription, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
+            {step.description}
+          </Text>
 
-            {currentStep === tutorialSteps.length - 1 ? (
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity
-                  style={[styles.nextButton, { backgroundColor: theme.primary }]}
-                  onPress={handleRate}
-                >
-                  <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
-                    Leave a Review
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.nextButton, { backgroundColor: "transparent", borderWidth: 1, borderColor: theme.border }]}
-                  onPress={completeTutorial}
-                >
-                  <Text style={[styles.nextButtonText, { fontSize: scaleFont(16), color: theme.text }]}>
-                    Get Started
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View style={styles.navigationContainer}>
-                <TouchableOpacity
-                  style={[styles.navButton, currentStep === 0 && styles.navButtonDisabled]}
-                  onPress={handlePrevious}
-                  disabled={currentStep === 0}
-                >
-                  <ChevronLeft size={24} color={currentStep === 0 ? theme.border : theme.text} />
-                </TouchableOpacity>
+          {/* Swipe hint - only show on first few steps */}
+          {currentStep < tutorialSteps.length - 1 && (
+            <Animated.View style={[styles.swipeHint, { opacity: swipeHintOpacity }]}>
+              <ChevronLeft size={20} color={theme.textSecondary} />
+              <Text style={[styles.swipeHintText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
+                Swipe to navigate
+              </Text>
+              <ChevronRight size={20} color={theme.textSecondary} />
+            </Animated.View>
+          )}
+        </View>
 
-                <TouchableOpacity
-                  style={[styles.nextButton, { backgroundColor: theme.primary, flex: 1 }]}
-                  onPress={handleNext}
-                >
-                  <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
-                    Next
-                  </Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.navButton}
-                  onPress={handleNext}
-                >
-                  <ChevronRight size={24} color={theme.text} />
-                </TouchableOpacity>
-              </View>
-            )}
+        <View style={styles.tutorialFooter}>
+          <View style={styles.dotsContainer}>
+            {tutorialSteps.map((_, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.dot,
+                  {
+                    backgroundColor: index === currentStep ? theme.primary : theme.border,
+                    width: index === currentStep ? 24 : 8,
+                  },
+                ]}
+              />
+            ))}
           </View>
+
+          {currentStep === tutorialSteps.length - 1 ? (
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.nextButton, { backgroundColor: theme.primary }]}
+                onPress={handleRate}
+              >
+                <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
+                  Leave a Review
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.nextButton, { backgroundColor: "transparent", borderWidth: 1, borderColor: theme.border }]}
+                onPress={completeTutorial}
+              >
+                <Text style={[styles.nextButtonText, { fontSize: scaleFont(16), color: theme.text }]}>
+                  Get Started
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.navigationContainer}>
+              <TouchableOpacity
+                style={[styles.navButton, currentStep === 0 && styles.navButtonDisabled]}
+                onPress={handlePrevious}
+                disabled={currentStep === 0}
+              >
+                <ChevronLeft size={24} color={currentStep === 0 ? theme.border : theme.text} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.nextButton, { backgroundColor: theme.primary, flex: 1 }]}
+                onPress={handleNext}
+              >
+                <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
+                  Next
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.navButton}
+                onPress={handleNext}
+              >
+                <ChevronRight size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </View>
     );
