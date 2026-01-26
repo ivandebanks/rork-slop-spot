@@ -437,6 +437,11 @@ export default function HistoryScreen() {
           data={filteredAndSortedScans}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={true}
+          maxToRenderPerBatch={10}
+          updateCellsBatchingPeriod={50}
+          windowSize={21}
           renderItem={({ item }) => {
             const date = new Date(item.timestamp);
             const formattedDate = date.toLocaleDateString("en-US", {
@@ -455,6 +460,9 @@ export default function HistoryScreen() {
               <Swipeable
                 renderRightActions={() => renderRightActions(item.id, item.isFavorite || false)}
                 overshootRight={false}
+                enabled={!selectMode}
+                friction={2}
+                rightThreshold={40}
               >
                 <TouchableOpacity
                   style={[
