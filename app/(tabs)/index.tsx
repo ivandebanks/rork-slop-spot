@@ -344,14 +344,30 @@ Ensure all health claims are backed by credible scientific sources.`,
     completeTutorial();
   };
 
-  const handleRate = () => {
-    if (Platform.OS === "ios") {
-      // Replace with actual App Store ID
-      Linking.openURL("https://apps.apple.com/app/id6757214914?action=write-review");
-    } else {
-      Linking.openURL("market://details?id=app.rork.slop_spot");
+  const handleRate = async () => {
+    try {
+      if (Platform.OS === "ios") {
+        await Linking.openURL("https://apps.apple.com/app/id6757214914?action=write-review");
+      } else {
+        const androidPackage = "app.rork.slop_spot";
+        const marketUrl = `market://details?id=${androidPackage}`;
+        
+        // Check if market URL can be opened (e.g. Play Store installed)
+        const canOpen = await Linking.canOpenURL(marketUrl);
+        
+        if (canOpen) {
+          await Linking.openURL(marketUrl);
+        } else {
+          // Fallback to web URL
+          await Linking.openURL(`https://play.google.com/store/apps/details?id=${androidPackage}`);
+        }
+      }
+    } catch (error) {
+      console.log("Error opening review link:", error);
+    } finally {
+      // Always complete tutorial so user isn't stuck
+      completeTutorial();
     }
-    completeTutorial();
   };
 
   if (showTutorial) {
