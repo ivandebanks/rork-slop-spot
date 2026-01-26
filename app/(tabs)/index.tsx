@@ -98,13 +98,13 @@ export default function ScannerScreen() {
   // Simulate progress when analyzing
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
-    if (isAnalyzing && analysisProgress < 95) {
+    if (isAnalyzing && analysisProgress < 90) {
       interval = setInterval(() => {
         setAnalysisProgress((prev) => {
-          const increment = prev < 50 ? 8 : prev < 80 ? 4 : 2;
-          return Math.min(prev + increment, 95);
+          const increment = prev < 50 ? 10 : prev < 70 ? 6 : prev < 85 ? 3 : 1;
+          return Math.min(prev + increment, 90);
         });
-      }, 200);
+      }, 150);
     }
     return () => clearInterval(interval);
   }, [isAnalyzing, analysisProgress]);
@@ -177,21 +177,46 @@ Ensure all health claims are backed by credible scientific sources.`,
       return scanResult;
     },
     onSuccess: (data) => {
-      setAnalysisProgress(100);
-      setIsAnalyzing(false);
-      
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      
-      setTimeout(() => {
-        router.push({
-          pathname: "/result",
-          params: { scanId: data.id },
+      // Smoothly animate from current progress to 100
+      const animateToComplete = () => {
+        setAnalysisProgress((prev) => {
+          if (prev >= 100) {
+            setIsAnalyzing(false);
+            setTimeout(() => {
+              router.push({
+                pathname: "/result",
+                params: { scanId: data.id },
+              });
+              setCapturedPhoto(null);
+              setAnalysisProgress(0);
+            }, 300);
+            return 100;
+          }
+          return Math.min(prev + 5, 100);
         });
-        setCapturedPhoto(null);
-        setAnalysisProgress(0);
-      }, 500);
+      };
+
+      const completeInterval = setInterval(() => {
+        setAnalysisProgress((prev) => {
+          if (prev >= 100) {
+            clearInterval(completeInterval);
+            setIsAnalyzing(false);
+            if (Platform.OS !== "web") {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+            setTimeout(() => {
+              router.push({
+                pathname: "/result",
+                params: { scanId: data.id },
+              });
+              setCapturedPhoto(null);
+              setAnalysisProgress(0);
+            }, 300);
+            return 100;
+          }
+          return Math.min(prev + 5, 100);
+        });
+      }, 30);
     },
     onError: () => {
       setCapturedPhoto(null);
