@@ -209,7 +209,7 @@ Ensure all health claims are backed by credible scientific sources.`,
               });
               setCapturedPhoto(null);
               setAnalysisProgress(0);
-            }, 300);
+            }, 1500);
             return 100;
           }
           return Math.min(prev + 3, 100);
