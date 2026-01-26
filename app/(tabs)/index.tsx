@@ -11,6 +11,7 @@ import {
   Animated,
   Linking,
   Dimensions,
+  PanResponder,
 } from "react-native";
 import { Camera, Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
@@ -23,7 +24,6 @@ import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
-import { GestureDetector, Gesture } from "react-native-gesture-handler";
 
 const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -103,8 +103,28 @@ export default function ScannerScreen() {
   const burstAnim = useRef(new Animated.Value(0)).current;
   const redFillAnim = useRef(new Animated.Value(0)).current;
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const translateX = useRef(new Animated.Value(0)).current;
   const swipeHintOpacity = useRef(new Animated.Value(1)).current;
+
+  // PanResponder for swipe gestures
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > 10;
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const SWIPE_THRESHOLD = 50;
+        
+        if (gestureState.dx < -SWIPE_THRESHOLD && currentStep < tutorialSteps.length - 1) {
+          // Swipe left - go to next step
+          handleNext();
+        } else if (gestureState.dx > SWIPE_THRESHOLD && currentStep > 0) {
+          // Swipe right - go to previous step
+          handlePrevious();
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     if (analysisProgress >= 100) {
@@ -380,13 +400,7 @@ Ensure all health claims are backed by credible scientific sources.`,
   };
 
   const animateToStep = (step: number) => {
-    Animated.timing(translateX, {
-      toValue: -step * SCREEN_WIDTH,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      setCurrentStep(step);
-    });
+    setCurrentStep(step);
   };
 
   const handleSkip = () => {
@@ -422,25 +436,12 @@ Ensure all health claims are backed by credible scientific sources.`,
     }
   };
 
-  // Swipe gesture for tutorial
-  const swipeGesture = Gesture.Pan()
-    .onEnd((event) => {
-      const SWIPE_THRESHOLD = 50;
-      
-      if (event.translationX < -SWIPE_THRESHOLD && currentStep < tutorialSteps.length - 1) {
-        // Swipe left - go to next step
-        handleNext();
-      } else if (event.translationX > SWIPE_THRESHOLD && currentStep > 0) {
-        // Swipe right - go to previous step
-        handlePrevious();
-      }
-    });
+  // Swipe gesture removed - now using PanResponder
 
   if (showTutorial) {
     const step = tutorialSteps[currentStep];
     return (
-      <GestureDetector gesture={swipeGesture}>
-        <View style={[styles.tutorialContainer, { backgroundColor: theme.background }]}>
+      <View style={[styles.tutorialContainer, { backgroundColor: theme.background }]} {...panResponder.panHandlers}>
           <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
             <X size={24} color={theme.textSecondary} />
           </TouchableOpacity>
@@ -540,7 +541,7 @@ Ensure all health claims are backed by credible scientific sources.`,
             )}
           </View>
         </View>
-      </GestureDetector>
+      </View>
     );
   }
 
