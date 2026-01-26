@@ -354,22 +354,25 @@ Ensure all health claims are backed by credible scientific sources.`,
     );
   }
 
-  if (!permission.granted) {
+  // Show tutorial first, before asking for camera permission
+  if (showTutorial) {
+    const step = tutorialSteps[currentStep];
     return (
-      <View style={[styles.permissionContainer, { backgroundColor: theme.background }]}>
-        <Camera size={64} color={theme.primary} />
-        <Text style={[styles.permissionTitle, { color: theme.text, fontSize: scaleFont(24) }]}>Camera Access Required</Text>
-        <Text style={[styles.permissionText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
-          Slop Spot needs camera access to scan product labels
-        </Text>
-        <TouchableOpacity style={[styles.permissionButton, { backgroundColor: theme.primary }]} onPress={requestPermission}>
-          <Text style={[styles.permissionButtonText, { fontSize: scaleFont(16) }]}>Continue</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+      <View style={[styles.tutorialContainer, { backgroundColor: theme.background }]}>
+        <View style={{ flex: 1 }} {...panResponder.panHandlers}>
+          <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
+            <X size={24} color={theme.textSecondary} />
+          </TouchableOpacity>
 
   const takePicture = async () => {
+    // Request permission if not granted
+    if (!permission?.granted) {
+      const result = await requestPermission();
+      if (!result?.granted) {
+        return; // User denied permission
+      }
+    }
+
     if (cameraRef && !isAnalyzing) {
       if (Platform.OS !== "web") {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
