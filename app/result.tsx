@@ -8,12 +8,14 @@ import {
   Platform,
   Linking,
   Modal,
+  Share,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useScans } from "@/contexts/ScanContext";
 import { getGradeColor } from "@/types/scan";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Trash2, Info, ExternalLink, X } from "lucide-react-native";
+import { ArrowLeft, Trash2, Info, ExternalLink, X, Share2 } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useState } from "react";
@@ -55,6 +57,44 @@ export default function ResultScreen() {
     router.back();
   };
 
+  const handleShare = async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    try {
+      // Create a formatted message with the scan results
+      const ingredientsList = scan.ingredients
+        .map((ing, idx) => `${idx + 1}. ${ing.name} (${Math.round(ing.rating)}/100)`)
+        .join('\n');
+
+      const message = `${scan.productName} - Health Score: ${Math.round(scan.overallScore)}/100 (${scan.gradeLabel})
+
+Ingredients (${scan.ingredients.length}):
+${ingredientsList}
+
+Scanned with Slop Spot`;
+
+      const result = await Share.share({
+        message: message,
+        title: `${scan.productName} Health Scan`,
+      });
+
+      if (result.action === Share.sharedAction) {
+        if (result.activityType) {
+          // Shared with activity type of result.activityType
+        } else {
+          // Shared successfully
+        }
+      } else if (result.action === Share.dismissedAction) {
+        // Dismissed
+      }
+    } catch (error: any) {
+      Alert.alert('Error', 'Failed to share the scan results');
+      console.error('Error sharing:', error);
+    }
+  };
+
   const openCitationsModal = (citations: Citation[], title: string) => {
     setSelectedCitations(citations);
     setCitationTitle(title);
@@ -85,6 +125,12 @@ export default function ResultScreen() {
             onPress={() => router.back()}
           >
             <ArrowLeft size={24} color="#FFFFFF" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.shareButtonFloating}
+            onPress={handleShare}
+          >
+            <Share2 size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
@@ -164,10 +210,17 @@ export default function ResultScreen() {
             })}
           </View>
 
-          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
-            <Trash2 size={20} color="#E63946" />
-            <Text style={[styles.deleteButtonText, { fontSize: scaleFont(16) }]}>Delete Scan</Text>
-          </TouchableOpacity>
+          <View style={styles.actionButtons}>
+            <TouchableOpacity style={[styles.shareButton, { backgroundColor: theme.primary }]} onPress={handleShare}>
+              <Share2 size={20} color="#FFFFFF" />
+              <Text style={[styles.shareButtonText, { fontSize: scaleFont(16) }]}>Share Results</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+              <Trash2 size={20} color="#E63946" />
+              <Text style={[styles.deleteButtonText, { fontSize: scaleFont(16) }]}>Delete Scan</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
 
@@ -249,6 +302,17 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: 60,
     left: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  shareButtonFloating: {
+    position: "absolute",
+    top: 60,
+    right: 16,
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -391,12 +455,30 @@ const styles = StyleSheet.create({
     fontWeight: "600" as const,
     color: "#118AB2",
   },
+  actionButtons: {
+    width: "100%",
+    gap: 12,
+    marginTop: 24,
+  },
+  shareButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+  },
+  shareButtonText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: "#FFFFFF",
+  },
   deleteButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    marginTop: 24,
     paddingVertical: 12,
     paddingHorizontal: 24,
     borderRadius: 12,
