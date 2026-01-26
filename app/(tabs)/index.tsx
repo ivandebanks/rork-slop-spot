@@ -356,10 +356,16 @@ Ensure all health claims are backed by credible scientific sources.`,
 
   const takePicture = async () => {
     // Request permission if not granted
-    if (!permission || !permission.granted) {
+    if (permission && permission.granted) {
+      // Permission already granted, take photo
+    } else {
+      // Request permission
       const result = await requestPermission();
-      if (!result || !result.granted) {
-        return; // User denied permission
+      if (result && result.granted) {
+        // Permission granted, continue
+      } else {
+        // User denied permission
+        return;
       }
     }
 
@@ -370,7 +376,6 @@ Ensure all health claims are backed by credible scientific sources.`,
       const photo = await cameraRef.takePictureAsync({
         quality: 0.8,
         base64: true,
-        // flash is controlled by the CameraView prop
       });
       if (photo && photo.base64) {
         const imageUri = `data:image/jpeg;base64,${photo.base64}`;
