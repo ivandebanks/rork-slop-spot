@@ -347,7 +347,7 @@ Ensure all health claims are backed by credible scientific sources.`,
   const handleRate = () => {
     if (Platform.OS === "ios") {
       // Replace with actual App Store ID
-      Linking.openURL("https://apps.apple.com/app/id6441234567?action=write-review");
+      Linking.openURL("https://apps.apple.com/app/id6757214914?action=write-review");
     } else {
       Linking.openURL("market://details?id=app.rork.slop_spot");
     }
