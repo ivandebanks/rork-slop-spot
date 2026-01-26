@@ -214,7 +214,7 @@ Ensure all health claims are backed by credible scientific sources.`,
             setTimeout(() => {
               router.push({
                 pathname: "/result",
-                params: { scanId: data.id },
+                params: { scanId: data.id, isNewScan: "true" },
               });
               setCapturedPhoto(null);
               setAnalysisProgress(0);

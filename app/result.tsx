@@ -25,7 +25,7 @@ import { useState, useRef, useEffect } from "react";
 import { Citation } from "@/types/scan";
 
 export default function ResultScreen() {
-  const { scanId } = useLocalSearchParams<{ scanId: string }>();
+  const { scanId, isNewScan } = useLocalSearchParams<{ scanId: string; isNewScan?: string }>();
   const { scans, deleteScan } = useScans();
   const { theme, scaleFont } = useTheme();
   const [citationsModalVisible, setCitationsModalVisible] = useState(false);
@@ -34,6 +34,9 @@ export default function ResultScreen() {
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Only animate if it's a new scan
+    if (isNewScan !== "true") return;
+
     // Start with a small delay to ensure the user sees the red screen
     const timer = setTimeout(() => {
       Animated.timing(slideAnim, {
@@ -44,7 +47,7 @@ export default function ResultScreen() {
       }).start();
     }, 1000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [isNewScan]);
 
   const scan = scans.find((s) => s.id === scanId);
 
@@ -134,12 +137,14 @@ Scanned with Slop Spot`;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <Animated.View 
-        style={[
-          styles.dripOverlay, 
-          { transform: [{ translateY: slideAnim }] }
-        ]} 
-      />
+      {isNewScan === "true" && (
+        <Animated.View 
+          style={[
+            styles.dripOverlay, 
+            { transform: [{ translateY: slideAnim }] }
+          ]} 
+        />
+      )}
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.imageContainer}>
           <Image source={{ uri: scan.imageUri }} style={styles.image} />
