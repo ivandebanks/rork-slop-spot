@@ -366,9 +366,9 @@ Ensure all health claims are backed by credible scientific sources.`,
 
   const takePicture = async () => {
     // Request permission if not granted
-    if (!permission?.granted) {
+    if (!permission || !permission.granted) {
       const result = await requestPermission();
-      if (!result?.granted) {
+      if (!result || !result.granted) {
         return; // User denied permission
       }
     }
