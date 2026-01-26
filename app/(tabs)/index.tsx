@@ -91,18 +91,27 @@ export default function ScannerScreen() {
 
   // Animation values
   const burstAnim = useRef(new Animated.Value(0)).current;
+  const redFillAnim = useRef(new Animated.Value(0)).current;
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     if (analysisProgress >= 100) {
-      Animated.spring(burstAnim, {
-        toValue: 1,
-        friction: 5,
-        tension: 40,
-        useNativeDriver: true,
-      }).start();
+      Animated.parallel([
+        Animated.spring(burstAnim, {
+          toValue: 1,
+          friction: 6,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(redFillAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else {
       burstAnim.setValue(0);
+      redFillAnim.setValue(0);
     }
   }, [analysisProgress]);
 
@@ -209,7 +218,7 @@ Ensure all health claims are backed by credible scientific sources.`,
               });
               setCapturedPhoto(null);
               setAnalysisProgress(0);
-            }, 1500);
+            }, 2000);
             return 100;
           }
           return Math.min(prev + 3, 100);
@@ -431,15 +440,35 @@ Ensure all health claims are backed by credible scientific sources.`,
 
                 {/* Burst effect at 100% */}
                 {analysisProgress >= 100 && (
-                  <Animated.View style={[styles.burstContainer, { transform: [{ scale: burstAnim }] }]}>
-                    <View style={styles.iconSplatContainer}>
-                      <Image 
-                        source={require('../../assets/images/icon.png')} 
-                        style={styles.burstIcon}
-                        resizeMode="contain"
-                      />
-                    </View>
-                  </Animated.View>
+                  <>
+                    <Animated.View 
+                      style={[
+                        styles.redBurst, 
+                        { 
+                          transform: [
+                            { scale: redFillAnim.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0, 30] 
+                              }) 
+                            }
+                          ],
+                          opacity: redFillAnim.interpolate({
+                            inputRange: [0, 0.2, 1],
+                            outputRange: [0, 1, 1]
+                          })
+                        }
+                      ]} 
+                    />
+                    <Animated.View style={[styles.burstContainer, { transform: [{ scale: burstAnim }] }]}>
+                      <View style={styles.iconSplatContainer}>
+                        <Image 
+                          source={require('../../assets/images/icon.png')} 
+                          style={styles.burstIcon}
+                          resizeMode="contain"
+                        />
+                      </View>
+                    </Animated.View>
+                  </>
                 )}
               </View>
 
@@ -767,13 +796,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
   },
+  redBurst: {
+    position: "absolute",
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#E63946",
+    bottom: 155, // Center position relative to where icon appears
+    zIndex: 9, // Behind the icon but above everything else
+  },
   burstContainer: {
     position: "absolute",
     width: 150,
     height: 150,
     justifyContent: "center",
     alignItems: "center",
-    bottom: 155,
+    bottom: 130, // Adjusted slightly to center better with the burst
     zIndex: 10,
   },
   iconSplatContainer: {
@@ -781,14 +819,15 @@ const styles = StyleSheet.create({
     height: 120,
     justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#E63946",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
+    // shadowColor: "#E63946",
+    // shadowOffset: { width: 0, height: 0 },
+    // shadowOpacity: 0.5,
+    // shadowRadius: 20,
   },
   burstIcon: {
     width: "100%",
     height: "100%",
+    borderRadius: 60, // Crop the white background (assuming square icon)
   },
   progressTextContainer: {
     alignItems: "center",
