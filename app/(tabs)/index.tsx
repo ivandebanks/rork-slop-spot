@@ -346,56 +346,6 @@ Ensure all health claims are backed by credible scientific sources.`,
     }
   };
 
-  if (!permission) {
-    return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <ActivityIndicator size="large" color={theme.primary} />
-      </View>
-    );
-  }
-
-  const takePicture = async () => {
-    // Request permission if not granted
-    if (permission && permission.granted) {
-      // Permission already granted, take photo
-    } else {
-      // Request permission
-      const result = await requestPermission();
-      if (result && result.granted) {
-        // Permission granted, continue
-      } else {
-        // User denied permission
-        return;
-      }
-    }
-
-    if (cameraRef && !isAnalyzing) {
-      if (Platform.OS !== "web") {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }
-      const photo = await cameraRef.takePictureAsync({
-        quality: 0.8,
-        base64: true,
-      });
-      if (photo && photo.base64) {
-        const imageUri = `data:image/jpeg;base64,${photo.base64}`;
-        setCapturedPhoto(imageUri);
-        setAnalysisProgress(0);
-        analyzeMutation.mutate(imageUri);
-      }
-    }
-  };
-
-  // Show tutorial first, before asking for camera permission
-  if (showTutorial) {
-    const step = tutorialSteps[currentStep];
-    return (
-      <View style={[styles.tutorialContainer, { backgroundColor: theme.background }]}>
-        <View style={{ flex: 1 }} {...panResponder.panHandlers}>
-          <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-            <X size={24} color={theme.textSecondary} />
-          </TouchableOpacity>
-
   const takePicture = async () => {
     // Request permission if not granted
     if (!permission || !permission.granted) {
@@ -412,7 +362,6 @@ Ensure all health claims are backed by credible scientific sources.`,
       const photo = await cameraRef.takePictureAsync({
         quality: 0.8,
         base64: true,
-        // flash is controlled by the CameraView prop
       });
       if (photo && photo.base64) {
         const imageUri = `data:image/jpeg;base64,${photo.base64}`;
@@ -472,7 +421,13 @@ Ensure all health claims are backed by credible scientific sources.`,
     }
   };
 
-  // Swipe gesture removed - now using PanResponder
+  if (!permission) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+      </View>
+    );
+  }
 
   if (showTutorial) {
     const step = tutorialSteps[currentStep];
@@ -903,272 +858,272 @@ const styles = StyleSheet.create({
     width: 200,
     height: 300,
     justifyContent: "flex-end",
-    alignItems: "center",
-    marginBottom: 40,
-    position: "relative",
-  },
-  pot: {
-    width: 80,
-    height: 60,
-    backgroundColor: "#8B4513",
-    borderBottomLeftRadius: 10,
-    borderBottomRightRadius: 10,
-    position: "absolute",
-    bottom: 0,
-    zIndex: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-  },
-  potRim: {
-    width: 90,
-    height: 15,
-    backgroundColor: "#A0522D",
-    borderRadius: 10,
-    position: "absolute",
-    top: -8,
-    left: -5,
-  },
-  stem: {
-    width: 8,
-    backgroundColor: "#2D5016",
-    borderRadius: 4,
-    position: "absolute",
-    bottom: 50,
-    zIndex: 1,
-    shadowColor: "#2D5016",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 3,
-  },
-  leafLeft: {
-    width: 30,
-    height: 20,
-    backgroundColor: "#4A7C2E",
-    borderRadius: 15,
-    position: "absolute",
-    left: 85,
-    transform: [{ rotate: "-30deg" }],
-    shadowColor: "#000",
-    shadowOffset: { width: -2, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  leafRight: {
-    width: 30,
-    height: 20,
-    backgroundColor: "#4A7C2E",
-    borderRadius: 15,
-    position: "absolute",
-    right: 85,
-    transform: [{ rotate: "30deg" }],
-    shadowColor: "#000",
-    shadowOffset: { width: 2, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-  },
-  flowerBud: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#E63946",
-    position: "absolute",
-    zIndex: 3,
-    borderWidth: 3,
-    borderColor: "#FFFFFF",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-  },
-  redBurst: {
-    position: "absolute",
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: "#E63946",
-    bottom: 155,
-    zIndex: 9,
-  },
-  burstContainer: {
-    position: "absolute",
-    width: 150,
-    height: 150,
-    justifyContent: "center",
-    alignItems: "center",
-    bottom: 130,
-    zIndex: 10,
-  },
-  iconSplatContainer: {
-    width: 120,
-    height: 120,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  burstIcon: {
-    width: "100%",
-    height: "100%",
-    borderRadius: 60,
-  },
-  progressTextContainer: {
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  progressText: {
-    fontSize: 48,
-    fontWeight: "800" as const,
-    color: "#FFFFFF",
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 8,
-  },
-  progressLabel: {
-    fontSize: 14,
-    color: "#FFFFFF",
-    marginTop: 8,
-    textShadowColor: "rgba(0, 0, 0, 0.8)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 4,
-  },
-  progressBarContainer: {
-    width: "100%",
-    height: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  progressBarFill: {
-    height: "100%",
-    backgroundColor: "#118AB2",
-    borderRadius: 4,
-    shadowColor: "#118AB2",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6,
-    shadowRadius: 8,
-  },
-  retakeButtonContainer: {
-    paddingHorizontal: 32,
-    paddingBottom: 120,
-    alignItems: "center",
-  },
-  retakeButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-  },
-  retakeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600" as const,
-  },
-  tutorialContainer: {
-    flex: 1,
-    paddingTop: 60,
-  },
-  skipButton: {
-    position: "absolute",
-    top: 60,
-    right: 24,
-    zIndex: 10,
-    padding: 8,
-  },
-  tutorialContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 40,
-  },
-  tutorialImageContainer: {
-    width: "100%",
-    height: 320,
-    marginBottom: 24,
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  tutorialImage: {
-    width: "100%",
-    height: "100%",
-  },
-  tutorialIcon: {
-    fontSize: 80,
-    marginBottom: 32,
-  },
-  tutorialTitle: {
-    fontSize: 28,
-    fontWeight: "700" as const,
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  tutorialDescription: {
-    fontSize: 16,
-    textAlign: "center",
-    lineHeight: 24,
-    maxWidth: 320,
-  },
-  swipeHint: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 24,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: "rgba(128, 128, 128, 0.1)",
-  },
-  swipeHintText: {
-    fontSize: 14,
-    fontWeight: "500" as const,
-  },
-  tutorialFooter: {
-    paddingHorizontal: 32,
-    paddingBottom: 140,
-    gap: 32,
-  },
-  dotsContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-  },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-  },
-  buttonContainer: {
-    width: "100%",
-    gap: 12,
-  },
-  navigationContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    width: "100%",
-  },
-  navButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(128, 128, 128, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  navButtonDisabled: {
-    opacity: 0.3,
-  },
-  nextButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  nextButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600" as const,
-  },
+alignItems: "center",
+marginBottom: 40,
+position: "relative",
+},
+pot: {
+width: 80,
+height: 60,
+backgroundColor: "#8B4513",
+borderBottomLeftRadius: 10,
+borderBottomRightRadius: 10,
+position: "absolute",
+bottom: 0,
+zIndex: 2,
+shadowColor: "#000",
+shadowOffset: { width: 0, height: 4 },
+shadowOpacity: 0.3,
+shadowRadius: 4,
+},
+potRim: {
+width: 90,
+height: 15,
+backgroundColor: "#A0522D",
+borderRadius: 10,
+position: "absolute",
+top: -8,
+left: -5,
+},
+stem: {
+width: 8,
+backgroundColor: "#2D5016",
+borderRadius: 4,
+position: "absolute",
+bottom: 50,
+zIndex: 1,
+shadowColor: "#2D5016",
+shadowOffset: { width: 0, height: 2 },
+shadowOpacity: 0.4,
+shadowRadius: 3,
+},
+leafLeft: {
+width: 30,
+height: 20,
+backgroundColor: "#4A7C2E",
+borderRadius: 15,
+position: "absolute",
+left: 85,
+transform: [{ rotate: "-30deg" }],
+shadowColor: "#000",
+shadowOffset: { width: -2, height: 2 },
+shadowOpacity: 0.2,
+shadowRadius: 2,
+},
+leafRight: {
+width: 30,
+height: 20,
+backgroundColor: "#4A7C2E",
+borderRadius: 15,
+position: "absolute",
+right: 85,
+transform: [{ rotate: "30deg" }],
+shadowColor: "#000",
+shadowOffset: { width: 2, height: 2 },
+shadowOpacity: 0.2,
+shadowRadius: 2,
+},
+flowerBud: {
+width: 24,
+height: 24,
+borderRadius: 12,
+backgroundColor: "#E63946",
+position: "absolute",
+zIndex: 3,
+borderWidth: 3,
+borderColor: "#FFFFFF",
+shadowColor: "#000",
+shadowOffset: { width: 0, height: 2 },
+shadowOpacity: 0.2,
+shadowRadius: 3,
+},
+redBurst: {
+position: "absolute",
+width: 100,
+height: 100,
+borderRadius: 50,
+backgroundColor: "#E63946",
+bottom: 155,
+zIndex: 9,
+},
+burstContainer: {
+position: "absolute",
+width: 150,
+height: 150,
+justifyContent: "center",
+alignItems: "center",
+bottom: 130,
+zIndex: 10,
+},
+iconSplatContainer: {
+width: 120,
+height: 120,
+justifyContent: "center",
+alignItems: "center",
+},
+burstIcon: {
+width: "100%",
+height: "100%",
+borderRadius: 60,
+},
+progressTextContainer: {
+alignItems: "center",
+marginBottom: 30,
+},
+progressText: {
+fontSize: 48,
+fontWeight: "800" as const,
+color: "#FFFFFF",
+textShadowColor: "rgba(0, 0, 0, 0.8)",
+textShadowOffset: { width: 0, height: 2 },
+textShadowRadius: 8,
+},
+progressLabel: {
+fontSize: 14,
+color: "#FFFFFF",
+marginTop: 8,
+textShadowColor: "rgba(0, 0, 0, 0.8)",
+textShadowOffset: { width: 0, height: 1 },
+textShadowRadius: 4,
+},
+progressBarContainer: {
+width: "100%",
+height: 6,
+backgroundColor: "rgba(255, 255, 255, 0.2)",
+borderRadius: 3,
+overflow: "hidden",
+},
+progressBarFill: {
+height: "100%",
+backgroundColor: "#118AB2",
+borderRadius: 4,
+shadowColor: "#118AB2",
+shadowOffset: { width: 0, height: 0 },
+shadowOpacity: 0.6,
+shadowRadius: 8,
+},
+retakeButtonContainer: {
+paddingHorizontal: 32,
+paddingBottom: 120,
+alignItems: "center",
+},
+retakeButton: {
+flexDirection: "row",
+alignItems: "center",
+gap: 8,
+paddingHorizontal: 24,
+paddingVertical: 14,
+backgroundColor: "rgba(255, 255, 255, 0.2)",
+borderRadius: 12,
+borderWidth: 2,
+borderColor: "#FFFFFF",
+},
+retakeButtonText: {
+color: "#FFFFFF",
+fontSize: 16,
+fontWeight: "600" as const,
+},
+tutorialContainer: {
+flex: 1,
+paddingTop: 60,
+},
+skipButton: {
+position: "absolute",
+top: 60,
+right: 24,
+zIndex: 10,
+padding: 8,
+},
+tutorialContent: {
+flex: 1,
+justifyContent: "center",
+alignItems: "center",
+paddingHorizontal: 40,
+},
+tutorialImageContainer: {
+width: "100%",
+height: 320,
+marginBottom: 24,
+borderRadius: 16,
+overflow: "hidden",
+},
+tutorialImage: {
+width: "100%",
+height: "100%",
+},
+tutorialIcon: {
+fontSize: 80,
+marginBottom: 32,
+},
+tutorialTitle: {
+fontSize: 28,
+fontWeight: "700" as const,
+textAlign: "center",
+marginBottom: 16,
+},
+tutorialDescription: {
+fontSize: 16,
+textAlign: "center",
+lineHeight: 24,
+maxWidth: 320,
+},
+swipeHint: {
+flexDirection: "row",
+alignItems: "center",
+gap: 8,
+marginTop: 24,
+paddingVertical: 8,
+paddingHorizontal: 16,
+borderRadius: 20,
+backgroundColor: "rgba(128, 128, 128, 0.1)",
+},
+swipeHintText: {
+fontSize: 14,
+fontWeight: "500" as const,
+},
+tutorialFooter: {
+paddingHorizontal: 32,
+paddingBottom: 140,
+gap: 32,
+},
+dotsContainer: {
+flexDirection: "row",
+justifyContent: "center",
+gap: 8,
+},
+dot: {
+height: 8,
+borderRadius: 4,
+},
+buttonContainer: {
+width: "100%",
+gap: 12,
+},
+navigationContainer: {
+flexDirection: "row",
+alignItems: "center",
+gap: 12,
+width: "100%",
+},
+navButton: {
+width: 48,
+height: 48,
+borderRadius: 24,
+backgroundColor: "rgba(128, 128, 128, 0.1)",
+justifyContent: "center",
+alignItems: "center",
+},
+navButtonDisabled: {
+opacity: 0.3,
+},
+nextButton: {
+paddingVertical: 16,
+borderRadius: 12,
+alignItems: "center",
+},
+nextButtonText: {
+color: "#FFFFFF",
+fontSize: 16,
+fontWeight: "600" as const,
+},
 });
