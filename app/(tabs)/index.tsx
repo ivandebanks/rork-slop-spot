@@ -354,6 +354,33 @@ Ensure all health claims are backed by credible scientific sources.`,
     );
   }
 
+  const takePicture = async () => {
+    // Request permission if not granted
+    if (!permission || !permission.granted) {
+      const result = await requestPermission();
+      if (!result || !result.granted) {
+        return; // User denied permission
+      }
+    }
+
+    if (cameraRef && !isAnalyzing) {
+      if (Platform.OS !== "web") {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      }
+      const photo = await cameraRef.takePictureAsync({
+        quality: 0.8,
+        base64: true,
+        // flash is controlled by the CameraView prop
+      });
+      if (photo && photo.base64) {
+        const imageUri = `data:image/jpeg;base64,${photo.base64}`;
+        setCapturedPhoto(imageUri);
+        setAnalysisProgress(0);
+        analyzeMutation.mutate(imageUri);
+      }
+    }
+  };
+
   // Show tutorial first, before asking for camera permission
   if (showTutorial) {
     const step = tutorialSteps[currentStep];
