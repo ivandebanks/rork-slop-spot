@@ -302,7 +302,7 @@ By using the Slop Spot app, you acknowledge that you have read, understood, and 
 type ModalContent = "privacy" | "terms" | null;
 
 export default function SettingsScreen() {
-  const { themeMode, changeThemeMode, theme, largeTextMode, toggleLargeTextMode, scaleFont } = useTheme();
+  const { themeMode, changeThemeMode, theme, textSizeMode, changeTextSizeMode, scaleFont } = useTheme();
   const [modalContent, setModalContent] = useState<ModalContent>(null);
 
   const handleContactUs = () => {
@@ -383,9 +383,29 @@ export default function SettingsScreen() {
           </Text>
 
           <View style={[styles.card, { backgroundColor: theme.card }]}>
-            <View style={styles.switchOption}>
+            <View style={[styles.switchOption, { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
               <View style={styles.switchOptionLeft}>
-                <Type size={20} color={theme.primary} />
+                <Type size={18} color={theme.primary} />
+                <View style={styles.switchOptionText}>
+                  <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                    Medium Text Mode
+                  </Text>
+                  <Text style={[styles.optionDescription, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+                    Increases all font sizes by 1.25x
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={textSizeMode === "medium"}
+                onValueChange={(value) => changeTextSizeMode(value ? "medium" : "normal")}
+                trackColor={{ false: theme.border, true: theme.primary }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            <View style={[styles.switchOption, { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+              <View style={styles.switchOptionLeft}>
+                <Type size={20} color={theme.primary} strokeWidth={2} />
                 <View style={styles.switchOptionText}>
                   <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
                     Large Text Mode
@@ -396,8 +416,28 @@ export default function SettingsScreen() {
                 </View>
               </View>
               <Switch
-                value={largeTextMode}
-                onValueChange={toggleLargeTextMode}
+                value={textSizeMode === "large"}
+                onValueChange={(value) => changeTextSizeMode(value ? "large" : "normal")}
+                trackColor={{ false: theme.border, true: theme.primary }}
+                thumbColor="#FFFFFF"
+              />
+            </View>
+
+            <View style={styles.switchOption}>
+              <View style={styles.switchOptionLeft}>
+                <Type size={24} color={theme.primary} strokeWidth={2.5} />
+                <View style={styles.switchOptionText}>
+                  <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                    Extra Large Text Mode
+                  </Text>
+                  <Text style={[styles.optionDescription, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+                    Increases all font sizes by 2x
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={textSizeMode === "extraLarge"}
+                onValueChange={(value) => changeTextSizeMode(value ? "extraLarge" : "normal")}
                 trackColor={{ false: theme.border, true: theme.primary }}
                 thumbColor="#FFFFFF"
               />
