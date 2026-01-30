@@ -163,17 +163,6 @@ Scanned with Slop Spot`;
         </View>
 
         <View style={[styles.resultCard, { backgroundColor: theme.card }]}>
-          {/* ENTERTAINMENT DISCLAIMER - REQUIRED BY APPLE */}
-          <View style={styles.disclaimerCard}>
-            <Info size={18} color="#FFA500" strokeWidth={2.5} />
-            <View style={styles.disclaimerContent}>
-              <Text style={[styles.disclaimerTitle, { fontSize: scaleFont(13) }]}>For Entertainment Only</Text>
-              <Text style={[styles.disclaimerText, { fontSize: scaleFont(12) }]}>
-                Ingredient ratings are for informational and entertainment purposes only. This is not medical advice, nutritional guidance, or professionally validated health information. Consult healthcare professionals for dietary decisions.
-              </Text>
-            </View>
-          </View>
-
           <View style={[styles.scoreCircle, { backgroundColor: gradeColor }]}>
             <Text style={[styles.scoreNumber, { fontSize: scaleFont(48) }]}>{Math.round(scan.overallScore)}</Text>
             <Text style={[styles.scoreOutOf, { fontSize: scaleFont(16) }]}>/100</Text>
@@ -248,6 +237,17 @@ Scanned with Slop Spot`;
               <Trash2 size={20} color="#E63946" />
               <Text style={[styles.deleteButtonText, { fontSize: scaleFont(16) }]}>Delete Scan</Text>
             </TouchableOpacity>
+          </View>
+
+          {/* ENTERTAINMENT DISCLAIMER - REQUIRED BY APPLE */}
+          <View style={styles.disclaimerCard}>
+            <Info size={18} color="#FFA500" strokeWidth={2.5} />
+            <View style={styles.disclaimerContent}>
+              <Text style={[styles.disclaimerTitle, { fontSize: scaleFont(13) }]}>For Entertainment Only</Text>
+              <Text style={[styles.disclaimerText, { fontSize: scaleFont(12) }]}>
+                Ingredient ratings are for informational and entertainment purposes only. This is not medical advice, nutritional guidance, or professionally validated health information. Consult healthcare professionals for dietary decisions.
+              </Text>
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -365,7 +365,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 165, 0, 0.1)",
     borderRadius: 12,
     padding: 12,
-    marginBottom: 20,
+    marginTop: 20,
     borderWidth: 1,
     borderColor: "rgba(255, 165, 0, 0.3)",
     gap: 10,
