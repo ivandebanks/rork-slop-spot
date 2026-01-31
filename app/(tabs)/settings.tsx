@@ -214,7 +214,7 @@ Slop Spot allows users to take photos of food, drinks, and food items or package
 The App is provided for informational and entertainment purposes only.
 
 2. Eligibility
-You must be at least 16 years old (or 15 in Australia) to use Slop Spot. By using the App, you confirm that you meet this requirement.
+You must be at least 4 years old to use Slop Spot. By using the App, you confirm that you meet this requirement.
 
 3. User Content
 • You may upload photos of food, drinks, and packaged goods ("User Content").
@@ -456,7 +456,7 @@ export default function SettingsScreen() {
                 Age Rating
               </Text>
               <Text style={[styles.infoValue, { color: theme.textSecondary, fontSize: scaleFont(15) }]}>
-                16+ (15+ for Australia)
+                4+
               </Text>
             </View>
           </View>
