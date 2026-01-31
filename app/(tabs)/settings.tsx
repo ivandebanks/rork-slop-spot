@@ -153,7 +153,7 @@ DISCLAIMER: Ingredient ratings and health scores provided by Slop Spot are for i
 Always consult qualified healthcare professionals and registered dietitians for dietary decisions and health concerns.
 
 Children's Privacy
-Slop Spot is not intended for children under the age of 13 (or 16 in some jurisdictions). We do not knowingly collect any information from children. If you are a parent or guardian and believe your child has used our app, please contact us.
+Slop Spot is rated 4+ and is appropriate for users of all ages. We do not knowingly collect personal information from anyone, including children. All image processing occurs locally on the device, and we do not collect, store, or transmit any personal data to our servers. If you are a parent or guardian and have questions about your child's use of the app, please contact us.
 
 Data Security
 We take reasonable measures to protect the app and its processing systems:
