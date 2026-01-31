@@ -6,11 +6,12 @@ import { useColorScheme } from "react-native";
 import { colors } from "@/constants/colors";
 
 type ThemeMode = "light" | "dark" | "system";
+type TextSizeMode = "normal" | "medium" | "large" | "extraLarge";
 
 export const [ThemeProvider, useTheme] = createContextHook(() => {
   const systemColorScheme = useColorScheme();
   const [themeMode, setThemeMode] = useState<ThemeMode>("system");
-  const [largeTextMode, setLargeTextMode] = useState<boolean>(false);
+  const [textSizeMode, setTextSizeMode] = useState<TextSizeMode>("normal");
 
   const themeModeQuery = useQuery({
     queryKey: ["themeMode"],
@@ -29,15 +30,19 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
     },
   });
 
-  const largeTextModeQuery = useQuery({
-    queryKey: ["largeTextMode"],
+  const textSizeModeQuery = useQuery({
+    queryKey: ["textSizeMode"],
     queryFn: async () => {
       try {
-        const stored = await AsyncStorage.getItem("largeTextMode");
-        return stored === "true";
+        const stored = await AsyncStorage.getItem("textSizeMode");
+        if (!stored) return "normal";
+        if (["normal", "medium", "large", "extraLarge"].includes(stored)) {
+          return stored as TextSizeMode;
+        }
+        return "normal";
       } catch (error) {
-        console.log("Error loading large text mode:", error);
-        return false;
+        console.log("Error loading text size mode:", error);
+        return "normal";
       }
     },
   });
@@ -49,10 +54,10 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
     },
   });
 
-  const saveLargeTextModeMutation = useMutation({
-    mutationFn: async (enabled: boolean) => {
-      await AsyncStorage.setItem("largeTextMode", enabled.toString());
-      return enabled;
+  const saveTextSizeModeMutation = useMutation({
+    mutationFn: async (mode: TextSizeMode) => {
+      await AsyncStorage.setItem("textSizeMode", mode);
+      return mode;
     },
   });
 
@@ -63,24 +68,38 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
   }, [themeModeQuery.data]);
 
   useEffect(() => {
-    if (largeTextModeQuery.data !== undefined) {
-      setLargeTextMode(largeTextModeQuery.data);
+    if (textSizeModeQuery.data !== undefined) {
+      setTextSizeMode(textSizeModeQuery.data);
     }
-  }, [largeTextModeQuery.data]);
+  }, [textSizeModeQuery.data]);
 
   const changeThemeMode = (mode: ThemeMode) => {
     setThemeMode(mode);
     saveThemeModeMutation.mutate(mode);
   };
 
+  const changeTextSizeMode = (mode: TextSizeMode) => {
+    setTextSizeMode(mode);
+    saveTextSizeModeMutation.mutate(mode);
+  };
+
+  // Legacy support for existing code
   const toggleLargeTextMode = () => {
-    const newValue = !largeTextMode;
-    setLargeTextMode(newValue);
-    saveLargeTextModeMutation.mutate(newValue);
+    const newMode = textSizeMode === "normal" ? "medium" : "normal";
+    changeTextSizeMode(newMode);
   };
 
   const scaleFont = (size: number): number => {
-    return largeTextMode ? size * 1.5 : size;
+    switch (textSizeMode) {
+      case "medium":
+        return size * 1.25;
+      case "large":
+        return size * 1.5;
+      case "extraLarge":
+        return size * 2;
+      default:
+        return size;
+    }
   };
 
   const activeColorScheme =
@@ -95,7 +114,10 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
     changeThemeMode,
     theme,
     activeColorScheme,
-    largeTextMode,
+    textSizeMode,
+    changeTextSizeMode,
+    // Legacy support
+    largeTextMode: textSizeMode !== "normal",
     toggleLargeTextMode,
     scaleFont,
   };
