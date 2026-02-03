@@ -6,6 +6,7 @@ import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ScanProvider } from "@/contexts/ScanContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { PurchaseProvider } from "@/contexts/PurchaseContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -22,6 +23,13 @@ function RootLayoutNav() {
           presentation: "card"
         }} 
       />
+      <Stack.Screen 
+        name="paywall" 
+        options={{ 
+          title: "Upgrade",
+          presentation: "modal"
+        }} 
+      />
     </Stack>
   );
 }
@@ -34,11 +42,13 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <ScanProvider>
-          <GestureHandlerRootView>
-            <RootLayoutNav />
-          </GestureHandlerRootView>
-        </ScanProvider>
+        <PurchaseProvider>
+          <ScanProvider>
+            <GestureHandlerRootView>
+              <RootLayoutNav />
+            </GestureHandlerRootView>
+          </ScanProvider>
+        </PurchaseProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

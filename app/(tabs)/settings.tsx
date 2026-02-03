@@ -9,10 +9,15 @@ import {
   Modal,
   Linking,
   Pressable,
+  Platform,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, X } from "lucide-react-native";
+import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, X, Sparkles, RefreshCw, Crown } from "lucide-react-native";
 import { useTheme } from "@/contexts/ThemeContext";
+import { usePurchases } from "@/contexts/PurchaseContext";
+import { router } from "expo-router";
+import * as Haptics from "expo-haptics";
 
 type ThemeMode = "light" | "dark" | "system";
 
@@ -303,10 +308,39 @@ type ModalContent = "privacy" | "terms" | null;
 
 export default function SettingsScreen() {
   const { themeMode, changeThemeMode, theme, textSizeMode, changeTextSizeMode, scaleFont } = useTheme();
+  const { hasPremium, scansRemaining, restoreMutation } = usePurchases();
   const [modalContent, setModalContent] = useState<ModalContent>(null);
 
   const handleContactUs = () => {
     Linking.openURL("mailto:slopspotapp@gmail.com");
+  };
+
+  const handleRestorePurchases = async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    try {
+      await restoreMutation.mutateAsync();
+      if (Platform.OS === "web") {
+        alert("Purchases restored successfully!");
+      } else {
+        Alert.alert("Success", "Purchases restored successfully!");
+      }
+    } catch (error) {
+      console.log("Restore error:", error);
+      if (Platform.OS === "web") {
+        alert("No purchases to restore");
+      } else {
+        Alert.alert("Info", "No purchases to restore");
+      }
+    }
+  };
+
+  const handleUpgrade = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    router.push("/paywall");
   };
 
   const getModalTitle = () => {
@@ -442,6 +476,63 @@ export default function SettingsScreen() {
                 thumbColor="#FFFFFF"
               />
             </View>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+            SUBSCRIPTION
+          </Text>
+
+          <View style={[styles.card, { backgroundColor: theme.card }]}>
+            <View style={[styles.subscriptionStatus, { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+              <View style={styles.subscriptionStatusLeft}>
+                {hasPremium ? (
+                  <Crown size={20} color="#FFD700" fill="#FFD700" />
+                ) : (
+                  <Sparkles size={20} color={theme.primary} />
+                )}
+                <View style={styles.subscriptionStatusText}>
+                  <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                    {hasPremium ? "Premium Active" : "Free Plan"}
+                  </Text>
+                  <Text style={[styles.optionDescription, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+                    {scansRemaining} scans remaining
+                  </Text>
+                </View>
+              </View>
+            </View>
+
+            {!hasPremium && (
+              <TouchableOpacity
+                style={[styles.upgradeOption, { borderBottomWidth: 1, borderBottomColor: theme.border }]}
+                onPress={handleUpgrade}
+                activeOpacity={0.7}
+              >
+                <View style={styles.legalOptionLeft}>
+                  <Sparkles size={20} color={theme.primary} />
+                  <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                    Upgrade to Premium
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={theme.textSecondary} />
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.legalOption}
+              onPress={handleRestorePurchases}
+              activeOpacity={0.7}
+              disabled={restoreMutation.isPending}
+            >
+              <View style={styles.legalOptionLeft}>
+                <RefreshCw size={20} color={theme.primary} />
+                <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                  {restoreMutation.isPending ? "Restoring..." : "Restore Purchases"}
+                </Text>
+              </View>
+              <ChevronRight size={20} color={theme.textSecondary} />
+            </TouchableOpacity>
           </View>
         </View>
 
@@ -637,6 +728,26 @@ const styles = StyleSheet.create({
     flexDirection: "row" as const,
     alignItems: "center" as const,
     gap: 12,
+  },
+  subscriptionStatus: {
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+  },
+  subscriptionStatusLeft: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 12,
+  },
+  subscriptionStatusText: {
+    flex: 1,
+    gap: 4,
+  },
+  upgradeOption: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
   bottomSpacer: {
     height: 40,

@@ -13,11 +13,12 @@ import {
   Dimensions,
   PanResponder,
 } from "react-native";
-import { Camera, Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react-native";
+import { Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
 import { generateObject } from "@rork-ai/toolkit-sdk";
 import { z } from "zod";
 import { useScans } from "@/contexts/ScanContext";
+import { usePurchases } from "@/contexts/PurchaseContext";
 import { router } from "expo-router";
 import { getGradeLabel, ScanResult } from "@/types/scan";
 import * as Haptics from "expo-haptics";
@@ -26,7 +27,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 
 const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 const citationSchema = z.object({
   title: z.string(),
@@ -97,6 +97,7 @@ export default function ScannerScreen() {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [flashEnabled, setFlashEnabled] = useState(false);
   const { addScan } = useScans();
+  const { canScan, useScanMutation, scansRemaining } = usePurchases();
   const { theme, scaleFont } = useTheme();
 
   // Animation values
@@ -325,6 +326,14 @@ Ensure all health claims are backed by credible scientific sources.`,
   };
 
   const pickImageFromGallery = async () => {
+    if (!canScan) {
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      }
+      router.push("/paywall");
+      return;
+    }
+
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -340,11 +349,20 @@ Ensure all health claims are backed by credible scientific sources.`,
       const imageUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
       setCapturedPhoto(imageUri);
       setAnalysisProgress(0);
+      useScanMutation.mutate();
       analyzeMutation.mutate(imageUri);
     }
   };
 
   const takePicture = async () => {
+    if (!canScan) {
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      }
+      router.push("/paywall");
+      return;
+    }
+
     // Request permission if not granted
     if (!permission || !permission.granted) {
       const result = await requestPermission();
@@ -365,6 +383,7 @@ Ensure all health claims are backed by credible scientific sources.`,
         const imageUri = `data:image/jpeg;base64,${photo.base64}`;
         setCapturedPhoto(imageUri);
         setAnalysisProgress(0);
+        useScanMutation.mutate();
         analyzeMutation.mutate(imageUri);
       }
     }
@@ -669,7 +688,7 @@ Ensure all health claims are backed by credible scientific sources.`,
 
               <View style={styles.headerCenter}>
                 <Text style={[styles.headerTitle, { fontSize: scaleFont(32) }]}>Slop Spot</Text>
-                <Text style={[styles.headerSubtitle, { fontSize: scaleFont(16) }]}>Scan product label</Text>
+                <Text style={[styles.headerSubtitle, { fontSize: scaleFont(16) }]}>{scansRemaining} scans</Text>
               </View>
 
               <View style={styles.headerRight}>
