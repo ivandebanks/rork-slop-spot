@@ -81,7 +81,7 @@ export default function PaywallScreen() {
               Subscriptions
             </Text>
             {subscriptions.map((pkg) => {
-              const isUnlimited = pkg.identifier.includes("unlimited");
+              const isPremium = pkg.identifier.includes("premium");
               return (
                 <TouchableOpacity
                   key={pkg.identifier}
@@ -89,14 +89,14 @@ export default function PaywallScreen() {
                     styles.packageCard,
                     { 
                       backgroundColor: theme.surface,
-                      borderColor: isUnlimited ? theme.primary : theme.border,
-                      borderWidth: isUnlimited ? 2 : 1,
+                      borderColor: isPremium ? theme.primary : theme.border,
+                      borderWidth: isPremium ? 2 : 1,
                     }
                   ]}
                   onPress={() => handlePurchase(pkg)}
                   disabled={purchaseMutation.isPending}
                 >
-                  {isUnlimited && (
+                  {isPremium && (
                     <View style={[styles.badge, { backgroundColor: theme.primary }]}>
                       <Zap size={14} color="#FFFFFF" fill="#FFFFFF" />
                       <Text style={[styles.badgeText, { fontSize: scaleFont(12) }]}>
