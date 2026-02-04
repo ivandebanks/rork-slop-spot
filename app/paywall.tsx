@@ -2,14 +2,16 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { router } from "expo-router";
-import { X, Check, Zap, Sparkles, AlertCircle } from "lucide-react-native";
+import { X, Check, Zap, Sparkles, AlertCircle, RefreshCw } from "lucide-react-native";
 import { PurchasesPackage } from "react-native-purchases";
 import * as Haptics from "expo-haptics";
 import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function PaywallScreen() {
   const { offerings, purchaseMutation, scansRemaining, isLoading, error } = usePurchases();
   const { theme, scaleFont } = useTheme();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // Debug logging for TestFlight
@@ -98,11 +100,14 @@ export default function PaywallScreen() {
           <TouchableOpacity
             style={[styles.retryButton, { backgroundColor: theme.primary }]}
             onPress={() => {
-              // Trigger a refresh of offerings
-              router.back();
-              router.push("/(tabs)/paywall");
+              if (Platform.OS !== "web") {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              }
+              queryClient.invalidateQueries({ queryKey: ["offerings"] });
+              queryClient.invalidateQueries({ queryKey: ["customerInfo"] });
             }}
           >
+            <RefreshCw size={20} color="#FFFFFF" />
             <Text style={[styles.retryButtonText, { fontSize: scaleFont(16) }]}>
               Retry
             </Text>
@@ -404,6 +409,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
   retryButtonText: {
     color: "#FFFFFF",

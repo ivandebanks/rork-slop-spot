@@ -18,12 +18,21 @@ function getRCToken() {
 }
 
 const apiKey = getRCToken();
+console.log("=== RevenueCat Configuration ===");
+console.log("Platform:", Platform.OS);
+console.log("Dev mode:", __DEV__);
+console.log("API Key present:", !!apiKey);
+console.log("API Key (first 10 chars):", apiKey?.substring(0, 10));
+
 if (apiKey) {
   try {
     Purchases.configure({ apiKey });
+    console.log("RevenueCat configured successfully");
   } catch (error) {
-    console.log("Error configuring RevenueCat:", error);
+    console.error("Error configuring RevenueCat:", error);
   }
+} else {
+  console.error("No RevenueCat API key found!");
 }
 
 export const [PurchaseProvider, usePurchases] = createContextHook(() => {
@@ -43,9 +52,19 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
   const offeringsQuery = useQuery({
     queryKey: ["offerings"],
     queryFn: async () => {
-      const offerings = await Purchases.getOfferings();
-      return offerings;
+      try {
+        console.log("Fetching offerings from RevenueCat...");
+        const offerings = await Purchases.getOfferings();
+        console.log("Offerings fetched:", offerings);
+        return offerings;
+      } catch (error) {
+        console.error("Error fetching offerings:", error);
+        throw error;
+      }
     },
+    retry: 2,
+    retryDelay: 1000,
+    staleTime: 60000,
   });
 
   const dailyScansQuery = useQuery({
@@ -146,6 +165,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
     customerInfo: customerInfoQuery.data,
     offerings: offeringsQuery.data,
     isLoading: customerInfoQuery.isLoading || offeringsQuery.isLoading,
+    error: offeringsQuery.error || customerInfoQuery.error,
     purchaseMutation,
     restoreMutation,
     useScanMutation,
