@@ -8,6 +8,7 @@ export const colors = {
     border: "#F0F0F0",
     card: "#FFFFFF",
     tabBar: "#FFFFFF",
+    error: "#FF3B30",
   },
   dark: {
     primary: "#118AB2",
@@ -18,5 +19,6 @@ export const colors = {
     border: "#2C2C2C",
     card: "#1E1E1E",
     tabBar: "#1E1E1E",
+    error: "#FF453A",
   },
 };
