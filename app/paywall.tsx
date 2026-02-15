@@ -1,11 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, Animated } from "react-native";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { router } from "expo-router";
-import { X, Check, Zap, Sparkles, AlertCircle, RefreshCw } from "lucide-react-native";
+import { X, Check, Sparkles, AlertCircle, RefreshCw, Crown, Shield, Zap, Star } from "lucide-react-native";
 import { PurchasesPackage } from "react-native-purchases";
 import * as Haptics from "expo-haptics";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 export default function PaywallScreen() {
@@ -13,8 +13,47 @@ export default function PaywallScreen() {
   const { theme, scaleFont } = useTheme();
   const queryClient = useQueryClient();
 
+  const shimmer1 = useRef(new Animated.Value(0)).current;
+  const shimmer2 = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const starSpin = useRef(new Animated.Value(0)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
-    // Debug logging for TestFlight
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer1, { toValue: 1, duration: 2000, useNativeDriver: true }),
+        Animated.timing(shimmer1, { toValue: 0, duration: 2000, useNativeDriver: true }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer2, { toValue: 1, duration: 3000, useNativeDriver: true }),
+        Animated.timing(shimmer2, { toValue: 0, duration: 3000, useNativeDriver: true }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, { toValue: 1.05, duration: 1500, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
+      ])
+    ).start();
+
+    Animated.loop(
+      Animated.timing(starSpin, { toValue: 1, duration: 8000, useNativeDriver: true })
+    ).start();
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(glowAnim, { toValue: 1, duration: 2500, useNativeDriver: true }),
+        Animated.timing(glowAnim, { toValue: 0, duration: 2500, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  useEffect(() => {
     console.log("=== PAYWALL DEBUG ===");
     console.log("Offerings:", offerings);
     console.log("Is Loading:", isLoading);
@@ -37,7 +76,7 @@ export default function PaywallScreen() {
 
   const handlePurchase = async (pkg: PurchasesPackage) => {
     if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     }
     try {
       await purchaseMutation.mutateAsync(pkg);
@@ -48,7 +87,6 @@ export default function PaywallScreen() {
     } catch (error: any) {
       if (!error.userCancelled) {
         console.error("Purchase error:", error);
-        // Show error to user
         alert(`Purchase failed: ${error.message || 'Unknown error'}`);
       }
     }
@@ -61,7 +99,31 @@ export default function PaywallScreen() {
     router.back();
   };
 
-  // Loading state
+  const spinInterpolation = starSpin.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
+
+  const glowOpacity = glowAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0.3, 0.8],
+  });
+
+  const shimmerOpacity1 = shimmer1.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.2, 0.6, 0.2],
+  });
+
+  const shimmerOpacity2 = shimmer2.interpolate({
+    inputRange: [0, 0.5, 1],
+    outputRange: [0.1, 0.4, 0.1],
+  });
+
+  const shimmerTranslate = shimmer1.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-200, 200],
+  });
+
   if (isLoading || !offerings) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -71,16 +133,15 @@ export default function PaywallScreen() {
           </TouchableOpacity>
         </View>
         <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color={theme.primary} />
+          <ActivityIndicator size="large" color="#D4AF37" />
           <Text style={[styles.loadingText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
-            Loading plans...
+            Loading...
           </Text>
         </View>
       </View>
     );
   }
 
-  // Error state
   if (error || !offerings.current) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -92,13 +153,13 @@ export default function PaywallScreen() {
         <View style={styles.centerContent}>
           <AlertCircle size={48} color={theme.error || "#FF3B30"} />
           <Text style={[styles.errorTitle, { color: theme.text, fontSize: scaleFont(20) }]}>
-            Unable to Load Plans
+            Unable to Load
           </Text>
           <Text style={[styles.errorText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
             {error?.message || "Please check your internet connection and try again."}
           </Text>
           <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: theme.primary }]}
+            style={[styles.retryButton, { backgroundColor: "#D4AF37" }]}
             onPress={() => {
               if (Platform.OS !== "web") {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -108,9 +169,7 @@ export default function PaywallScreen() {
             }}
           >
             <RefreshCw size={20} color="#FFFFFF" />
-            <Text style={[styles.retryButtonText, { fontSize: scaleFont(16) }]}>
-              Retry
-            </Text>
+            <Text style={[styles.retryButtonText, { fontSize: scaleFont(16) }]}>Retry</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -118,28 +177,9 @@ export default function PaywallScreen() {
   }
 
   const packages = offerings.current.availablePackages;
-  
-  // Filter and sort packages
-  const subscriptions = packages.filter(p => 
-    p.packageType === "MONTHLY" || 
-    p.packageType === "ANNUAL" ||
-    p.identifier.toLowerCase().includes("premium") || 
-    p.identifier.toLowerCase().includes("unlimited")
-  ).sort((a, b) => {
-    // Sort by price, highest first (Premium $9.99 should be first)
-    return b.product.price - a.product.price;
-  });
-  
-  const oneTimePurchases = packages.filter(p => 
-    p.packageType === "LIFETIME" ||
-    p.identifier.toLowerCase().includes("scans") && !p.identifier.toLowerCase().includes("unlimited")
-  ).sort((a, b) => {
-    // Sort by price, highest first (30 scans at top, 1 scan at bottom)
-    return b.product.price - a.product.price;
-  });
+  const targetPackage = packages.length > 0 ? packages[0] : null;
 
-  // If no packages found
-  if (packages.length === 0) {
+  if (!targetPackage) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.header}>
@@ -160,191 +200,148 @@ export default function PaywallScreen() {
     );
   }
 
+  const isDark = theme.background === "#121212";
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
           <X size={24} color={theme.text} />
         </TouchableOpacity>
-        <View style={styles.headerContent}>
-          <Sparkles size={32} color={theme.primary} />
-          <Text style={[styles.title, { color: theme.text, fontSize: scaleFont(28) }]}>
-            Upgrade Your Scans
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
-            You have {scansRemaining} scans remaining
-          </Text>
-        </View>
       </View>
 
-      <ScrollView 
-        style={styles.content}
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        {subscriptions.length > 0 && (
-          <>
-            <Text style={[styles.sectionTitle, { color: theme.text, fontSize: scaleFont(20) }]}>
-              Subscriptions
-            </Text>
-            {subscriptions.map((pkg, index) => {
-              // Premium should be first (highest price), Unlimited second
-              const isPremium = pkg.identifier.toLowerCase().includes("premium");
-              const isUnlimited = pkg.identifier.toLowerCase().includes("unlimited");
-              const isAnnual = pkg.packageType === "ANNUAL";
-              
-              // Get display title from product or use fallback
-              let displayTitle = pkg.product.title;
-              if (isPremium && !displayTitle.toLowerCase().includes("premium")) {
-                displayTitle = "Premium";
-              } else if (isUnlimited && !displayTitle.toLowerCase().includes("unlimited")) {
-                displayTitle = "Unlimited Scans";
-              }
-              
-              return (
-                <TouchableOpacity
-                  key={pkg.identifier}
-                  style={[
-                    styles.packageCard,
-                    { 
-                      backgroundColor: theme.surface,
-                      borderColor: isPremium ? theme.primary : theme.border,
-                      borderWidth: isPremium ? 2 : 1,
-                    }
-                  ]}
-                  onPress={() => handlePurchase(pkg)}
-                  disabled={purchaseMutation.isPending}
-                >
-                  {isPremium && (
-                    <View style={[styles.badge, { backgroundColor: theme.primary }]}>
-                      <Zap size={14} color="#FFFFFF" fill="#FFFFFF" />
-                      <Text style={[styles.badgeText, { fontSize: scaleFont(12) }]}>
-                        Best Value
-                      </Text>
-                    </View>
-                  )}
-                  <View style={styles.packageHeader}>
-                    <View>
-                      <Text style={[styles.packageTitle, { color: theme.text, fontSize: scaleFont(18) }]}>
-                        {displayTitle}
-                      </Text>
-                      {isPremium && (
-                        <Text style={[styles.packageSubtitle, { color: theme.textSecondary, fontSize: scaleFont(12) }]}>
-                          Most popular choice
-                        </Text>
-                      )}
-                      {isUnlimited && (
-                        <Text style={[styles.packageSubtitle, { color: theme.textSecondary, fontSize: scaleFont(12) }]}>
-                          Great value
-                        </Text>
-                      )}
-                      {isAnnual && (
-                        <Text style={[styles.packageSubtitle, { color: theme.textSecondary, fontSize: scaleFont(12) }]}>
-                          Save with annual
-                        </Text>
-                      )}
-                    </View>
-                    <View style={styles.priceContainer}>
-                      <Text style={[styles.packagePrice, { color: theme.primary, fontSize: scaleFont(24) }]}>
-                        {pkg.product.priceString}
-                      </Text>
-                      <Text style={[styles.pricePeriod, { color: theme.textSecondary, fontSize: scaleFont(12) }]}>
-                        {isAnnual ? '/year' : '/month'}
-                      </Text>
-                    </View>
-                  </View>
-                  <View style={styles.features}>
-                    <View style={styles.feature}>
-                      <Check size={16} color={theme.primary} />
-                      <Text style={[styles.featureText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
-                        Unlimited daily scans
-                      </Text>
-                    </View>
-                    <View style={styles.feature}>
-                      <Check size={16} color={theme.primary} />
-                      <Text style={[styles.featureText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
-                        Priority analysis
-                      </Text>
-                    </View>
-                    <View style={styles.feature}>
-                      <Check size={16} color={theme.primary} />
-                      <Text style={[styles.featureText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
-                        Cancel anytime
-                      </Text>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </>
-        )}
+      <View style={styles.mainContent}>
+        <View style={styles.topSection}>
+          <Animated.View style={{ transform: [{ rotate: spinInterpolation }] }}>
+            <Crown size={48} color="#D4AF37" fill="#D4AF37" />
+          </Animated.View>
+          <Text style={[styles.title, { color: theme.text, fontSize: scaleFont(30) }]}>
+            Go Premium
+          </Text>
+          <Text style={[styles.subtitle, { color: theme.textSecondary, fontSize: scaleFont(15) }]}>
+            One purchase. Unlimited power. Forever.
+          </Text>
+          <Text style={[styles.scansInfo, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+            Currently: {scansRemaining}
+          </Text>
+        </View>
 
-        {oneTimePurchases.length > 0 && (
-          <>
-            <Text style={[styles.sectionTitle, { color: theme.text, fontSize: scaleFont(20), marginTop: 24 }]}>
-              Scan Packs
-            </Text>
-            <View style={styles.packsGrid}>
-              {oneTimePurchases.map((pkg) => {
-                // Extract number from identifier first, then title, then description
-                let scanCount = "1";
-                
-                // Try identifier first (e.g., scans_30, scans_20, etc.)
-                const idMatch = pkg.identifier.match(/scans?[_-]?(\d+)/i);
-                if (idMatch) {
-                  scanCount = idMatch[1];
-                } else {
-                  // Try product title (e.g., "30 Scans", "20 Scans")
-                  const titleMatch = pkg.product.title.match(/(\d+)\s*scans?/i);
-                  if (titleMatch) {
-                    scanCount = titleMatch[1];
-                  } else {
-                    // Try just any number in title
-                    const anyNumber = pkg.product.title.match(/\d+/);
-                    if (anyNumber) {
-                      scanCount = anyNumber[0];
-                    }
-                  }
-                }
-                
-                // Determine if singular or plural
-                const isPlural = parseInt(scanCount) !== 1;
-                
-                return (
-                  <TouchableOpacity
-                    key={pkg.identifier}
-                    style={[
-                      styles.packCard,
-                      { 
-                        backgroundColor: theme.surface,
-                        borderColor: theme.border,
-                      }
-                    ]}
-                    onPress={() => handlePurchase(pkg)}
-                    disabled={purchaseMutation.isPending}
-                  >
-                    <Text style={[styles.packCount, { color: theme.text, fontSize: scaleFont(32) }]}>
-                      {scanCount}
-                    </Text>
-                    <Text style={[styles.packLabel, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
-                      {isPlural ? 'scans' : 'scan'}
-                    </Text>
-                    <Text style={[styles.packPrice, { color: theme.primary, fontSize: scaleFont(18) }]}>
-                      {pkg.product.priceString}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+        <Animated.View style={[styles.cardWrapper, { transform: [{ scale: pulseAnim }] }]}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => handlePurchase(targetPackage)}
+            disabled={purchaseMutation.isPending}
+            style={styles.cardTouchable}
+          >
+            <View style={[
+              styles.card,
+              {
+                backgroundColor: isDark ? "#1C1A14" : "#FFFDF5",
+                borderColor: "#D4AF37",
+              }
+            ]}>
+              <Animated.View
+                style={[
+                  styles.shimmerOverlay,
+                  {
+                    opacity: shimmerOpacity1,
+                    transform: [{ translateX: shimmerTranslate }],
+                    backgroundColor: "#D4AF37",
+                  },
+                ]}
+              />
+              <Animated.View
+                style={[
+                  styles.shimmerOverlay2,
+                  {
+                    opacity: shimmerOpacity2,
+                    backgroundColor: "#FFD700",
+                  },
+                ]}
+              />
+
+              <Animated.View style={[styles.glowRing, { opacity: glowOpacity, borderColor: "#D4AF37" }]} />
+
+              <View style={styles.cardBadge}>
+                <View style={styles.badgeInner}>
+                  <Star size={12} color="#FFFFFF" fill="#FFFFFF" />
+                  <Text style={styles.badgeText}>LIFETIME DEAL</Text>
+                  <Star size={12} color="#FFFFFF" fill="#FFFFFF" />
+                </View>
+              </View>
+
+              <View style={styles.cardContent}>
+                <View style={styles.priceRow}>
+                  <Text style={[styles.currency, { color: "#D4AF37", fontSize: scaleFont(22) }]}>$</Text>
+                  <Text style={[styles.priceMain, { color: "#D4AF37", fontSize: scaleFont(56) }]}>4</Text>
+                  <Text style={[styles.priceDecimal, { color: "#D4AF37", fontSize: scaleFont(24) }]}>.99</Text>
+                </View>
+                <Text style={[styles.oneTime, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
+                  One-time payment
+                </Text>
+
+                <View style={[styles.divider, { backgroundColor: isDark ? "#2A2720" : "#F0E8D0" }]} />
+
+                <View style={styles.perks}>
+                  {[
+                    { icon: Zap, text: "Unlimited scans forever" },
+                    { icon: Sparkles, text: "Priority AI analysis" },
+                    { icon: Shield, text: "No ads, no limits" },
+                    { icon: Crown, text: "All future updates included" },
+                  ].map((perk, i) => (
+                    <View key={i} style={styles.perkRow}>
+                      <View style={styles.checkCircle}>
+                        <Check size={14} color="#FFFFFF" strokeWidth={3} />
+                      </View>
+                      <Text style={[styles.perkText, { color: theme.text, fontSize: scaleFont(15) }]}>
+                        {perk.text}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {purchaseMutation.isPending ? (
+                <View style={styles.buyButton}>
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                </View>
+              ) : (
+                <View style={styles.buyButton}>
+                  <Text style={[styles.buyButtonText, { fontSize: scaleFont(18) }]}>
+                    Unlock Premium
+                  </Text>
+                  <Sparkles size={20} color="#FFFFFF" />
+                </View>
+              )}
+
+              <View style={styles.sparkleCornerTL}>
+                <Animated.View style={{ opacity: shimmerOpacity1 }}>
+                  <Star size={16} color="#D4AF37" fill="#D4AF37" />
+                </Animated.View>
+              </View>
+              <View style={styles.sparkleCornerTR}>
+                <Animated.View style={{ opacity: shimmerOpacity2 }}>
+                  <Sparkles size={14} color="#D4AF37" />
+                </Animated.View>
+              </View>
+              <View style={styles.sparkleCornerBL}>
+                <Animated.View style={{ opacity: shimmerOpacity2 }}>
+                  <Star size={12} color="#D4AF37" fill="#D4AF37" />
+                </Animated.View>
+              </View>
+              <View style={styles.sparkleCornerBR}>
+                <Animated.View style={{ opacity: shimmerOpacity1 }}>
+                  <Sparkles size={16} color="#D4AF37" />
+                </Animated.View>
+              </View>
             </View>
-          </>
-        )}
+          </TouchableOpacity>
+        </Animated.View>
 
         <Text style={[styles.disclaimer, { color: theme.textSecondary, fontSize: scaleFont(12) }]}>
-          Subscriptions auto-renew unless cancelled 24 hours before the period ends.
-          {"\n"}
-          Manage subscriptions in your account settings.
+          Pay once, own it forever. No subscriptions.
         </Text>
-      </ScrollView>
+      </View>
     </View>
   );
 }
@@ -356,31 +353,11 @@ const styles = StyleSheet.create({
   header: {
     paddingTop: 60,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 8,
   },
   closeButton: {
     alignSelf: "flex-end",
     padding: 8,
-  },
-  headerContent: {
-    alignItems: "center",
-    gap: 8,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "700" as const,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    textAlign: "center",
-  },
-  content: {
-    flex: 1,
-  },
-  contentContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
   },
   centerContent: {
     flex: 1,
@@ -418,98 +395,183 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600" as const,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "600" as const,
-    marginBottom: 16,
+  mainContent: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    paddingBottom: 40,
+    marginTop: -20,
   },
-  packageCard: {
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
-    borderWidth: 1,
+  topSection: {
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 32,
   },
-  badge: {
+  title: {
+    fontWeight: "800" as const,
+    textAlign: "center",
+    marginTop: 12,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    textAlign: "center",
+    letterSpacing: 0.2,
+  },
+  scansInfo: {
+    textAlign: "center",
+    marginTop: 2,
+  },
+  cardWrapper: {
+    width: "100%",
+    maxWidth: 360,
+  },
+  cardTouchable: {
+    width: "100%",
+  },
+  card: {
+    borderRadius: 24,
+    borderWidth: 2,
+    paddingTop: 32,
+    paddingBottom: 0,
+    overflow: "hidden",
+    position: "relative",
+  },
+  shimmerOverlay: {
     position: "absolute",
-    top: -12,
-    alignSelf: "center",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: 120,
+    borderRadius: 24,
+  },
+  shimmerOverlay2: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    width: "50%",
+    height: "100%",
+    borderRadius: 24,
+  },
+  glowRing: {
+    position: "absolute",
+    top: -4,
+    left: -4,
+    right: -4,
+    bottom: -4,
+    borderRadius: 28,
+    borderWidth: 3,
+  },
+  cardBadge: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  badgeInner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    gap: 6,
+    backgroundColor: "#D4AF37",
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
   badgeText: {
     color: "#FFFFFF",
     fontSize: 12,
-    fontWeight: "600" as const,
+    fontWeight: "800" as const,
+    letterSpacing: 1.5,
   },
-  packageHeader: {
+  cardContent: {
+    paddingHorizontal: 24,
+    alignItems: "center",
+  },
+  priceRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 16,
   },
-  packageTitle: {
-    fontSize: 18,
-    fontWeight: "600" as const,
-  },
-  packageSubtitle: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  priceContainer: {
-    alignItems: "flex-end",
-  },
-  packagePrice: {
-    fontSize: 24,
+  currency: {
     fontWeight: "700" as const,
+    marginTop: 8,
+    marginRight: 2,
   },
-  pricePeriod: {
-    fontSize: 12,
+  priceMain: {
+    fontWeight: "900" as const,
+    lineHeight: 62,
+  },
+  priceDecimal: {
+    fontWeight: "700" as const,
+    marginTop: 8,
+  },
+  oneTime: {
     marginTop: 2,
+    letterSpacing: 0.3,
   },
-  features: {
-    gap: 12,
+  divider: {
+    width: "80%",
+    height: 1,
+    marginVertical: 20,
   },
-  feature: {
+  perks: {
+    width: "100%",
+    gap: 14,
+    marginBottom: 24,
+  },
+  perkRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-  },
-  featureText: {
-    fontSize: 14,
-  },
-  packsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
     gap: 12,
-    marginBottom: 16,
   },
-  packCard: {
-    width: "48%",
-    borderRadius: 12,
-    padding: 16,
+  checkCircle: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "#D4AF37",
     alignItems: "center",
-    borderWidth: 1,
+    justifyContent: "center",
   },
-  packCount: {
-    fontSize: 32,
-    fontWeight: "700" as const,
+  perkText: {
+    fontWeight: "500" as const,
+    flex: 1,
   },
-  packLabel: {
-    fontSize: 14,
-    marginBottom: 8,
+  buyButton: {
+    backgroundColor: "#D4AF37",
+    paddingVertical: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
   },
-  packPrice: {
-    fontSize: 18,
-    fontWeight: "600" as const,
+  buyButtonText: {
+    color: "#FFFFFF",
+    fontWeight: "800" as const,
+    letterSpacing: 0.5,
+  },
+  sparkleCornerTL: {
+    position: "absolute",
+    top: 12,
+    left: 12,
+  },
+  sparkleCornerTR: {
+    position: "absolute",
+    top: 14,
+    right: 12,
+  },
+  sparkleCornerBL: {
+    position: "absolute",
+    bottom: 70,
+    left: 14,
+  },
+  sparkleCornerBR: {
+    position: "absolute",
+    bottom: 72,
+    right: 12,
   },
   disclaimer: {
-    fontSize: 12,
     textAlign: "center",
     lineHeight: 18,
-    marginTop: 24,
+    marginTop: 20,
   },
 });

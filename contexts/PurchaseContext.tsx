@@ -102,12 +102,6 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
   }, [customerInfoQuery.data]);
 
   const getCreditsFromProduct = (productId: string): number => {
-    if (productId.includes("scans_1")) return 1;
-    if (productId.includes("scans_3")) return 3;
-    if (productId.includes("scans_5")) return 5;
-    if (productId.includes("scans_10")) return 10;
-    if (productId.includes("scans_20")) return 20;
-    if (productId.includes("scans_30")) return 30;
     return 0;
   };
 
@@ -144,7 +138,9 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
   });
 
   const hasPremium = (): boolean => {
-    return customerInfoQuery.data?.entitlements.active["premium"] !== undefined;
+    const hasEntitlement = customerInfoQuery.data?.entitlements.active["premium"] !== undefined;
+    const hasPurchase = (customerInfoQuery.data?.nonSubscriptionTransactions?.length ?? 0) > 0;
+    return hasEntitlement || hasPurchase;
   };
 
   const canScan = (): boolean => {
