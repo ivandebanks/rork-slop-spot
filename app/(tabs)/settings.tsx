@@ -89,30 +89,6 @@ The app includes a tutorial to help you understand how to use the scanning and a
 • Can be accessed or skipped at your preference
 • Does not send any information to external servers
 
-Advertising
-ADVERTISING DISCLOSURE: Kiwi uses Google AdMob to display advertisements.
-
-How Advertising Works
-When ads are active in the app, Google AdMob may collect and process certain information to serve personalized advertisements. This may include:
-• Device information (device type, operating system version)
-• Advertising identifiers (IDFA on iOS, which you can reset in device settings)
-• General location data (approximate location based on IP address)
-• Ad interaction data (which ads you view or click)
-• App usage data (how you interact with the app)
-
-What AdMob Does NOT Receive
-• Your photos or scanned images
-• Your scan results or ingredient data
-• Your scan history
-• Any personally identifiable information we collect (because we don't collect any)
-
-Your Advertising Choices
-• You can limit ad tracking on iOS by going to Settings > Privacy & Security > Tracking > turning off "Allow Apps to Request to Track"
-• You can reset your advertising identifier in your device settings
-• AdMob's data practices are governed by Google's Privacy Policy, available at https://policies.google.com/privacy
-
-Note: Advertising features are currently integrated in the app but may not be active until verification is complete. When active, ads will be clearly displayed within the app interface.
-
 Personal Information
 We do NOT collect personal information such as:
 • Names, email addresses, phone numbers, or account credentials
@@ -131,16 +107,14 @@ The app uses on-device image recognition and text extraction to:
 All processing happens on your device. No photos or ingredient data are sent to external servers.
 
 Third-Party Services
-Kiwi uses the following third-party services:
-• Google AdMob: For displaying advertisements (see Advertising section above)
-• App performance monitoring: For crash reporting and basic usage analytics (anonymous, non-identifying data only)
+Kiwi may use third-party services for app performance monitoring (crash reporting and basic usage analytics using anonymous, non-identifying data only).
 
 Important: These services do NOT receive:
 • Your photos or images
 • Scan results or ingredient data
 • Your scan history
 
-Any third-party services we use are required to comply with privacy standards. AdMob collects data as described in the Advertising section above. Other analytics services only receive anonymous, aggregated data.
+Any third-party services we use are required to comply with privacy standards and only receive anonymous, aggregated data.
 
 No Social Features or Data Sharing
 • The app does NOT include social features, voting, or sharing capabilities
@@ -166,7 +140,6 @@ We take reasonable measures to protect the app and its processing systems:
 • No photos are transmitted over the network
 • Scan results are stored only on your device using secure local storage
 • We cannot access your scan history or photos
-• AdMob uses industry-standard security practices for data it collects
 
 Since photos are never uploaded and are immediately deleted, the risk of photo data exposure is minimized.
 
@@ -175,37 +148,32 @@ Regarding data we collect or store:
 • We do not collect or store personal data, photos, or scan results on servers
 • Once you delete the app, all local scan history is permanently removed
 • You control scan data through your device and the in-app delete functions
-• For advertising data collected by AdMob, you have rights under Google's privacy policies
-• You can control ad tracking through your device settings as described in the Advertising section
 
 International Data Transfers
 Regarding our data practices:
 • All scanning and analysis occurs on your device with no data transfers
 • Your photos and scan results never leave your device
-• AdMob may transfer advertising data internationally in accordance with Google's privacy practices
 
 Region-Specific Information
 
 California Residents (CCPA)
-We do not sell personal information. AdMob may collect data for advertising purposes as described above. Since we don't collect or store personal scan data on servers, CCPA data rights do not apply to that data. All scan data is stored locally on your device under your control.
+We do not sell personal information. Since we don't collect or store personal scan data on servers, CCPA data rights do not apply to that data. All scan data is stored locally on your device under your control.
 
 European Economic Area Residents (GDPR)
-Our legal basis for processing is your consent (camera permission). AdMob processes advertising data based on legitimate interests and consent where required. Since we don't store scan data on servers, GDPR data retention requirements don't apply to that data. You can withdraw camera consent by revoking access in device settings.
+Our legal basis for processing is your consent (camera permission). Since we don't store scan data on servers, GDPR data retention requirements don't apply to that data. You can withdraw camera consent by revoking access in device settings.
 
 Australian Residents
-We comply with the Australian Privacy Principles. Since we don't collect or store personal scan information on servers, APP requirements for server-side data handling don't apply to scan data. AdMob's practices are subject to Google's privacy compliance.
+We comply with the Australian Privacy Principles. Since we don't collect or store personal scan information on servers, APP requirements for server-side data handling don't apply to scan data.
 
 Changes to This Policy
 We may update this Privacy Policy from time to time. Any changes will be reflected by updating the "Last Updated" date at the top of this policy. We will notify you of material changes through the app or other reasonable means. Continued use of the app after changes constitutes acceptance of the updated policy.
 
 Contact Us
-If you have questions about this Privacy Policy, camera and image data handling, or advertising practices, you can contact us at:
+If you have questions about this Privacy Policy or camera and image data handling, you can contact us at:
 
-Email: slopspotapp@gmail.com
+Email: snapit.foranything@gmail.com
 
-For questions about AdMob and advertising data, you can also review Google's Privacy Policy at https://policies.google.com/privacy
-
-By using the Kiwi app, you acknowledge that you have read and understood this Privacy Policy, particularly the sections regarding camera usage, on-device image processing, advertising practices, and entertainment-only ingredient ratings.`;
+By using the Kiwi app, you acknowledge that you have read and understood this Privacy Policy, particularly the sections regarding camera usage, on-device image processing, and entertainment-only ingredient ratings.`;
 
 const TERMS_OF_SERVICE = `Terms of Service
 Kiwi - Better Health Scanner
@@ -239,13 +207,7 @@ You agree not to upload:
 • Uninstalling the App permanently deletes all stored scan history.
 • We do not have access to your scan history as it never leaves your device.
 
-5. Advertising
-• The App may display advertisements through Google AdMob.
-• AdMob may collect certain data as described in our Privacy Policy.
-• Advertising revenue helps us maintain and improve the App.
-• You can control ad tracking through your device settings.
-
-6. No Guarantees or Professional Advice
+5. No Guarantees or Professional Advice
 Kiwi does not provide medical, nutritional, dietary, or professional advice.
 • Results are automated and may be inaccurate.
 • You should not rely on the App for health, allergy, or dietary decisions.
@@ -253,23 +215,22 @@ Kiwi does not provide medical, nutritional, dietary, or professional advice.
 
 Use the App at your own risk.
 
-7. Acceptable Use
+6. Acceptable Use
 You agree not to:
 • Abuse, exploit, or attempt to reverse engineer the App
 • Use the App for unlawful purposes
 • Interfere with or disrupt the App's operation
 • Attempt to access systems or data not intended for users
-• Circumvent or disable advertising features
 
-8. Intellectual Property
+7. Intellectual Property
 All app content, branding, logos, and software (excluding User Content) are owned by Kiwi or its licensors and are protected by intellectual property laws.
 
 You may not copy, modify, distribute, or resell any part of the App without permission.
 
-9. Termination
+8. Termination
 We reserve the right to suspend or terminate access to the App at any time if you violate these Terms or misuse the App.
 
-10. Disclaimer of Warranties
+9. Disclaimer of Warranties
 Kiwi is provided "as is" and "as available."
 
 We make no warranties regarding:
@@ -278,29 +239,25 @@ We make no warranties regarding:
 • Fitness for a particular purpose
 • Uninterrupted or error-free operation
 
-11. Limitation of Liability
+10. Limitation of Liability
 To the fullest extent permitted by law, Kiwi shall not be liable for any damages arising from:
 • Use of or inability to use the App
 • Errors or inaccuracies in results
 • Decisions made based on App output
-• Third-party advertising or data collection
 
-12. Third-Party Services
-The App uses third-party services including Google AdMob. Your use of the App is also subject to the terms and privacy policies of these third parties.
-
-13. Updates and Modifications
+11. Updates and Modifications
 We may update, modify, or discontinue any feature of the App at any time without notice.
 
-14. Changes to These Terms
+12. Changes to These Terms
 We may update these Terms from time to time. Continued use of the App after changes means you accept the updated Terms.
 
-15. Governing Law
+13. Governing Law
 These Terms are governed by the laws of the United States, without regard to conflict of law principles.
 
-16. Contact Information
+14. Contact Information
 If you have questions about these Terms, contact us at:
 
-Email: slopspotapp@gmail.com
+Email: snapit.foranything@gmail.com
 
 By using the Kiwi app, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.`;
 
@@ -312,7 +269,7 @@ export default function SettingsScreen() {
   const [modalContent, setModalContent] = useState<ModalContent>(null);
 
   const handleContactUs = () => {
-    Linking.openURL("mailto:slopspotapp@gmail.com");
+    Linking.openURL("mailto:snapit.foranything@gmail.com");
   };
 
   const handleRestorePurchases = async () => {
