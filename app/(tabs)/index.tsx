@@ -291,7 +291,7 @@ Ensure all health claims are backed by credible scientific sources.`,
             }
             setTimeout(() => {
               router.push({
-                pathname: "/result",
+                pathname: "/result" as any,
                 params: { scanId: data.id, isNewScan: "true" },
               });
               setCapturedPhoto(null);
@@ -330,7 +330,7 @@ Ensure all health claims are backed by credible scientific sources.`,
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       }
-      router.push("/paywall");
+      router.push("/paywall" as any);
       return;
     }
 
@@ -359,7 +359,7 @@ Ensure all health claims are backed by credible scientific sources.`,
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       }
-      router.push("/paywall");
+      router.push("/paywall" as any);
       return;
     }
 

@@ -340,7 +340,7 @@ export default function SettingsScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-    router.push("/paywall");
+    router.push("/paywall" as any);
   };
 
   const getModalTitle = () => {

@@ -49,7 +49,7 @@ export default function HistoryScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     router.push({
-      pathname: "/result",
+      pathname: "/result" as any,
       params: { scanId },
     });
   };
