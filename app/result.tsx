@@ -93,7 +93,7 @@ export default function ResultScreen() {
 Ingredients (${scan.ingredients.length}):
 ${ingredientsList}
 
-Scanned with Slop Spot`;
+Scanned with Kiwi - Better Health Scanner`;
 
       const result = await Share.share({
         message: message,

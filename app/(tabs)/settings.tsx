@@ -22,13 +22,13 @@ import * as Haptics from "expo-haptics";
 type ThemeMode = "light" | "dark" | "system";
 
 const PRIVACY_POLICY = `Privacy Policy
-Slop Spot
+Kiwi - Better Health Scanner
 Last Updated: January 18, 2026
 
 Overview
-Slop Spot ("we," "us," or "our") respects your privacy. This Privacy Policy explains how information is handled when you use our mobile application.
+Kiwi - Better Health Scanner ("we," "us," or "our") respects your privacy. This Privacy Policy explains how information is handled when you use our mobile application.
 
-By using Slop Spot, you agree to the practices described in this policy.
+By using Kiwi, you agree to the practices described in this policy.
 
 Camera and Image Data Collection
 IMPORTANT: Our app uses your device camera to scan product labels for ingredient analysis and health ratings.
@@ -90,7 +90,7 @@ The app includes a tutorial to help you understand how to use the scanning and a
 • Does not send any information to external servers
 
 Advertising
-ADVERTISING DISCLOSURE: Slop Spot uses Google AdMob to display advertisements.
+ADVERTISING DISCLOSURE: Kiwi uses Google AdMob to display advertisements.
 
 How Advertising Works
 When ads are active in the app, Google AdMob may collect and process certain information to serve personalized advertisements. This may include:
@@ -131,7 +131,7 @@ The app uses on-device image recognition and text extraction to:
 All processing happens on your device. No photos or ingredient data are sent to external servers.
 
 Third-Party Services
-Slop Spot uses the following third-party services:
+Kiwi uses the following third-party services:
 • Google AdMob: For displaying advertisements (see Advertising section above)
 • App performance monitoring: For crash reporting and basic usage analytics (anonymous, non-identifying data only)
 
@@ -149,7 +149,7 @@ No Social Features or Data Sharing
 • All analysis is done locally for your privacy
 
 Entertainment and Informational Purposes Only
-DISCLAIMER: Ingredient ratings and health scores provided by Slop Spot are for informational and entertainment purposes only. They are:
+DISCLAIMER: Ingredient ratings and health scores provided by Kiwi are for informational and entertainment purposes only. They are:
 • NOT medical advice or nutritional guidance
 • NOT professionally validated health assessments
 • NOT a substitute for professional dietary advice
@@ -158,7 +158,7 @@ DISCLAIMER: Ingredient ratings and health scores provided by Slop Spot are for i
 Always consult qualified healthcare professionals and registered dietitians for dietary decisions and health concerns.
 
 Children's Privacy
-Slop Spot is rated 4+ and is appropriate for users of all ages. We do not knowingly collect personal information from anyone, including children. All image processing occurs locally on the device, and we do not collect, store, or transmit any personal data to our servers. If you are a parent or guardian and have questions about your child's use of the app, please contact us.
+Kiwi is rated 4+ and is appropriate for users of all ages. We do not knowingly collect personal information from anyone, including children. All image processing occurs locally on the device, and we do not collect, store, or transmit any personal data to our servers. If you are a parent or guardian and have questions about your child's use of the app, please contact us.
 
 Data Security
 We take reasonable measures to protect the app and its processing systems:
@@ -205,26 +205,26 @@ Email: slopspotapp@gmail.com
 
 For questions about AdMob and advertising data, you can also review Google's Privacy Policy at https://policies.google.com/privacy
 
-By using the Slop Spot app, you acknowledge that you have read and understood this Privacy Policy, particularly the sections regarding camera usage, on-device image processing, advertising practices, and entertainment-only ingredient ratings.`;
+By using the Kiwi app, you acknowledge that you have read and understood this Privacy Policy, particularly the sections regarding camera usage, on-device image processing, advertising practices, and entertainment-only ingredient ratings.`;
 
 const TERMS_OF_SERVICE = `Terms of Service
-Slop Spot
+Kiwi - Better Health Scanner
 Last Updated: January 18, 2026
 
-By downloading, accessing, or using the Slop Spot mobile application ("App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the App.
+By downloading, accessing, or using the Kiwi mobile application ("App"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, do not use the App.
 
 1. Description of the Service
-Slop Spot allows users to take photos of food, drinks, and food items or packaged goods and receive feedback, analysis, or informational results based on those images.
+Kiwi allows users to take photos of food, drinks, and food items or packaged goods and receive feedback, analysis, or informational results based on those images.
 
 The App is provided for informational and entertainment purposes only.
 
 2. Eligibility
-You must be at least 4 years old to use Slop Spot. By using the App, you confirm that you meet this requirement.
+You must be at least 4 years old to use Kiwi. By using the App, you confirm that you meet this requirement.
 
 3. User Content
 • You may upload photos of food, drinks, and packaged goods ("User Content").
 • You retain ownership of your User Content.
-• By using the App, you grant Slop Spot a limited, temporary license to process your photos solely to provide app functionality.
+• By using the App, you grant Kiwi a limited, temporary license to process your photos solely to provide app functionality.
 • We do not store, sell, or share your photos.
 • Photos are processed on-device and immediately deleted after analysis.
 
@@ -246,7 +246,7 @@ You agree not to upload:
 • You can control ad tracking through your device settings.
 
 6. No Guarantees or Professional Advice
-Slop Spot does not provide medical, nutritional, dietary, or professional advice.
+Kiwi does not provide medical, nutritional, dietary, or professional advice.
 • Results are automated and may be inaccurate.
 • You should not rely on the App for health, allergy, or dietary decisions.
 • Always consult a qualified professional when needed.
@@ -262,7 +262,7 @@ You agree not to:
 • Circumvent or disable advertising features
 
 8. Intellectual Property
-All app content, branding, logos, and software (excluding User Content) are owned by Slop Spot or its licensors and are protected by intellectual property laws.
+All app content, branding, logos, and software (excluding User Content) are owned by Kiwi or its licensors and are protected by intellectual property laws.
 
 You may not copy, modify, distribute, or resell any part of the App without permission.
 
@@ -270,7 +270,7 @@ You may not copy, modify, distribute, or resell any part of the App without perm
 We reserve the right to suspend or terminate access to the App at any time if you violate these Terms or misuse the App.
 
 10. Disclaimer of Warranties
-Slop Spot is provided "as is" and "as available."
+Kiwi is provided "as is" and "as available."
 
 We make no warranties regarding:
 • Accuracy of results
@@ -279,7 +279,7 @@ We make no warranties regarding:
 • Uninterrupted or error-free operation
 
 11. Limitation of Liability
-To the fullest extent permitted by law, Slop Spot shall not be liable for any damages arising from:
+To the fullest extent permitted by law, Kiwi shall not be liable for any damages arising from:
 • Use of or inability to use the App
 • Errors or inaccuracies in results
 • Decisions made based on App output
@@ -302,7 +302,7 @@ If you have questions about these Terms, contact us at:
 
 Email: slopspotapp@gmail.com
 
-By using the Slop Spot app, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.`;
+By using the Kiwi app, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.`;
 
 type ModalContent = "privacy" | "terms" | null;
 

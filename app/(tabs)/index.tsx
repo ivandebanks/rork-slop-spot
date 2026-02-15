@@ -50,7 +50,7 @@ const analysisSchema = z.object({
 
 const tutorialSteps = [
   {
-    title: "Welcome to Slop Spot",
+    title: "Welcome to Kiwi",
     description: "Scan any food, beverage, or product label to instantly analyze its ingredients and health impact.",
     icon: "✨",
     image: null,
@@ -687,7 +687,7 @@ Ensure all health claims are backed by credible scientific sources.`,
               </View>
 
               <View style={styles.headerCenter}>
-                <Text style={[styles.headerTitle, { fontSize: scaleFont(32) }]}>Slop Spot</Text>
+                <Text style={[styles.headerTitle, { fontSize: scaleFont(32) }]}>Kiwi</Text>
                 <Text style={[styles.headerSubtitle, { fontSize: scaleFont(16) }]}>{scansRemaining} scans</Text>
               </View>
 
