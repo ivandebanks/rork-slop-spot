@@ -1,70 +1,23 @@
 import { useState, useEffect } from "react";
 import createContextHook from "@nkzw/create-context-hook";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Purchases, { PurchasesPackage } from "react-native-purchases";
-import { Platform } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const DAILY_SCANS_KEY = "@slop_spot_daily_scans";
 const LAST_RESET_KEY = "@slop_spot_last_reset";
-
-function getRCToken() {
-  if (__DEV__ || Platform.OS === "web") return process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY;
-  return Platform.select({
-    ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY,
-    android: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY,
-    default: process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY,
-  });
-}
-
-const apiKey = getRCToken();
-console.log("=== RevenueCat Configuration ===");
-console.log("Platform:", Platform.OS);
-console.log("Dev mode:", __DEV__);
-console.log("API Key present:", !!apiKey);
-console.log("API Key (first 10 chars):", apiKey?.substring(0, 10));
-
-if (apiKey) {
-  try {
-    Purchases.configure({ apiKey });
-    console.log("RevenueCat configured successfully");
-  } catch (error) {
-    console.error("Error configuring RevenueCat:", error);
-  }
-} else {
-  console.error("No RevenueCat API key found!");
-}
+const PREMIUM_KEY = "@slop_spot_premium";
 
 export const [PurchaseProvider, usePurchases] = createContextHook(() => {
   const queryClient = useQueryClient();
-  const [scanCredits, setScanCredits] = useState(0);
   const [dailyScansUsed, setDailyScansUsed] = useState(0);
+  const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
 
-  const customerInfoQuery = useQuery({
-    queryKey: ["customerInfo"],
+  const premiumQuery = useQuery({
+    queryKey: ["premium"],
     queryFn: async () => {
-      const info = await Purchases.getCustomerInfo();
-      return info;
+      const premium = await AsyncStorage.getItem(PREMIUM_KEY);
+      return premium === "true";
     },
-    refetchInterval: 30000,
-  });
-
-  const offeringsQuery = useQuery({
-    queryKey: ["offerings"],
-    queryFn: async () => {
-      try {
-        console.log("Fetching offerings from RevenueCat...");
-        const offerings = await Purchases.getOfferings();
-        console.log("Offerings fetched:", offerings);
-        return offerings;
-      } catch (error) {
-        console.error("Error fetching offerings:", error);
-        throw error;
-      }
-    },
-    retry: 2,
-    retryDelay: 1000,
-    staleTime: 60000,
   });
 
   const dailyScansQuery = useQuery({
@@ -91,39 +44,10 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
   }, [dailyScansQuery.data]);
 
   useEffect(() => {
-    if (customerInfoQuery.data) {
-      const info = customerInfoQuery.data;
-      const credits = parseInt(info.nonSubscriptionTransactions
-        .filter((t) => t.productIdentifier.includes("scans_"))
-        .reduce((sum, t) => sum + getCreditsFromProduct(t.productIdentifier), 0)
-        .toString(), 10);
-      setScanCredits(credits);
+    if (premiumQuery.data !== undefined) {
+      setHasPremiumAccess(premiumQuery.data);
     }
-  }, [customerInfoQuery.data]);
-
-  const getCreditsFromProduct = (productId: string): number => {
-    return 0;
-  };
-
-  const purchaseMutation = useMutation({
-    mutationFn: async (packageToPurchase: PurchasesPackage) => {
-      const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
-      return customerInfo;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customerInfo"] });
-    },
-  });
-
-  const restoreMutation = useMutation({
-    mutationFn: async () => {
-      const info = await Purchases.restorePurchases();
-      return info;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["customerInfo"] });
-    },
-  });
+  }, [premiumQuery.data]);
 
   const useScanMutation = useMutation({
     mutationFn: async () => {
@@ -137,38 +61,24 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
     },
   });
 
-  const hasPremium = (): boolean => {
-    const hasEntitlement = customerInfoQuery.data?.entitlements.active["premium"] !== undefined;
-    const hasPurchase = (customerInfoQuery.data?.nonSubscriptionTransactions?.length ?? 0) > 0;
-    return hasEntitlement || hasPurchase;
-  };
-
   const canScan = (): boolean => {
-    if (hasPremium()) return true;
-    if (scanCredits > 0) return true;
+    if (hasPremiumAccess) return true;
     if (dailyScansUsed < 2) return true;
     return false;
   };
 
   const getScansRemaining = (): string => {
-    if (hasPremium()) return "Unlimited";
-    if (scanCredits > 0) return scanCredits.toString();
+    if (hasPremiumAccess) return "Unlimited";
     const remaining = Math.max(0, 2 - dailyScansUsed);
     return `${remaining} free today`;
   };
 
   return {
-    customerInfo: customerInfoQuery.data,
-    offerings: offeringsQuery.data,
-    isLoading: customerInfoQuery.isLoading || offeringsQuery.isLoading,
-    error: offeringsQuery.error || customerInfoQuery.error,
-    purchaseMutation,
-    restoreMutation,
+    isLoading: premiumQuery.isLoading || dailyScansQuery.isLoading,
     useScanMutation,
-    hasPremium: hasPremium(),
+    hasPremium: hasPremiumAccess,
     canScan: canScan(),
     scansRemaining: getScansRemaining(),
-    scanCredits,
     dailyScansUsed,
   };
 });

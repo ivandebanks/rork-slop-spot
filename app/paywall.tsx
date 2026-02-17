@@ -1,96 +1,22 @@
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Platform, Animated } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from "react-native";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { router } from "expo-router";
-import { X, Check, Sparkles, AlertCircle, RefreshCw, Crown, Shield, Zap, Star } from "lucide-react-native";
-import { PurchasesPackage } from "react-native-purchases";
+import { X, Check, Crown, Shield, Zap, Star } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 
 export default function PaywallScreen() {
-  const { offerings, purchaseMutation, scansRemaining, isLoading, error } = usePurchases();
+  const { scansRemaining } = usePurchases();
   const { theme, scaleFont } = useTheme();
-  const queryClient = useQueryClient();
 
-  const shimmer1 = useRef(new Animated.Value(0)).current;
-  const shimmer2 = useRef(new Animated.Value(0)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
   const starSpin = useRef(new Animated.Value(0)).current;
-  const glowAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmer1, { toValue: 1, duration: 2000, useNativeDriver: true }),
-        Animated.timing(shimmer1, { toValue: 0, duration: 2000, useNativeDriver: true }),
-      ])
-    ).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(shimmer2, { toValue: 1, duration: 3000, useNativeDriver: true }),
-        Animated.timing(shimmer2, { toValue: 0, duration: 3000, useNativeDriver: true }),
-      ])
-    ).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1.05, duration: 1500, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
-      ])
-    ).start();
-
     Animated.loop(
       Animated.timing(starSpin, { toValue: 1, duration: 8000, useNativeDriver: true })
     ).start();
-
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnim, { toValue: 1, duration: 2500, useNativeDriver: true }),
-        Animated.timing(glowAnim, { toValue: 0, duration: 2500, useNativeDriver: true }),
-      ])
-    ).start();
   }, []);
-
-  useEffect(() => {
-    console.log("=== PAYWALL DEBUG ===");
-    console.log("Offerings:", offerings);
-    console.log("Is Loading:", isLoading);
-    console.log("Error:", error);
-    if (offerings?.current) {
-      console.log("Available packages:", offerings.current.availablePackages.length);
-      offerings.current.availablePackages.forEach((pkg, index) => {
-        console.log(`\nPackage ${index + 1}:`, {
-          identifier: pkg.identifier,
-          packageType: pkg.packageType,
-          title: pkg.product.title,
-          price: pkg.product.priceString,
-          priceAmount: pkg.product.price,
-          currencyCode: pkg.product.currencyCode,
-        });
-      });
-    }
-    console.log("=== END DEBUG ===\n");
-  }, [offerings, isLoading, error]);
-
-  const handlePurchase = async (pkg: PurchasesPackage) => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-    }
-    try {
-      await purchaseMutation.mutateAsync(pkg);
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      router.back();
-    } catch (error: any) {
-      if (!error.userCancelled) {
-        console.error("Purchase error:", error);
-        alert(`Purchase failed: ${error.message || 'Unknown error'}`);
-      }
-    }
-  };
 
   const handleClose = () => {
     if (Platform.OS !== "web") {
@@ -103,102 +29,6 @@ export default function PaywallScreen() {
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
   });
-
-  const glowOpacity = glowAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.3, 0.8],
-  });
-
-  const shimmerOpacity1 = shimmer1.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.2, 0.6, 0.2],
-  });
-
-  const shimmerOpacity2 = shimmer2.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.1, 0.4, 0.1],
-  });
-
-  const shimmerTranslate = shimmer1.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-200, 200],
-  });
-
-  if (isLoading || !offerings) {
-    return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <X size={24} color={theme.text} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#D4AF37" />
-          <Text style={[styles.loadingText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
-            Loading...
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
-  if (error || !offerings.current) {
-    return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <X size={24} color={theme.text} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.centerContent}>
-          <AlertCircle size={48} color={theme.error || "#FF3B30"} />
-          <Text style={[styles.errorTitle, { color: theme.text, fontSize: scaleFont(20) }]}>
-            Unable to Load
-          </Text>
-          <Text style={[styles.errorText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
-            {error?.message || "Please check your internet connection and try again."}
-          </Text>
-          <TouchableOpacity
-            style={[styles.retryButton, { backgroundColor: "#D4AF37" }]}
-            onPress={() => {
-              if (Platform.OS !== "web") {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              }
-              queryClient.invalidateQueries({ queryKey: ["offerings"] });
-              queryClient.invalidateQueries({ queryKey: ["customerInfo"] });
-            }}
-          >
-            <RefreshCw size={20} color="#FFFFFF" />
-            <Text style={[styles.retryButtonText, { fontSize: scaleFont(16) }]}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  const packages = offerings.current.availablePackages;
-  const targetPackage = packages.length > 0 ? packages[0] : null;
-
-  if (!targetPackage) {
-    return (
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <X size={24} color={theme.text} />
-          </TouchableOpacity>
-        </View>
-        <View style={styles.centerContent}>
-          <AlertCircle size={48} color={theme.textSecondary} />
-          <Text style={[styles.errorTitle, { color: theme.text, fontSize: scaleFont(20) }]}>
-            No Plans Available
-          </Text>
-          <Text style={[styles.errorText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
-            Please try again later or contact support.
-          </Text>
-        </View>
-      </View>
-    );
-  }
 
   const isDark = theme.background === "#121212";
 
@@ -216,130 +46,58 @@ export default function PaywallScreen() {
             <Crown size={48} color="#D4AF37" fill="#D4AF37" />
           </Animated.View>
           <Text style={[styles.title, { color: theme.text, fontSize: scaleFont(30) }]}>
-            Go Premium
+            Premium Features
           </Text>
           <Text style={[styles.subtitle, { color: theme.textSecondary, fontSize: scaleFont(15) }]}>
-            One purchase. Unlimited power. Forever.
+            Unlimited scanning power
           </Text>
           <Text style={[styles.scansInfo, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
             Currently: {scansRemaining}
           </Text>
         </View>
 
-        <Animated.View style={[styles.cardWrapper, { transform: [{ scale: pulseAnim }] }]}>
-          <TouchableOpacity
-            activeOpacity={0.85}
-            onPress={() => handlePurchase(targetPackage)}
-            disabled={purchaseMutation.isPending}
-            style={styles.cardTouchable}
-          >
-            <View style={[
-              styles.card,
-              {
-                backgroundColor: isDark ? "#1C1A14" : "#FFFDF5",
-                borderColor: "#D4AF37",
-              }
-            ]}>
-              <Animated.View
-                style={[
-                  styles.shimmerOverlay,
-                  {
-                    opacity: shimmerOpacity1,
-                    transform: [{ translateX: shimmerTranslate }],
-                    backgroundColor: "#D4AF37",
-                  },
-                ]}
-              />
-              <Animated.View
-                style={[
-                  styles.shimmerOverlay2,
-                  {
-                    opacity: shimmerOpacity2,
-                    backgroundColor: "#FFD700",
-                  },
-                ]}
-              />
-
-              <Animated.View style={[styles.glowRing, { opacity: glowOpacity, borderColor: "#D4AF37" }]} />
-
-              <View style={styles.cardBadge}>
-                <View style={styles.badgeInner}>
-                  <Star size={12} color="#FFFFFF" fill="#FFFFFF" />
-                  <Text style={styles.badgeText}>LIFETIME DEAL</Text>
-                  <Star size={12} color="#FFFFFF" fill="#FFFFFF" />
-                </View>
-              </View>
-
-              <View style={styles.cardContent}>
-                <View style={styles.priceRow}>
-                  <Text style={[styles.currency, { color: "#D4AF37", fontSize: scaleFont(22) }]}>$</Text>
-                  <Text style={[styles.priceMain, { color: "#D4AF37", fontSize: scaleFont(56) }]}>4</Text>
-                  <Text style={[styles.priceDecimal, { color: "#D4AF37", fontSize: scaleFont(24) }]}>.99</Text>
-                </View>
-                <Text style={[styles.oneTime, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
-                  One-time payment
-                </Text>
-
-                <View style={[styles.divider, { backgroundColor: isDark ? "#2A2720" : "#F0E8D0" }]} />
-
-                <View style={styles.perks}>
-                  {[
-                    { icon: Zap, text: "Unlimited scans forever" },
-                    { icon: Sparkles, text: "Priority AI analysis" },
-                    { icon: Shield, text: "No ads, no limits" },
-                    { icon: Crown, text: "All future updates included" },
-                  ].map((perk, i) => (
-                    <View key={i} style={styles.perkRow}>
-                      <View style={styles.checkCircle}>
-                        <Check size={14} color="#FFFFFF" strokeWidth={3} />
-                      </View>
-                      <Text style={[styles.perkText, { color: theme.text, fontSize: scaleFont(15) }]}>
-                        {perk.text}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-
-              {purchaseMutation.isPending ? (
-                <View style={styles.buyButton}>
-                  <ActivityIndicator size="small" color="#FFFFFF" />
-                </View>
-              ) : (
-                <View style={styles.buyButton}>
-                  <Text style={[styles.buyButtonText, { fontSize: scaleFont(18) }]}>
-                    Unlock Premium
-                  </Text>
-                  <Sparkles size={20} color="#FFFFFF" />
-                </View>
-              )}
-
-              <View style={styles.sparkleCornerTL}>
-                <Animated.View style={{ opacity: shimmerOpacity1 }}>
-                  <Star size={16} color="#D4AF37" fill="#D4AF37" />
-                </Animated.View>
-              </View>
-              <View style={styles.sparkleCornerTR}>
-                <Animated.View style={{ opacity: shimmerOpacity2 }}>
-                  <Sparkles size={14} color="#D4AF37" />
-                </Animated.View>
-              </View>
-              <View style={styles.sparkleCornerBL}>
-                <Animated.View style={{ opacity: shimmerOpacity2 }}>
-                  <Star size={12} color="#D4AF37" fill="#D4AF37" />
-                </Animated.View>
-              </View>
-              <View style={styles.sparkleCornerBR}>
-                <Animated.View style={{ opacity: shimmerOpacity1 }}>
-                  <Sparkles size={16} color="#D4AF37" />
-                </Animated.View>
+        <View style={styles.cardWrapper}>
+          <View style={[
+            styles.card,
+            {
+              backgroundColor: isDark ? "#1C1A14" : "#FFFDF5",
+              borderColor: "#D4AF37",
+            }
+          ]}>
+            <View style={styles.cardBadge}>
+              <View style={styles.badgeInner}>
+                <Star size={12} color="#FFFFFF" fill="#FFFFFF" />
+                <Text style={styles.badgeText}>PREMIUM</Text>
+                <Star size={12} color="#FFFFFF" fill="#FFFFFF" />
               </View>
             </View>
-          </TouchableOpacity>
-        </Animated.View>
+
+            <View style={styles.cardContent}>
+              <View style={[styles.divider, { backgroundColor: isDark ? "#2A2720" : "#F0E8D0" }]} />
+
+              <View style={styles.perks}>
+                {[
+                  { text: "Unlimited scans forever" },
+                  { text: "Priority AI analysis" },
+                  { text: "No ads, no limits" },
+                  { text: "All future updates included" },
+                ].map((perk, i) => (
+                  <View key={i} style={styles.perkRow}>
+                    <View style={styles.checkCircle}>
+                      <Check size={14} color="#FFFFFF" strokeWidth={3} />
+                    </View>
+                    <Text style={[styles.perkText, { color: theme.text, fontSize: scaleFont(15) }]}>
+                      {perk.text}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        </View>
 
         <Text style={[styles.disclaimer, { color: theme.textSecondary, fontSize: scaleFont(12) }]}>
-          Pay once, own it forever. No subscriptions.
+          In-app purchases are currently unavailable.
         </Text>
       </View>
     </View>

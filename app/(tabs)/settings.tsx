@@ -13,7 +13,7 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, X, Sparkles, RefreshCw, Crown } from "lucide-react-native";
+import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, X, Sparkles, Crown } from "lucide-react-native";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { router } from "expo-router";
@@ -265,33 +265,14 @@ type ModalContent = "privacy" | "terms" | null;
 
 export default function SettingsScreen() {
   const { themeMode, changeThemeMode, theme, textSizeMode, changeTextSizeMode, scaleFont } = useTheme();
-  const { hasPremium, scansRemaining, restoreMutation } = usePurchases();
+  const { hasPremium, scansRemaining } = usePurchases();
   const [modalContent, setModalContent] = useState<ModalContent>(null);
 
   const handleContactUs = () => {
     Linking.openURL("mailto:snapit.foranything@gmail.com");
   };
 
-  const handleRestorePurchases = async () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    try {
-      await restoreMutation.mutateAsync();
-      if (Platform.OS === "web") {
-        alert("Purchases restored successfully!");
-      } else {
-        Alert.alert("Success", "Purchases restored successfully!");
-      }
-    } catch (error) {
-      console.log("Restore error:", error);
-      if (Platform.OS === "web") {
-        alert("No purchases to restore");
-      } else {
-        Alert.alert("Info", "No purchases to restore");
-      }
-    }
-  };
+
 
   const handleUpgrade = () => {
     if (Platform.OS !== "web") {
@@ -462,7 +443,7 @@ export default function SettingsScreen() {
 
             {!hasPremium && (
               <TouchableOpacity
-                style={[styles.upgradeOption, { borderBottomWidth: 1, borderBottomColor: theme.border }]}
+                style={styles.legalOption}
                 onPress={handleUpgrade}
                 activeOpacity={0.7}
               >
@@ -475,21 +456,6 @@ export default function SettingsScreen() {
                 <ChevronRight size={20} color={theme.textSecondary} />
               </TouchableOpacity>
             )}
-
-            <TouchableOpacity
-              style={styles.legalOption}
-              onPress={handleRestorePurchases}
-              activeOpacity={0.7}
-              disabled={restoreMutation.isPending}
-            >
-              <View style={styles.legalOptionLeft}>
-                <RefreshCw size={20} color={theme.primary} />
-                <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
-                  {restoreMutation.isPending ? "Restoring..." : "Restore Purchases"}
-                </Text>
-              </View>
-              <ChevronRight size={20} color={theme.textSecondary} />
-            </TouchableOpacity>
           </View>
         </View>
 
