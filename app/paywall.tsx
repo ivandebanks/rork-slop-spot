@@ -1,14 +1,15 @@
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, ActivityIndicator, Alert } from "react-native";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { router } from "expo-router";
-import { X, Check, Crown, Shield, Zap, Star } from "lucide-react-native";
+import { X, Check, Crown, Shield, Zap, Star, RefreshCw } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function PaywallScreen() {
-  const { scansRemaining } = usePurchases();
+  const { scansRemaining, offerings, isLoadingOfferings, purchaseMutation, restoreMutation } = usePurchases();
   const { theme, scaleFont } = useTheme();
+  const [selectedPackage, setSelectedPackage] = useState<any>(null);
 
   const starSpin = useRef(new Animated.Value(0)).current;
 
@@ -18,11 +19,58 @@ export default function PaywallScreen() {
     ).start();
   }, []);
 
+  useEffect(() => {
+    if (offerings?.current) {
+      const pkg = offerings.current.availablePackages[0];
+      setSelectedPackage(pkg);
+    }
+  }, [offerings]);
+
   const handleClose = () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     router.back();
+  };
+
+  const handlePurchase = async () => {
+    if (!selectedPackage) return;
+    
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    try {
+      await purchaseMutation.mutateAsync(selectedPackage);
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      Alert.alert("Success!", "Welcome to Premium! Enjoy unlimited scans.", [
+        { text: "OK", onPress: () => router.back() }
+      ]);
+    } catch (error: any) {
+      if (error.message !== "Purchase cancelled") {
+        Alert.alert("Purchase Failed", error.message || "Please try again later.");
+      }
+    }
+  };
+
+  const handleRestore = async () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    try {
+      await restoreMutation.mutateAsync();
+      if (Platform.OS !== "web") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+      Alert.alert("Success!", "Your purchases have been restored.", [
+        { text: "OK", onPress: () => router.back() }
+      ]);
+    } catch (error: any) {
+      Alert.alert("Restore Failed", "No purchases found to restore.");
+    }
   };
 
   const spinInterpolation = starSpin.interpolate({
@@ -31,6 +79,53 @@ export default function PaywallScreen() {
   });
 
   const isDark = theme.background === "#121212";
+
+  if (isLoadingOfferings) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <X size={24} color={theme.text} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={[styles.loadingText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
+            Loading offers...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (!offerings?.current || !selectedPackage) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <X size={24} color={theme.text} />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.centerContent}>
+          <Crown size={48} color={theme.textSecondary} />
+          <Text style={[styles.errorTitle, { color: theme.text, fontSize: scaleFont(20) }]}>
+            Offers Unavailable
+          </Text>
+          <Text style={[styles.errorText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
+            Unable to load premium offers. Please check your connection and try again.
+          </Text>
+          <TouchableOpacity 
+            style={[styles.retryButton, { backgroundColor: theme.primary }]}
+            onPress={handleClose}
+          >
+            <Text style={[styles.retryButtonText, { fontSize: scaleFont(16) }]}>OK</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  const priceString = selectedPackage.product.priceString;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -96,9 +191,39 @@ export default function PaywallScreen() {
           </View>
         </View>
 
-        <Text style={[styles.disclaimer, { color: theme.textSecondary, fontSize: scaleFont(12) }]}>
-          In-app purchases are currently unavailable.
-        </Text>
+        <TouchableOpacity 
+          style={[styles.buyButton, { opacity: purchaseMutation.isPending ? 0.7 : 1 }]}
+          onPress={handlePurchase}
+          disabled={purchaseMutation.isPending}
+        >
+          {purchaseMutation.isPending ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <>
+              <Text style={[styles.buyButtonText, { fontSize: scaleFont(18) }]}>
+                Get Premium for {priceString}
+              </Text>
+              <Crown size={20} color="#FFFFFF" />
+            </>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.restoreButton}
+          onPress={handleRestore}
+          disabled={restoreMutation.isPending}
+        >
+          {restoreMutation.isPending ? (
+            <ActivityIndicator size="small" color={theme.textSecondary} />
+          ) : (
+            <>
+              <RefreshCw size={14} color={theme.textSecondary} />
+              <Text style={[styles.restoreText, { color: theme.textSecondary, fontSize: scaleFont(12) }]}>
+                Restore Purchases
+              </Text>
+            </>
+          )}
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -331,5 +456,15 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 18,
     marginTop: 20,
+  },
+  restoreButton: {
+    marginTop: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    padding: 8,
+  },
+  restoreText: {
+    letterSpacing: 0.3,
   },
 });
