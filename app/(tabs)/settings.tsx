@@ -35,92 +35,109 @@ IMPORTANT: Our app uses your device camera to scan product labels for ingredient
 
 What We Collect
 • Temporary camera access to capture photos of product labels, barcodes, and ingredient lists
-• On-device image processing to extract text from food and beverage packaging
+• On-device image capture to extract photos from food and beverage packaging
 • The app scans product labels to read ingredient information
 
 How We Use It
-• All image scanning and analysis occurs locally on your device
-• We extract product names and ingredient lists from photos to calculate health ratings
+• You take a photo of a product label using the in-app camera or your device's photo library
+• The image is converted to a secure format and transmitted to our AI analysis service (powered by Rork AI) to extract ingredient information and calculate health ratings
 • The ratings are provided for informational and entertainment purposes only
-• No images, photos, or scanned data are uploaded to any server
-• Photos are processed in real-time and immediately deleted after analysis
-• No biometric identification, facial recognition, or personally identifiable data is extracted
+• After analysis is complete, the image is not stored on our servers
+• No biometric identification, facial recognition, or personally identifiable data is extracted from images
+
+Image Transmission and AI Processing
+IMPORTANT: Unlike purely local apps, Kiwi transmits your product photos to an external AI service to perform ingredient analysis. Specifically:
+• Photos you take or select from your gallery are sent over an encrypted connection to our AI processing service (Rork AI) to read and analyze ingredient labels
+• This transmission is necessary to provide the ingredient analysis feature
+• Images are processed by the AI service and are not permanently stored by that service after analysis
+• No images are stored on Kiwi's own servers
 
 What We DON'T Do
-• We do NOT upload photos or scanned images to any server
-• We do NOT share camera data or images with third parties
-• We do NOT store photos on your device or our servers
-• We do NOT use images for any purpose beyond displaying ingredient ratings
-• We do NOT retain any image data after analysis is complete
-• We do NOT sell or share your photos with anyone
+• We do NOT store your photos on Kiwi's servers after analysis
+• We do NOT use your photos for advertising or profiling
+• We do NOT share your photos with third parties beyond the AI processing service described above
+• We do NOT retain images after analysis is complete
+• We do NOT sell your photos to anyone
 
 Data Retention for Images
-• Images are captured and processed in real-time on your device
-• All image data is immediately deleted from device memory after the ingredient analysis is displayed (typically within seconds)
-• No image data persists on your device or anywhere else after analysis
-• The app does not maintain any history of your photos
+• Images are captured and transmitted to our AI service for real-time analysis
+• Images are not permanently stored by Kiwi after the analysis result is returned
+• The AI processing service (Rork AI) processes images transiently and does not store them permanently
+• No image data persists on Kiwi's servers after analysis
 
 Your Control
 • You must grant camera permission to use the scanning feature
 • You can revoke camera access at any time through your device settings
-• Each scan requires you to actively capture a new photo
+• Each scan requires you to actively capture or select a new photo
 • No photos are taken without your explicit action
 
 Scan History and Local Storage
 
 What We Store Locally
-• Scan results only (product names, ingredient lists, and text-based ratings) are stored on your device only using local storage (AsyncStorage)
-• This allows you to view your scan history within the app
+• Scan results only (product names, ingredient lists, and text-based ratings) are stored on your device using local storage (AsyncStorage)
+• A thumbnail of your scanned product image is stored locally on your device so you can view your scan history
 • Your sorting preferences for viewing scan history (e.g., sort by date, name, or rating)
-• Important: No photos are stored - only text-based results (product names, ingredients, ratings)
+• The number of free scans you have used today (resets daily)
+• A record of whether you have completed the in-app tutorial
 
 Your Control Over Scan History
 • You can delete individual scans at any time using the delete button
 • You can sort and organize your scan history using the sorting settings
 • All scan history and preferences are stored locally on your device only
 • Uninstalling the app will permanently delete all stored scan results and settings
-• We have no access to your scan history - it never leaves your device
-• No scan data is uploaded to servers or shared with anyone
+• We have no access to your locally stored scan history
+• No locally stored scan history is uploaded to servers or shared with anyone
 
 Tutorial and App Features
 The app includes a tutorial to help you understand how to use the scanning and analysis features. The tutorial:
 • Runs locally on your device
-• Does not collect any data about your interaction with it
-• Can be accessed or skipped at your preference
+• Records locally whether you have completed it (so it does not show again)
 • Does not send any information to external servers
+• Can be replayed at any time from the Settings screen
 
 Personal Information
 We do NOT collect personal information such as:
 • Names, email addresses, phone numbers, or account credentials
 • User accounts or profiles
 • Login or registration information
-• User identity tracking across sessions
-• Linking scan results to your identity
 
 How Ingredient Analysis Works
-The app uses on-device image recognition and text extraction to:
-• Read product labels and ingredient lists from packaging
-• Extract ingredient names from photos
-• Provide health ratings based on common nutritional considerations
-• Display information for entertainment and educational purposes
+The app uses your device camera or photo library to:
+• Capture a photo of a product label
+• Transmit the photo securely to our AI analysis service (Rork AI)
+• Receive a structured list of ingredient names and health ratings
+• Display the results to you within the app
 
-All processing happens on your device. No photos or ingredient data are sent to external servers.
+All results are computed by the AI service. Photos are transmitted over an encrypted connection and are not permanently retained after analysis.
 
 Third-Party Services
-Kiwi may use third-party services for app performance monitoring (crash reporting and basic usage analytics using anonymous, non-identifying data only).
+Kiwi uses the following third-party services:
 
-Important: These services do NOT receive:
-• Your photos or images
-• Scan results or ingredient data
-• Your scan history
+1. Rork AI (AI Analysis)
+   • Purpose: Processes photos of product labels to extract ingredient lists and generate health ratings
+   • Data shared: Photos you submit for scanning
+   • Data retained: Photos are processed transiently and not stored permanently
+   • Privacy policy: https://rork.app/privacy
 
-Any third-party services we use are required to comply with privacy standards and only receive anonymous, aggregated data.
+2. RevenueCat (In-App Purchases)
+   • Purpose: Manages premium subscription purchases and restores
+   • Data shared: Anonymous purchase transaction data and device identifiers as required to validate purchases
+   • Data retained: Per RevenueCat's data retention policies
+   • Privacy policy: https://www.revenuecat.com/privacy
+
+3. Expo (App Platform and Crash Reporting)
+   • Purpose: Provides the app runtime and may collect anonymous crash and diagnostic data
+   • Data shared: Anonymous crash logs and device diagnostics (no personal data or scan content)
+   • Privacy policy: https://expo.dev/privacy
+
+These third-party services do NOT receive:
+• Your scan history or locally stored scan results
+• Any personally identifying information
 
 No Social Features or Data Sharing
-• The app does NOT include social features, voting, or sharing capabilities
-• Scan results are private to you and are NOT uploaded or shared
-• There is no server backend collecting user data or scan results
-• All analysis is done locally for your privacy
+• The app does NOT include social features, voting, or sharing capabilities beyond the native OS share sheet
+• Scan results are private to you
+• We do not maintain a server-side database of your scan results
 
 Entertainment and Informational Purposes Only
 DISCLAIMER: Ingredient ratings and health scores provided by Kiwi are for informational and entertainment purposes only. They are:
@@ -132,48 +149,46 @@ DISCLAIMER: Ingredient ratings and health scores provided by Kiwi are for inform
 Always consult qualified healthcare professionals and registered dietitians for dietary decisions and health concerns.
 
 Children's Privacy
-Kiwi is rated 4+ and is appropriate for users of all ages. We do not knowingly collect personal information from anyone, including children. All image processing occurs locally on the device, and we do not collect, store, or transmit any personal data to our servers. If you are a parent or guardian and have questions about your child's use of the app, please contact us.
+Kiwi is rated 4+ and is appropriate for users of all ages. We do not knowingly collect personal information from anyone, including children. If you are a parent or guardian and have questions about your child's use of the app, please contact us.
 
 Data Security
-We take reasonable measures to protect the app and its processing systems:
-• Photos are processed entirely on your device
-• No photos are transmitted over the network
+We take reasonable measures to protect your data:
+• Photos are transmitted over encrypted (HTTPS) connections to our AI processing service
 • Scan results are stored only on your device using secure local storage
-• We cannot access your scan history or photos
-
-Since photos are never uploaded and are immediately deleted, the risk of photo data exposure is minimized.
+• We do not maintain a server-side database of your personal scan history
+• RevenueCat handles all payment processing using industry-standard security
 
 Your Rights
-Regarding data we collect or store:
-• We do not collect or store personal data, photos, or scan results on servers
-• Once you delete the app, all local scan history is permanently removed
+• We do not collect or store personal data or scan results on Kiwi's own servers
+• Once you delete the app, all local scan history is permanently removed from your device
 • You control scan data through your device and the in-app delete functions
+• For questions about data held by third-party services (RevenueCat, Rork AI), please refer to their respective privacy policies
 
 International Data Transfers
-Regarding our data practices:
-• All scanning and analysis occurs on your device with no data transfers
-• Your photos and scan results never leave your device
+• Photos submitted for analysis are transmitted to Rork AI's servers, which may be located outside your country of residence
+• RevenueCat's servers may also be located outside your country of residence
+• These transfers are protected by appropriate safeguards including encrypted connections
 
 Region-Specific Information
 
 California Residents (CCPA)
-We do not sell personal information. Since we don't collect or store personal scan data on servers, CCPA data rights do not apply to that data. All scan data is stored locally on your device under your control.
+We do not sell personal information. Scan data is stored locally on your device under your control. For data processed by RevenueCat or Rork AI in connection with your use of the app, please refer to those services' respective privacy policies and CCPA disclosures.
 
 European Economic Area Residents (GDPR)
-Our legal basis for processing is your consent (camera permission). Since we don't store scan data on servers, GDPR data retention requirements don't apply to that data. You can withdraw camera consent by revoking access in device settings.
+Our legal basis for processing camera images is your consent (camera permission and your explicit action of taking a photo). Your legal basis for in-app purchase processing is the performance of a contract. You can withdraw camera consent by revoking access in device settings. For GDPR inquiries related to third-party processors (Rork AI, RevenueCat), please refer to their privacy policies.
 
 Australian Residents
-We comply with the Australian Privacy Principles. Since we don't collect or store personal scan information on servers, APP requirements for server-side data handling don't apply to scan data.
+We comply with the Australian Privacy Principles. Photos are transmitted to our AI processing service for analysis. For details on cross-border data transfers involving Rork AI or RevenueCat, please refer to those services' privacy policies.
 
 Changes to This Policy
 We may update this Privacy Policy from time to time. Any changes will be reflected by updating the "Last Updated" date at the top of this policy. We will notify you of material changes through the app or other reasonable means. Continued use of the app after changes constitutes acceptance of the updated policy.
 
 Contact Us
-If you have questions about this Privacy Policy or camera and image data handling, you can contact us at:
+If you have questions about this Privacy Policy or how your data is handled, you can contact us at:
 
 Email: snapit.foranything@gmail.com
 
-By using the Kiwi app, you acknowledge that you have read and understood this Privacy Policy, particularly the sections regarding camera usage, on-device image processing, and entertainment-only ingredient ratings.`;
+By using the Kiwi app, you acknowledge that you have read and understood this Privacy Policy, including the section regarding image transmission to our AI analysis service and the entertainment-only nature of ingredient ratings.`;
 
 const TERMS_OF_SERVICE = `Terms of Service
 Kiwi - Better Health Scanner
@@ -192,9 +207,9 @@ You must be at least 4 years old to use Kiwi. By using the App, you confirm that
 3. User Content
 • You may upload photos of food, drinks, and packaged goods ("User Content").
 • You retain ownership of your User Content.
-• By using the App, you grant Kiwi a limited, temporary license to process your photos solely to provide app functionality.
-• We do not store, sell, or share your photos.
-• Photos are processed on-device and immediately deleted after analysis.
+• By using the App, you grant Kiwi a limited, temporary license to process your photos solely to provide app functionality, including transmitting them to our AI analysis service.
+• We do not sell your photos.
+• Photos are transmitted to our AI processing service for analysis and are not permanently stored by Kiwi after analysis is complete.
 
 You agree not to upload:
 • Illegal or harmful content
@@ -205,11 +220,11 @@ You agree not to upload:
 • The App stores scan results (text-based product names, ingredients, and ratings) locally on your device.
 • You can delete scan results at any time using the in-app delete function.
 • Uninstalling the App permanently deletes all stored scan history.
-• We do not have access to your scan history as it never leaves your device.
+• We do not have access to your locally stored scan history.
 
 5. No Guarantees or Professional Advice
 Kiwi does not provide medical, nutritional, dietary, or professional advice.
-• Results are automated and may be inaccurate.
+• Results are generated by AI and may be inaccurate.
 • You should not rely on the App for health, allergy, or dietary decisions.
 • Always consult a qualified professional when needed.
 
