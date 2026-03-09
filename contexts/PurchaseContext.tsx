@@ -51,15 +51,20 @@ const ensureConfigured = (): Promise<boolean> => {
   return configurePromise;
 };
 
+// The specific product identifier for the monthly premium package
+const PREMIUM_PRODUCT_ID = "kiwi_premium_monthly";
+
 export const [PurchaseProvider, usePurchases] = createContextHook(() => {
   const queryClient = useQueryClient();
   const [dailyScansUsed, setDailyScansUsed] = useState(0);
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
   const [isConfigured, setIsConfigured] = useState(false);
+  const [configAttempted, setConfigAttempted] = useState(false);
 
   useEffect(() => {
     ensureConfigured().then((configured) => {
       setIsConfigured(configured);
+      setConfigAttempted(true);
     });
   }, []);
 
@@ -83,7 +88,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
         return stored === "true";
       }
     },
-    enabled: isConfigured,
+    enabled: configAttempted,
   });
 
   const offeringsQuery = useQuery({
@@ -96,13 +101,30 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
       }
       try {
         const offerings = await Purchases.getOfferings();
+
+        // Try to find the specific kiwi_premium_monthly package
+        if (offerings?.current) {
+          const monthlyPkg = offerings.current.availablePackages.find(
+            (pkg: any) => pkg.product.identifier === PREMIUM_PRODUCT_ID
+          );
+          if (monthlyPkg) {
+            // Move the target package to the front
+            offerings.current.availablePackages = [
+              monthlyPkg,
+              ...offerings.current.availablePackages.filter(
+                (pkg: any) => pkg.product.identifier !== PREMIUM_PRODUCT_ID
+              ),
+            ];
+          }
+        }
+
         return offerings;
       } catch (error) {
         console.error("Failed to get offerings:", error);
         return null;
       }
     },
-    enabled: isConfigured,
+    enabled: configAttempted,
     retry: 2,
     retryDelay: 1000,
   });
@@ -223,7 +245,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
     scansRemaining: getScansRemaining(),
     dailyScansUsed,
     offerings: offeringsQuery.data,
-    isLoadingOfferings: offeringsQuery.isLoading || !isConfigured,
+    isLoadingOfferings: offeringsQuery.isLoading || !configAttempted,
     purchaseMutation,
     restoreMutation,
   };
