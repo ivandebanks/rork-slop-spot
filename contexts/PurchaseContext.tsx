@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Purchases, { PurchasesOfferings } from "react-native-purchases";
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 
 const REFERRAL_PREMIUM_KEY = "@kiwi_referral_premium";
 const REFERRAL_PREMIUM_EXPIRY_KEY = "@kiwi_referral_premium_expiry";
@@ -15,8 +16,17 @@ const PREMIUM_KEY = "@slop_spot_premium";
 let isRevenueCatConfigured = false;
 let configurePromise: Promise<boolean> | null = null;
 
+// Detect if running inside Expo Go (native store unavailable)
+const isExpoGo = Constants.appOwnership === "expo";
+
 const configureRevenueCat = async (): Promise<boolean> => {
   if (isRevenueCatConfigured) return true;
+
+  // RevenueCat native store is not available in Expo Go
+  if (isExpoGo) {
+    console.log("RevenueCat skipped: running in Expo Go (use a development build for purchases)");
+    return false;
+  }
 
   try {
     let apiKey = "";
@@ -37,8 +47,13 @@ const configureRevenueCat = async (): Promise<boolean> => {
     }
     console.warn("RevenueCat API key not found for platform:", Platform.OS);
     return false;
-  } catch (error) {
-    console.error("Failed to configure RevenueCat:", error);
+  } catch (error: any) {
+    // Gracefully handle native store unavailability
+    if (error?.message?.includes("native store") || error?.message?.includes("Expo Go")) {
+      console.log("RevenueCat unavailable in this environment (expected in Expo Go)");
+    } else {
+      console.error("Failed to configure RevenueCat:", error);
+    }
     return false;
   }
 };
