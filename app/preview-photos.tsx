@@ -10,450 +10,461 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import {
-  Camera,
-  Sparkles,
-  Shield,
-  Star,
-  Heart,
-  ChevronRight,
   ArrowLeft,
   Check,
+  Star,
   Search,
-  Zap,
-  Award,
-  Users,
-  Lock,
-  BookOpen,
-  Leaf,
-  Eye,
+  Clock,
+  ChevronRight,
+  Camera,
+  Sparkles,
+  FlipHorizontal,
+  ImageIcon,
+  HelpCircle,
+  ZapOff,
+  Shield,
+  SlidersHorizontal,
+  ArrowUpDown,
+  Trash2,
+  Settings,
   Crown,
+  Package,
+  ExternalLink,
+  Share2,
+  Info,
+  X,
+  Leaf,
+  Lock,
+  Eye,
+  BookOpen,
+  Users,
+  Zap,
+  Heart,
   ShoppingCart,
+  Award,
+  Type,
+  Mail,
+  FileText,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const PHONE_WIDTH = SCREEN_WIDTH - 80;
+const PHONE_HEIGHT = PHONE_WIDTH * 2.05;
 
-// Preview Photo 1: Click Image (Hero - Curiosity)
-function HeroPreview() {
+// ─── Slide 1: CLICK IMAGE (Hero) ───
+// Screenshot: Camera scanner screen
+// Caption: "Scan Any Label Instantly"
+function Slide1() {
   return (
-    <View style={styles.slide}>
-      <LinearGradient
-        colors={["#0A1628", "#118AB2", "#06D6A0"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientBg}
-      >
-        <View style={styles.heroContent}>
-          <View style={styles.heroIconRow}>
-            <View style={styles.heroIconCircle}>
-              <Camera size={40} color="#FFFFFF" />
+    <PreviewFrame caption="Scan Any Label Instantly" subcaption="Point your camera at any food or product">
+      <View style={styles.phoneScreen}>
+        {/* Camera screen mockup */}
+        <View style={[styles.mockScreen, { backgroundColor: "#1A1A1A" }]}>
+          {/* Camera overlay */}
+          <View style={styles.cameraOverlay}>
+            {/* Header */}
+            <View style={styles.camHeader}>
+              <View style={styles.camHeaderLeft}>
+                <HelpCircle size={20} color="#FFFFFF" />
+              </View>
+              <View style={styles.camHeaderCenter}>
+                <Text style={styles.camTitle}>Kiwi</Text>
+                <Text style={styles.camSubtitle}>2 scans</Text>
+              </View>
+              <View style={styles.camHeaderRight}>
+                <ZapOff size={20} color="#FFFFFF" />
+              </View>
             </View>
-            <View style={styles.heroArrow}>
-              <Sparkles size={24} color="#FFD700" />
-            </View>
-            <View style={[styles.heroIconCircle, { backgroundColor: "#06D6A0" }]}>
-              <Check size={40} color="#FFFFFF" />
+
+            {/* Scan frame */}
+            <View style={styles.camScanFrame} />
+
+            {/* Controls */}
+            <View style={styles.camControls}>
+              <View style={styles.camSideBtn}>
+                <ImageIcon size={22} color="#FFFFFF" />
+              </View>
+              <View style={styles.camCaptureBtn}>
+                <View style={styles.camCaptureBtnInner}>
+                  <Sparkles size={24} color="#118AB2" />
+                </View>
+              </View>
+              <View style={styles.camSideBtn}>
+                <FlipHorizontal size={22} color="#FFFFFF" />
+              </View>
             </View>
           </View>
+        </View>
+      </View>
+    </PreviewFrame>
+  );
+}
 
-          <Text style={styles.heroTitle}>
-            Scan Any Label.{"\n"}Know What's Inside.
-          </Text>
+// ─── Slide 2: INGREDIENTS ───
+// Screenshot: Result screen ingredient list
+// Caption: "See Every Ingredient Rated"
+function Slide2() {
+  const ingredients = [
+    { name: "Organic Whole Oats", score: 95, color: "#118AB2", impact: "Excellent source of fiber" },
+    { name: "Raw Honey", score: 78, color: "#06D6A0", impact: "Natural sweetener with antioxidants" },
+    { name: "Sunflower Oil", score: 62, color: "#FCBF49", impact: "High in omega-6 fatty acids" },
+    { name: "Natural Flavors", score: 45, color: "#F77F00", impact: "Vague labeling, unknown compounds" },
+    { name: "Soy Lecithin", score: 58, color: "#FCBF49", impact: "Common emulsifier, generally safe" },
+  ];
 
-          <Text style={styles.heroSubtitle}>
-            Point your camera at any food, drink, or product label and get instant ingredient analysis
-          </Text>
+  return (
+    <PreviewFrame caption="See Every Ingredient Rated" subcaption="AI-powered health scores from 0-100">
+      <View style={styles.phoneScreen}>
+        <View style={[styles.mockScreen, { backgroundColor: "#FFFFFF" }]}>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+            {/* Result card */}
+            <View style={styles.resultCardMock}>
+              <View style={[styles.scoreCircleMock, { backgroundColor: "#06D6A0" }]}>
+                <Text style={styles.scoreNumMock}>74</Text>
+                <Text style={styles.scoreOfMock}>/100</Text>
+              </View>
+              <Text style={[styles.gradeLabelMock, { color: "#06D6A0" }]}>B Grade</Text>
+              <Text style={styles.productNameMock}>Nature's Path Granola</Text>
 
-          <View style={styles.heroMockup}>
-            <View style={styles.phoneMockup}>
-              <View style={styles.phoneScreen}>
-                <View style={styles.mockCameraView}>
-                  <Text style={styles.mockCameraTitle}>Kiwi</Text>
-                  <View style={styles.mockScanFrame} />
-                  <View style={styles.mockCaptureBtn}>
-                    <Sparkles size={20} color="#118AB2" />
+              {/* Section title */}
+              <View style={styles.sectionHeaderMock}>
+                <Text style={styles.sectionTitleMock}>Ingredients (5)</Text>
+              </View>
+
+              {/* Ingredient cards */}
+              {ingredients.map((ing, i) => (
+                <View key={i} style={styles.ingredientCardMock}>
+                  <View style={styles.ingHeader}>
+                    <View style={styles.ingNameRow}>
+                      <View style={[styles.ingDot, { backgroundColor: ing.color }]} />
+                      <Text style={styles.ingName}>{ing.name}</Text>
+                    </View>
+                    <View style={[styles.ingBadge, { backgroundColor: ing.color + "20" }]}>
+                      <Text style={[styles.ingScore, { color: ing.color }]}>{ing.score}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.ingImpact}>{ing.impact}</Text>
+                </View>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </PreviewFrame>
+  );
+}
+
+// ─── Slide 3: BENEFITS ───
+// Screenshot: Key features showcase
+// Caption: "Everything You Need to Eat Smarter"
+function Slide3() {
+  const benefits = [
+    { icon: <Camera size={24} color="#118AB2" />, title: "Instant Scan", desc: "Just point your camera at any label" },
+    { icon: <Zap size={24} color="#F77F00" />, title: "AI Analysis", desc: "Health scores 0-100 per ingredient" },
+    { icon: <BookOpen size={24} color="#06D6A0" />, title: "Real Sources", desc: "FDA, NIH & peer-reviewed citations" },
+    { icon: <Clock size={24} color="#9B59B6" />, title: "Track History", desc: "Save every scan, compare products" },
+  ];
+
+  return (
+    <PreviewFrame caption="Everything You Need to Eat Smarter" subcaption="Powerful features, dead simple to use">
+      <View style={styles.phoneScreen}>
+        <View style={[styles.mockScreen, { backgroundColor: "#0A1628" }]}>
+          <View style={styles.benefitsLayout}>
+            <View style={styles.benefitsHeader}>
+              <Sparkles size={28} color="#FFD700" />
+              <Text style={styles.benefitsTitle}>Why Kiwi?</Text>
+            </View>
+
+            {benefits.map((b, i) => (
+              <View key={i} style={styles.benefitRowMock}>
+                <View style={styles.benefitIconBox}>{b.icon}</View>
+                <View style={styles.benefitTextBox}>
+                  <Text style={styles.benefitTitleMock}>{b.title}</Text>
+                  <Text style={styles.benefitDescMock}>{b.desc}</Text>
+                </View>
+              </View>
+            ))}
+
+            <View style={styles.benefitsBadge}>
+              <Star size={14} color="#FFD700" fill="#FFD700" />
+              <Text style={styles.benefitsBadgeText}>Free to download  •  No account needed</Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </PreviewFrame>
+  );
+}
+
+// ─── Slide 4: PRODUCT DETAILS ───
+// Screenshot: Full result detail view
+// Caption: "Detailed Health Reports with Sources"
+function Slide4() {
+  return (
+    <PreviewFrame caption="Detailed Health Reports" subcaption="With scientific citations for every rating">
+      <View style={styles.phoneScreen}>
+        <View style={[styles.mockScreen, { backgroundColor: "#FFFFFF" }]}>
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+            {/* Product image area */}
+            <View style={styles.productImageArea}>
+              <View style={styles.productImagePlaceholder}>
+                <Package size={40} color="#AAAAAA" />
+                <Text style={styles.productImageText}>Product Photo</Text>
+              </View>
+              <View style={styles.floatingBack}>
+                <ArrowLeft size={18} color="#FFFFFF" />
+              </View>
+              <View style={styles.floatingShare}>
+                <Share2 size={18} color="#FFFFFF" />
+              </View>
+            </View>
+
+            {/* Result card */}
+            <View style={styles.detailResultCard}>
+              <View style={[styles.scoreCircleMock, { backgroundColor: "#E63946", width: 70, height: 70, borderRadius: 35 }]}>
+                <Text style={[styles.scoreNumMock, { fontSize: 28 }]}>32</Text>
+                <Text style={styles.scoreOfMock}>/100</Text>
+              </View>
+              <Text style={[styles.gradeLabelMock, { color: "#E63946" }]}>Slop</Text>
+              <Text style={styles.productNameMock}>Mountain Dew Code Red</Text>
+
+              {/* Ingredient detail */}
+              <View style={styles.detailIngredient}>
+                <View style={styles.ingHeader}>
+                  <View style={styles.ingNameRow}>
+                    <View style={[styles.ingDot, { backgroundColor: "#E63946" }]} />
+                    <Text style={styles.ingName}>High Fructose Corn Syrup</Text>
+                  </View>
+                  <View style={[styles.ingBadge, { backgroundColor: "#E6394620" }]}>
+                    <Text style={[styles.ingScore, { color: "#E63946" }]}>12</Text>
                   </View>
                 </View>
+                <Text style={styles.ingImpactBold}>Linked to obesity and metabolic disease</Text>
+                <Text style={styles.ingExplanation}>
+                  Highly processed sweetener associated with increased risk of type 2 diabetes, fatty liver disease, and cardiovascular issues.
+                </Text>
+                <View style={styles.citationBtn}>
+                  <ExternalLink size={12} color="#118AB2" />
+                  <Text style={styles.citationBtnText}>View Sources (3)</Text>
+                </View>
+              </View>
+
+              {/* Disclaimer */}
+              <View style={styles.disclaimerMock}>
+                <Info size={14} color="#FFA500" />
+                <Text style={styles.disclaimerText}>For entertainment purposes only. Not medical advice.</Text>
               </View>
             </View>
-          </View>
-
-          <View style={styles.heroBadge}>
-            <Star size={14} color="#FFD700" fill="#FFD700" />
-            <Text style={styles.heroBadgeText}>Free to Download</Text>
-          </View>
+          </ScrollView>
         </View>
-      </LinearGradient>
-    </View>
+      </View>
+    </PreviewFrame>
   );
 }
 
-// Preview Photo 2: Ingredients
-function IngredientsPreview() {
-  const mockIngredients = [
-    { name: "Organic Oats", score: 95, color: "#118AB2" },
-    { name: "Honey", score: 72, color: "#06D6A0" },
-    { name: "Natural Flavors", score: 55, color: "#FCBF49" },
-    { name: "Citric Acid", score: 68, color: "#FCBF49" },
-    { name: "High Fructose Corn Syrup", score: 15, color: "#E63946" },
+// ─── Slide 5: LIFESTYLE ───
+// Screenshot: History screen with scans
+// Caption: "Track Everything You Eat"
+function Slide5() {
+  const scans = [
+    { name: "Organic Granola Bar", score: 82, color: "#06D6A0", grade: "B Grade", time: "Today", count: 8 },
+    { name: "Coca-Cola Classic", score: 18, color: "#E63946", grade: "Health Hazard", time: "Today", count: 12 },
+    { name: "Greek Yogurt", score: 91, color: "#118AB2", grade: "A Grade", time: "Yesterday", count: 6 },
+    { name: "Doritos Nacho Cheese", score: 28, color: "#E63946", grade: "Health Hazard", time: "Yesterday", count: 15 },
+    { name: "Kind Protein Bar", score: 65, color: "#FCBF49", grade: "Premium Slop", time: "Mar 5", count: 10 },
   ];
 
   return (
-    <View style={styles.slide}>
-      <LinearGradient
-        colors={["#FFFFFF", "#F0F9FF", "#E0F2FE"]}
-        style={styles.gradientBg}
-      >
-        <View style={styles.slideContent}>
-          <View style={styles.slideHeader}>
-            <View style={[styles.slideIconBadge, { backgroundColor: "#118AB2" }]}>
-              <Search size={24} color="#FFFFFF" />
+    <PreviewFrame caption="Track Everything You Scan" subcaption="Build a history of smarter choices">
+      <View style={styles.phoneScreen}>
+        <View style={[styles.mockScreen, { backgroundColor: "#FFFFFF" }]}>
+          {/* History header */}
+          <View style={styles.historyHeader}>
+            <View style={styles.histSearchBar}>
+              <Search size={16} color="#999" />
+              <Text style={styles.histSearchText}>Search products...</Text>
             </View>
-            <Text style={styles.slideTitleDark}>Every Ingredient,{"\n"}Analyzed Instantly</Text>
-            <Text style={styles.slideSubtitleDark}>
-              AI-powered breakdown with health scores for each ingredient
-            </Text>
+            <View style={styles.histFilterRow}>
+              <View style={styles.histFilterBtn}>
+                <SlidersHorizontal size={14} color="#1A1A1A" />
+                <Text style={styles.histFilterText}>Filters</Text>
+              </View>
+              <View style={styles.histFilterBtn}>
+                <ArrowUpDown size={14} color="#1A1A1A" />
+                <Text style={styles.histFilterText}>Newest</Text>
+              </View>
+            </View>
+            <Text style={styles.histCount}>{scans.length} scans</Text>
           </View>
 
-          <View style={styles.ingredientsList}>
-            {mockIngredients.map((item, index) => (
-              <View key={index} style={styles.ingredientRow}>
-                <View style={[styles.ingredientDot, { backgroundColor: item.color }]} />
-                <Text style={styles.ingredientName}>{item.name}</Text>
-                <View style={[styles.ingredientScoreBadge, { backgroundColor: item.color + "20" }]}>
-                  <Text style={[styles.ingredientScore, { color: item.color }]}>{item.score}</Text>
+          {/* Scan list */}
+          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+            <View style={styles.histList}>
+              {scans.map((scan, i) => (
+                <View key={i} style={[styles.histCard, { borderLeftColor: scan.color }]}>
+                  <View style={styles.histThumb}>
+                    <Package size={20} color="#CCC" />
+                  </View>
+                  <View style={styles.histCardContent}>
+                    <Text style={styles.histProductName} numberOfLines={1}>{scan.name}</Text>
+                    <View style={styles.histMeta}>
+                      <Clock size={11} color="#999" />
+                      <Text style={styles.histTime}>{scan.time}</Text>
+                    </View>
+                    <Text style={styles.histIngCount}>{scan.count} ingredients</Text>
+                  </View>
+                  <View style={styles.histScoreArea}>
+                    <View style={[styles.histScoreBadge, { backgroundColor: scan.color }]}>
+                      <Text style={styles.histScoreText}>{scan.score}</Text>
+                    </View>
+                    <Text style={[styles.histGrade, { color: scan.color }]}>{scan.grade}</Text>
+                    <ChevronRight size={14} color="#CCC" />
+                  </View>
                 </View>
+              ))}
+            </View>
+          </ScrollView>
+        </View>
+      </View>
+    </PreviewFrame>
+  );
+}
+
+// ─── Slide 6: TRUST ───
+// Screenshot: Privacy & trust signals
+// Caption: "Your Privacy Comes First"
+function Slide6() {
+  const trustPoints = [
+    { icon: <Lock size={22} color="#118AB2" />, title: "100% On-Device", desc: "Photos never leave your phone" },
+    { icon: <BookOpen size={22} color="#06D6A0" />, title: "Real Citations", desc: "FDA, NIH, WHO & PubMed sources" },
+    { icon: <Eye size={22} color="#9B59B6" />, title: "Full Transparency", desc: "See why each score was given" },
+    { icon: <Users size={22} color="#F77F00" />, title: "No Account Needed", desc: "Download and start scanning" },
+  ];
+
+  return (
+    <PreviewFrame caption="Your Privacy Comes First" subcaption="No data leaves your device. Ever.">
+      <View style={styles.phoneScreen}>
+        <View style={[styles.mockScreen, { backgroundColor: "#F0FDF4" }]}>
+          <View style={styles.trustLayout}>
+            <View style={styles.trustShieldWrap}>
+              <Shield size={48} color="#06D6A0" />
+            </View>
+
+            {trustPoints.map((tp, i) => (
+              <View key={i} style={styles.trustRowMock}>
+                <View style={styles.trustIconBox}>{tp.icon}</View>
+                <View style={styles.trustTextBox}>
+                  <Text style={styles.trustTitleMock}>{tp.title}</Text>
+                  <Text style={styles.trustDescMock}>{tp.desc}</Text>
+                </View>
+                <Check size={18} color="#06D6A0" />
               </View>
             ))}
-          </View>
 
-          <View style={styles.scoreScale}>
-            <View style={styles.scaleBar}>
-              <LinearGradient
-                colors={["#E63946", "#F77F00", "#FCBF49", "#06D6A0", "#118AB2"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.scaleGradient}
+            <View style={styles.trustRatingRow}>
+              {[1, 2, 3, 4].map(i => (
+                <Star key={i} size={20} color="#FFD700" fill="#FFD700" />
+              ))}
+              <Star size={20} color="#FFD700" />
+              <Text style={styles.trustRatingText}>4.0 on App Store</Text>
+            </View>
+
+            <View style={styles.trustQuote}>
+              <Text style={styles.trustQuoteText}>
+                "Finally an app that tells me what's actually in my food without selling my data."
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </PreviewFrame>
+  );
+}
+
+// ─── Slide 7: BRAND STORY ───
+// Screenshot: Brand / download CTA
+// Caption: "Know What You're Eating"
+function Slide7() {
+  return (
+    <PreviewFrame caption="Know What You're Eating" subcaption="Join thousands making healthier choices">
+      <View style={styles.phoneScreen}>
+        <View style={[styles.mockScreen, { backgroundColor: "#0D3B66" }]}>
+          <LinearGradient
+            colors={["#0D3B66", "#118AB2", "#06D6A0"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{ flex: 1 }}
+          >
+            <View style={styles.brandLayout}>
+              <Image
+                source={require("../assets/images/icon.png")}
+                style={styles.brandLogoMock}
+                resizeMode="contain"
               />
+              <Text style={styles.brandNameMock}>Kiwi</Text>
+              <Text style={styles.brandTaglineMock}>Better Health Scanner</Text>
+
+              <View style={styles.brandMissionBox}>
+                <Leaf size={16} color="#06D6A0" />
+                <Text style={styles.brandMissionMock}>
+                  Everyone deserves to know what's in their food. Scan, learn, and choose better.
+                </Text>
+              </View>
+
+              <View style={styles.brandValuesList}>
+                {[
+                  { dot: "#06D6A0", text: "Transparency First" },
+                  { dot: "#FFFFFF", text: "Privacy by Design" },
+                  { dot: "#FFD700", text: "Science-Backed Ratings" },
+                  { dot: "#9B59B6", text: "Accessible to Everyone" },
+                ].map((v, i) => (
+                  <View key={i} style={styles.brandValueRow}>
+                    <View style={[styles.brandDot, { backgroundColor: v.dot }]} />
+                    <Text style={styles.brandValueText}>{v.text}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.brandCtaMock}>
+                <Text style={styles.brandCtaText}>Download Free</Text>
+              </View>
+              <Text style={styles.brandPriceLine}>Free  •  Premium $4.99 one-time</Text>
             </View>
-            <View style={styles.scaleLabels}>
-              <Text style={styles.scaleLabel}>Harmful</Text>
-              <Text style={styles.scaleLabel}>Excellent</Text>
-            </View>
-          </View>
+          </LinearGradient>
         </View>
-      </LinearGradient>
-    </View>
+      </View>
+    </PreviewFrame>
   );
 }
 
-// Preview Photo 3: Benefits
-function BenefitsPreview() {
-  const benefits = [
-    {
-      icon: <Camera size={28} color="#118AB2" />,
-      title: "Instant Scanning",
-      desc: "Point & scan any label in seconds",
-    },
-    {
-      icon: <Zap size={28} color="#F77F00" />,
-      title: "AI-Powered Analysis",
-      desc: "Smart ingredient health ratings 0-100",
-    },
-    {
-      icon: <Shield size={28} color="#06D6A0" />,
-      title: "Science-Backed",
-      desc: "Citations from FDA, NIH & medical journals",
-    },
-    {
-      icon: <BookOpen size={28} color="#9B59B6" />,
-      title: "Track History",
-      desc: "Save & compare all your scanned products",
-    },
-  ];
-
+// ─── Frame wrapper with caption ───
+function PreviewFrame({ caption, subcaption, children }: { caption: string; subcaption: string; children: React.ReactNode }) {
   return (
-    <View style={styles.slide}>
+    <View style={styles.frameContainer}>
       <LinearGradient
-        colors={["#0A1628", "#1A2940", "#0D3B66"]}
-        style={styles.gradientBg}
+        colors={["#0D3B66", "#118AB2"]}
+        style={styles.frameGradient}
       >
-        <View style={styles.slideContent}>
-          <View style={styles.slideHeader}>
-            <Text style={styles.slideTitle}>Why People{"\n"}Love Kiwi</Text>
-            <Text style={styles.slideSubtitle}>
-              Everything you need to make healthier choices
-            </Text>
-          </View>
-
-          <View style={styles.benefitsGrid}>
-            {benefits.map((benefit, index) => (
-              <View key={index} style={styles.benefitCard}>
-                <View style={styles.benefitIconWrap}>
-                  {benefit.icon}
-                </View>
-                <Text style={styles.benefitTitle}>{benefit.title}</Text>
-                <Text style={styles.benefitDesc}>{benefit.desc}</Text>
-              </View>
-            ))}
-          </View>
+        <View style={styles.captionArea}>
+          <Text style={styles.captionText}>{caption}</Text>
+          <Text style={styles.subcaptionText}>{subcaption}</Text>
         </View>
+        {children}
       </LinearGradient>
     </View>
   );
 }
 
-// Preview Photo 4: Product Details
-function ProductDetailsPreview() {
-  return (
-    <View style={styles.slide}>
-      <LinearGradient
-        colors={["#FFFFFF", "#F8F9FA", "#EEF2FF"]}
-        style={styles.gradientBg}
-      >
-        <View style={styles.slideContent}>
-          <View style={styles.slideHeader}>
-            <View style={[styles.slideIconBadge, { backgroundColor: "#06D6A0" }]}>
-              <Award size={24} color="#FFFFFF" />
-            </View>
-            <Text style={styles.slideTitleDark}>Detailed Product{"\n"}Health Reports</Text>
-          </View>
-
-          <View style={styles.mockResultCard}>
-            <View style={styles.mockProductHeader}>
-              <View style={[styles.mockScoreCircle, { backgroundColor: "#06D6A0" }]}>
-                <Text style={styles.mockScoreNum}>82</Text>
-                <Text style={styles.mockScoreOf}>/100</Text>
-              </View>
-              <Text style={styles.mockGradeLabel}>B Grade</Text>
-              <Text style={styles.mockProductName}>Organic Granola Bar</Text>
-            </View>
-
-            <View style={styles.mockDivider} />
-
-            <View style={styles.mockDetailRow}>
-              <Text style={styles.mockDetailLabel}>Ingredients Analyzed</Text>
-              <Text style={styles.mockDetailValue}>12</Text>
-            </View>
-            <View style={styles.mockDetailRow}>
-              <Text style={styles.mockDetailLabel}>Health Impact</Text>
-              <View style={styles.mockImpactBadge}>
-                <Text style={styles.mockImpactText}>Mostly Healthy</Text>
-              </View>
-            </View>
-            <View style={styles.mockDetailRow}>
-              <Text style={styles.mockDetailLabel}>Scientific Sources</Text>
-              <Text style={styles.mockDetailValue}>8 citations</Text>
-            </View>
-
-            <View style={styles.mockCitationPreview}>
-              <View style={styles.mockCitationDot} />
-              <Text style={styles.mockCitationText}>FDA - Generally Recognized as Safe</Text>
-            </View>
-            <View style={styles.mockCitationPreview}>
-              <View style={styles.mockCitationDot} />
-              <Text style={styles.mockCitationText}>NIH - Nutritional Benefits Study</Text>
-            </View>
-          </View>
-        </View>
-      </LinearGradient>
-    </View>
-  );
-}
-
-// Preview Photo 5: Lifestyle
-function LifestylePreview() {
-  const scenarios = [
-    { emoji: "🛒", title: "At the Grocery Store", desc: "Compare products before you buy" },
-    { emoji: "🍽️", title: "Meal Planning", desc: "Choose healthier ingredients" },
-    { emoji: "👨‍👩‍👧‍👦", title: "For Your Family", desc: "Know what your kids are eating" },
-    { emoji: "💪", title: "Fitness Goals", desc: "Track nutritional quality" },
-  ];
-
-  return (
-    <View style={styles.slide}>
-      <LinearGradient
-        colors={["#06D6A0", "#118AB2", "#0D3B66"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0.5, y: 1 }}
-        style={styles.gradientBg}
-      >
-        <View style={styles.slideContent}>
-          <View style={styles.slideHeader}>
-            <Text style={styles.slideTitle}>Scan Anywhere,{"\n"}Anytime</Text>
-            <Text style={styles.slideSubtitle}>
-              Make informed choices in every moment
-            </Text>
-          </View>
-
-          <View style={styles.lifestyleCards}>
-            {scenarios.map((item, index) => (
-              <View key={index} style={styles.lifestyleCard}>
-                <Text style={styles.lifestyleEmoji}>{item.emoji}</Text>
-                <View style={styles.lifestyleTextWrap}>
-                  <Text style={styles.lifestyleCardTitle}>{item.title}</Text>
-                  <Text style={styles.lifestyleCardDesc}>{item.desc}</Text>
-                </View>
-                <ChevronRight size={20} color="rgba(255,255,255,0.5)" />
-              </View>
-            ))}
-          </View>
-
-          <View style={styles.lifestyleStats}>
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>2M+</Text>
-              <Text style={styles.statLabel}>Scans</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>50K+</Text>
-              <Text style={styles.statLabel}>Products</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statNumber}>4.0</Text>
-              <Text style={styles.statLabel}>Rating</Text>
-            </View>
-          </View>
-        </View>
-      </LinearGradient>
-    </View>
-  );
-}
-
-// Preview Photo 6: Trust
-function TrustPreview() {
-  return (
-    <View style={styles.slide}>
-      <LinearGradient
-        colors={["#FFFFFF", "#F0FDF4", "#ECFDF5"]}
-        style={styles.gradientBg}
-      >
-        <View style={styles.slideContent}>
-          <View style={styles.slideHeader}>
-            <View style={[styles.slideIconBadge, { backgroundColor: "#06D6A0" }]}>
-              <Shield size={24} color="#FFFFFF" />
-            </View>
-            <Text style={styles.slideTitleDark}>Built on Trust{"\n"}& Transparency</Text>
-          </View>
-
-          <View style={styles.trustCards}>
-            <View style={styles.trustCard}>
-              <Lock size={24} color="#118AB2" />
-              <View style={styles.trustCardText}>
-                <Text style={styles.trustCardTitle}>100% Private</Text>
-                <Text style={styles.trustCardDesc}>All scanning happens on your device. No photos uploaded to any server.</Text>
-              </View>
-            </View>
-
-            <View style={styles.trustCard}>
-              <BookOpen size={24} color="#06D6A0" />
-              <View style={styles.trustCardText}>
-                <Text style={styles.trustCardTitle}>Science-Backed Sources</Text>
-                <Text style={styles.trustCardDesc}>Every rating links to FDA, NIH, WHO, and peer-reviewed research.</Text>
-              </View>
-            </View>
-
-            <View style={styles.trustCard}>
-              <Eye size={24} color="#9B59B6" />
-              <View style={styles.trustCardText}>
-                <Text style={styles.trustCardTitle}>Full Transparency</Text>
-                <Text style={styles.trustCardDesc}>See exactly why each ingredient received its score.</Text>
-              </View>
-            </View>
-
-            <View style={styles.trustCard}>
-              <Users size={24} color="#F77F00" />
-              <View style={styles.trustCardText}>
-                <Text style={styles.trustCardTitle}>No Account Required</Text>
-                <Text style={styles.trustCardDesc}>Start scanning immediately. No sign-up, no personal data collected.</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.trustStars}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Star key={i} size={24} color="#FFD700" fill={i <= 4 ? "#FFD700" : "transparent"} />
-            ))}
-            <Text style={styles.trustRating}>4.0 on the App Store</Text>
-          </View>
-        </View>
-      </LinearGradient>
-    </View>
-  );
-}
-
-// Preview Photo 7: Brand Story
-function BrandStoryPreview() {
-  return (
-    <View style={styles.slide}>
-      <LinearGradient
-        colors={["#0D3B66", "#118AB2", "#06D6A0"]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.gradientBg}
-      >
-        <View style={styles.slideContent}>
-          <View style={styles.brandHeader}>
-            <Image
-              source={require("../assets/images/icon.png")}
-              style={styles.brandLogo}
-              resizeMode="contain"
-            />
-            <Text style={styles.brandName}>Kiwi</Text>
-            <Text style={styles.brandTagline}>Better Health Scanner</Text>
-          </View>
-
-          <View style={styles.brandMission}>
-            <Leaf size={20} color="#06D6A0" />
-            <Text style={styles.brandMissionText}>
-              We believe everyone deserves to know what's in their food. Kiwi was built to make ingredient transparency simple, instant, and accessible to all.
-            </Text>
-          </View>
-
-          <View style={styles.brandValues}>
-            <View style={styles.brandValueItem}>
-              <View style={[styles.brandValueDot, { backgroundColor: "#06D6A0" }]} />
-              <Text style={styles.brandValueText}>Transparency First</Text>
-            </View>
-            <View style={styles.brandValueItem}>
-              <View style={[styles.brandValueDot, { backgroundColor: "#118AB2" }]} />
-              <Text style={styles.brandValueText}>Privacy by Design</Text>
-            </View>
-            <View style={styles.brandValueItem}>
-              <View style={[styles.brandValueDot, { backgroundColor: "#FFD700" }]} />
-              <Text style={styles.brandValueText}>Science-Backed Ratings</Text>
-            </View>
-            <View style={styles.brandValueItem}>
-              <View style={[styles.brandValueDot, { backgroundColor: "#9B59B6" }]} />
-              <Text style={styles.brandValueText}>Accessible to Everyone</Text>
-            </View>
-          </View>
-
-          <View style={styles.brandCta}>
-            <View style={styles.brandCtaButton}>
-              <Text style={styles.brandCtaText}>Download Free Today</Text>
-              <ShoppingCart size={18} color="#118AB2" />
-            </View>
-            <View style={styles.brandPricing}>
-              <Text style={styles.brandFreeText}>Free with 2 daily scans</Text>
-              <Text style={styles.brandPremiumText}>Premium: $4.99 one-time</Text>
-            </View>
-          </View>
-        </View>
-      </LinearGradient>
-    </View>
-  );
-}
-
-const previewSlides = [
-  { key: "hero", label: "1. Click Image", component: HeroPreview },
-  { key: "ingredients", label: "2. Ingredients", component: IngredientsPreview },
-  { key: "benefits", label: "3. Benefits", component: BenefitsPreview },
-  { key: "details", label: "4. Product Details", component: ProductDetailsPreview },
-  { key: "lifestyle", label: "5. Lifestyle", component: LifestylePreview },
-  { key: "trust", label: "6. Trust", component: TrustPreview },
-  { key: "brand", label: "7. Brand Story", component: BrandStoryPreview },
+// ─── Slides config ───
+const slides = [
+  { key: "1", label: "1 · Click Image", component: Slide1 },
+  { key: "2", label: "2 · Ingredients", component: Slide2 },
+  { key: "3", label: "3 · Benefits", component: Slide3 },
+  { key: "4", label: "4 · Product Details", component: Slide4 },
+  { key: "5", label: "5 · Lifestyle", component: Slide5 },
+  { key: "6", label: "6 · Trust", component: Slide6 },
+  { key: "7", label: "7 · Brand Story", component: Slide7 },
 ];
 
 export default function PreviewPhotosScreen() {
@@ -463,7 +474,7 @@ export default function PreviewPhotosScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <ArrowLeft size={24} color="#1A1A1A" />
         </TouchableOpacity>
-        <Text style={styles.navTitle}>App Store Previews</Text>
+        <Text style={styles.navTitle}>Preview Photos</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -471,11 +482,13 @@ export default function PreviewPhotosScreen() {
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        style={styles.scrollView}
+        decelerationRate="fast"
+        snapToInterval={SCREEN_WIDTH}
+        snapToAlignment="center"
         contentContainerStyle={styles.scrollContent}
       >
-        {previewSlides.map((slide) => (
-          <View key={slide.key} style={styles.slideWrapper}>
+        {slides.map((slide) => (
+          <View key={slide.key} style={[styles.slideWrapper, { width: SCREEN_WIDTH }]}>
             <Text style={styles.slideLabel}>{slide.label}</Text>
             <slide.component />
           </View>
@@ -488,14 +501,14 @@ export default function PreviewPhotosScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: "#F2F2F7",
   },
   navHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
   },
   backBtn: {
     width: 40,
@@ -504,578 +517,650 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   navTitle: {
-    fontSize: 18,
-    fontWeight: "700",
+    fontSize: 17,
+    fontWeight: "600",
     color: "#1A1A1A",
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 16,
-    gap: 16,
-  },
+  scrollContent: {},
   slideWrapper: {
-    width: SCREEN_WIDTH - 32,
-    marginRight: 16,
     alignItems: "center",
+    paddingHorizontal: 20,
   },
   slideLabel: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "600",
-    color: "#666666",
+    color: "#888",
     marginBottom: 8,
+    letterSpacing: 0.5,
     textTransform: "uppercase",
-    letterSpacing: 1,
   },
-  slide: {
-    width: SCREEN_WIDTH - 32,
-    height: SCREEN_HEIGHT * 0.78,
-    borderRadius: 24,
+
+  // ─── Frame ───
+  frameContainer: {
+    width: PHONE_WIDTH + 32,
+    borderRadius: 28,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
     elevation: 10,
   },
-  gradientBg: {
-    flex: 1,
-  },
-
-  // Hero styles
-  heroContent: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-    gap: 24,
-  },
-  heroIconRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-  },
-  heroIconCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: "#118AB2",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  heroArrow: {
-    paddingHorizontal: 8,
-  },
-  heroTitle: {
-    fontSize: 32,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    textAlign: "center",
-    lineHeight: 40,
-  },
-  heroSubtitle: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.8)",
-    textAlign: "center",
-    lineHeight: 24,
-    maxWidth: 300,
-  },
-  heroMockup: {
-    alignItems: "center",
-    marginTop: 8,
-  },
-  phoneMockup: {
-    width: 180,
-    height: 200,
-    borderRadius: 24,
-    backgroundColor: "#000000",
-    padding: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-  },
-  phoneScreen: {
-    flex: 1,
-    borderRadius: 18,
-    overflow: "hidden",
-    backgroundColor: "#1A1A1A",
-  },
-  mockCameraView: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-  },
-  mockCameraTitle: {
-    fontSize: 18,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  mockScanFrame: {
-    width: 100,
-    height: 80,
-    borderWidth: 2,
-    borderColor: "#FFFFFF",
-    borderRadius: 12,
-    borderStyle: "dashed",
-  },
-  mockCaptureBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "center",
+  frameGradient: {
+    paddingTop: 32,
+    paddingBottom: 20,
     alignItems: "center",
   },
-  heroBadge: {
-    flexDirection: "row",
+  captionArea: {
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(255,255,255,0.15)",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  heroBadgeText: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-
-  // Shared slide styles
-  slideContent: {
-    flex: 1,
+    marginBottom: 20,
     paddingHorizontal: 24,
-    paddingVertical: 40,
-    justifyContent: "space-between",
   },
-  slideHeader: {
-    alignItems: "center",
-    gap: 12,
-  },
-  slideIconBadge: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 4,
-  },
-  slideTitle: {
-    fontSize: 30,
+  captionText: {
+    fontSize: 22,
     fontWeight: "800",
     color: "#FFFFFF",
     textAlign: "center",
-    lineHeight: 38,
+    lineHeight: 28,
   },
-  slideSubtitle: {
-    fontSize: 15,
-    color: "rgba(255,255,255,0.75)",
+  subcaptionText: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.7)",
     textAlign: "center",
-    lineHeight: 22,
-    maxWidth: 300,
-  },
-  slideTitleDark: {
-    fontSize: 30,
-    fontWeight: "800",
-    color: "#1A1A1A",
-    textAlign: "center",
-    lineHeight: 38,
-  },
-  slideSubtitleDark: {
-    fontSize: 15,
-    color: "#666666",
-    textAlign: "center",
-    lineHeight: 22,
-    maxWidth: 300,
-  },
-
-  // Ingredients styles
-  ingredientsList: {
-    gap: 12,
-    marginTop: 8,
-  },
-  ingredientRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  ingredientDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 12,
-  },
-  ingredientName: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: "600",
-    color: "#1A1A1A",
-  },
-  ingredientScoreBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  ingredientScore: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  scoreScale: {
-    marginTop: 8,
-  },
-  scaleBar: {
-    height: 8,
-    borderRadius: 4,
-    overflow: "hidden",
-  },
-  scaleGradient: {
-    flex: 1,
-  },
-  scaleLabels: {
-    flexDirection: "row",
-    justifyContent: "space-between",
     marginTop: 6,
   },
-  scaleLabel: {
-    fontSize: 12,
-    color: "#999999",
-    fontWeight: "500",
+
+  // ─── Phone ───
+  phoneScreen: {
+    width: PHONE_WIDTH,
+    height: PHONE_HEIGHT,
+    borderRadius: 20,
+    overflow: "hidden",
+    borderWidth: 3,
+    borderColor: "rgba(255,255,255,0.2)",
+  },
+  mockScreen: {
+    flex: 1,
   },
 
-  // Benefits styles
-  benefitsGrid: {
-    gap: 14,
-    marginTop: 8,
+  // ─── Slide 1: Camera ───
+  cameraOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "space-between",
   },
-  benefitCard: {
-    backgroundColor: "rgba(255,255,255,0.08)",
+  camHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 40,
+    paddingHorizontal: 16,
+  },
+  camHeaderLeft: { width: 32 },
+  camHeaderCenter: { flex: 1, alignItems: "center" },
+  camHeaderRight: { width: 32, alignItems: "flex-end" },
+  camTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  camSubtitle: {
+    fontSize: 13,
+    color: "#FFFFFF",
+    marginTop: 2,
+  },
+  camScanFrame: {
+    marginHorizontal: 24,
+    flex: 1,
+    marginVertical: 50,
+    borderWidth: 2,
+    borderColor: "#FFFFFF",
     borderRadius: 16,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
+    borderStyle: "dashed",
   },
-  benefitIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,0.1)",
+  camControls: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 32,
+    paddingBottom: 40,
+  },
+  camSideBtn: {
+    width: 44,
+    height: 44,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 10,
   },
-  benefitTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 4,
+  camCaptureBtn: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: "#FFFFFF",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  benefitDesc: {
-    fontSize: 14,
-    color: "rgba(255,255,255,0.65)",
-    lineHeight: 20,
+  camCaptureBtnInner: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "#F0F0F0",
+    justifyContent: "center",
+    alignItems: "center",
   },
 
-  // Product Details styles
-  mockResultCard: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
-    padding: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  mockProductHeader: {
+  // ─── Slide 2: Ingredients ───
+  resultCardMock: {
+    padding: 16,
     alignItems: "center",
-    marginBottom: 16,
   },
-  mockScoreCircle: {
+  scoreCircleMock: {
     width: 80,
     height: 80,
     borderRadius: 40,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
+    marginTop: 16,
   },
-  mockScoreNum: {
+  scoreNumMock: {
     fontSize: 32,
     fontWeight: "800",
     color: "#FFFFFF",
   },
-  mockScoreOf: {
-    fontSize: 12,
+  scoreOfMock: {
+    fontSize: 11,
     fontWeight: "600",
     color: "rgba(255,255,255,0.8)",
-    marginTop: -4,
+    marginTop: -3,
   },
-  mockGradeLabel: {
-    fontSize: 20,
+  gradeLabelMock: {
+    fontSize: 18,
     fontWeight: "700",
-    color: "#06D6A0",
     marginBottom: 4,
   },
-  mockProductName: {
-    fontSize: 16,
+  productNameMock: {
+    fontSize: 15,
     fontWeight: "600",
     color: "#1A1A1A",
+    marginBottom: 16,
   },
-  mockDivider: {
-    height: 1,
-    backgroundColor: "#F0F0F0",
-    marginVertical: 16,
+  sectionHeaderMock: {
+    width: "100%",
+    marginBottom: 8,
   },
-  mockDetailRow: {
+  sectionTitleMock: {
+    fontSize: 15,
+    fontWeight: "700",
+    color: "#1A1A1A",
+  },
+  ingredientCardMock: {
+    width: "100%",
+    backgroundColor: "#F8F9FA",
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+    gap: 4,
+  },
+  ingHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 10,
   },
-  mockDetailLabel: {
-    fontSize: 14,
-    color: "#666666",
-  },
-  mockDetailValue: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1A1A1A",
-  },
-  mockImpactBadge: {
-    backgroundColor: "#06D6A020",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  mockImpactText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#06D6A0",
-  },
-  mockCitationPreview: {
+  ingNameRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    marginTop: 8,
-    paddingVertical: 6,
+    flex: 1,
   },
-  mockCitationDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#118AB2",
+  ingDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  mockCitationText: {
+  ingName: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#1A1A1A",
+    flex: 1,
+  },
+  ingBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  ingScore: {
     fontSize: 12,
-    color: "#118AB2",
-    fontWeight: "500",
+    fontWeight: "700",
+  },
+  ingImpact: {
+    fontSize: 11,
+    color: "#666",
+    marginTop: 2,
   },
 
-  // Lifestyle styles
-  lifestyleCards: {
-    gap: 12,
-    marginTop: 8,
-  },
-  lifestyleCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.12)",
-    borderRadius: 16,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    gap: 14,
-  },
-  lifestyleEmoji: {
-    fontSize: 32,
-  },
-  lifestyleTextWrap: {
+  // ─── Slide 3: Benefits ───
+  benefitsLayout: {
     flex: 1,
-    gap: 2,
-  },
-  lifestyleCardTitle: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  lifestyleCardDesc: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.65)",
-  },
-  lifestyleStats: {
-    flexDirection: "row",
-    alignItems: "center",
+    padding: 20,
     justifyContent: "center",
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-    gap: 20,
+    gap: 16,
   },
-  statItem: {
+  benefitsHeader: {
     alignItems: "center",
+    gap: 8,
+    marginBottom: 8,
   },
-  statNumber: {
+  benefitsTitle: {
     fontSize: 22,
     fontWeight: "800",
     color: "#FFFFFF",
   },
-  statLabel: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.65)",
-    marginTop: 2,
-  },
-  statDivider: {
-    width: 1,
-    height: 32,
-    backgroundColor: "rgba(255,255,255,0.2)",
-  },
-
-  // Trust styles
-  trustCards: {
-    gap: 12,
-  },
-  trustCard: {
+  benefitRowMock: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 14,
-    padding: 16,
+    alignItems: "center",
     gap: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 1,
-    alignItems: "flex-start",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
-  trustCardText: {
+  benefitIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  benefitTextBox: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
-  trustCardTitle: {
+  benefitTitleMock: {
     fontSize: 15,
     fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  benefitDescMock: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.6)",
+  },
+  benefitsBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginTop: 8,
+    paddingVertical: 10,
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 10,
+  },
+  benefitsBadgeText: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.65)",
+    fontWeight: "500",
+  },
+
+  // ─── Slide 4: Product Details ───
+  productImageArea: {
+    height: 140,
+    backgroundColor: "#E8E8E8",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  productImagePlaceholder: {
+    alignItems: "center",
+    gap: 4,
+  },
+  productImageText: {
+    fontSize: 12,
+    color: "#AAAAAA",
+  },
+  floatingBack: {
+    position: "absolute",
+    top: 40,
+    left: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  floatingShare: {
+    position: "absolute",
+    top: 40,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  detailResultCard: {
+    marginTop: -20,
+    marginHorizontal: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 18,
+    padding: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  detailIngredient: {
+    width: "100%",
+    backgroundColor: "#F8F9FA",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+    gap: 4,
+  },
+  ingImpactBold: {
+    fontSize: 12,
+    fontWeight: "600",
     color: "#1A1A1A",
+    marginTop: 4,
   },
-  trustCardDesc: {
+  ingExplanation: {
+    fontSize: 11,
+    color: "#666",
+    lineHeight: 16,
+  },
+  citationBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 6,
+    backgroundColor: "rgba(17,138,178,0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    alignSelf: "flex-start",
+  },
+  citationBtnText: {
+    fontSize: 10,
+    fontWeight: "600",
+    color: "#118AB2",
+  },
+  disclaimerMock: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 12,
+    backgroundColor: "rgba(255,165,0,0.08)",
+    padding: 10,
+    borderRadius: 8,
+    width: "100%",
+  },
+  disclaimerText: {
+    fontSize: 10,
+    color: "#888",
+    flex: 1,
+  },
+
+  // ─── Slide 5: History ───
+  historyHeader: {
+    paddingTop: 40,
+    paddingHorizontal: 12,
+    paddingBottom: 8,
+    gap: 8,
+  },
+  histSearchBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#F8F9FA",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  histSearchText: {
     fontSize: 13,
-    color: "#666666",
-    lineHeight: 18,
+    color: "#999",
   },
-  trustStars: {
+  histFilterRow: {
+    flexDirection: "row",
+    gap: 8,
+  },
+  histFilterBtn: {
+    flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
+    backgroundColor: "#F8F9FA",
+    borderRadius: 8,
+    paddingVertical: 8,
   },
-  trustRating: {
-    fontSize: 14,
+  histFilterText: {
+    fontSize: 12,
     fontWeight: "600",
     color: "#1A1A1A",
-    marginLeft: 8,
   },
-
-  // Brand Story styles
-  brandHeader: {
-    alignItems: "center",
+  histCount: {
+    fontSize: 11,
+    color: "#999",
+  },
+  histList: {
+    paddingHorizontal: 12,
+    paddingTop: 4,
     gap: 8,
+    paddingBottom: 20,
   },
-  brandLogo: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
-    marginBottom: 4,
-  },
-  brandName: {
-    fontSize: 36,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  brandTagline: {
-    fontSize: 16,
-    color: "rgba(255,255,255,0.75)",
-    fontWeight: "500",
-  },
-  brandMission: {
-    backgroundColor: "rgba(255,255,255,0.1)",
-    borderRadius: 16,
-    padding: 20,
-    flexDirection: "row",
-    gap: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.1)",
-    alignItems: "flex-start",
-  },
-  brandMissionText: {
-    flex: 1,
-    fontSize: 15,
-    color: "rgba(255,255,255,0.85)",
-    lineHeight: 22,
-  },
-  brandValues: {
-    gap: 12,
-  },
-  brandValueItem: {
+  histCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-  },
-  brandValueDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  brandValueText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  brandCta: {
-    alignItems: "center",
-    gap: 12,
-  },
-  brandCtaButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
     backgroundColor: "#FFFFFF",
-    paddingHorizontal: 28,
-    paddingVertical: 16,
-    borderRadius: 14,
+    borderRadius: 12,
+    padding: 10,
+    borderLeftWidth: 3,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  brandCtaText: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#118AB2",
+  histThumb: {
+    width: 48,
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: "#F5F5F5",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  brandPricing: {
+  histCardContent: {
+    flex: 1,
+    marginLeft: 10,
+    gap: 2,
+  },
+  histProductName: {
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#1A1A1A",
+  },
+  histMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  histTime: {
+    fontSize: 10,
+    color: "#999",
+  },
+  histIngCount: {
+    fontSize: 10,
+    color: "#999",
+  },
+  histScoreArea: {
     alignItems: "center",
     gap: 2,
   },
-  brandFreeText: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.7)",
+  histScoreBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  brandPremiumText: {
+  histScoreText: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  histGrade: {
+    fontSize: 9,
+    fontWeight: "600",
+  },
+
+  // ─── Slide 6: Trust ───
+  trustLayout: {
+    flex: 1,
+    padding: 20,
+    justifyContent: "center",
+    gap: 14,
+  },
+  trustShieldWrap: {
+    alignItems: "center",
+    marginBottom: 4,
+  },
+  trustRowMock: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  trustIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: "#F0FDF4",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  trustTextBox: {
+    flex: 1,
+    gap: 1,
+  },
+  trustTitleMock: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#1A1A1A",
+  },
+  trustDescMock: {
+    fontSize: 11,
+    color: "#666",
+  },
+  trustRatingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 3,
+    marginTop: 4,
+  },
+  trustRatingText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#1A1A1A",
+    marginLeft: 6,
+  },
+  trustQuote: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 14,
+    borderLeftWidth: 3,
+    borderLeftColor: "#06D6A0",
+  },
+  trustQuoteText: {
+    fontSize: 12,
+    fontStyle: "italic",
+    color: "#444",
+    lineHeight: 18,
+  },
+
+  // ─── Slide 7: Brand ───
+  brandLayout: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    gap: 16,
+  },
+  brandLogoMock: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+  },
+  brandNameMock: {
+    fontSize: 28,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  brandTaglineMock: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.7)",
+    marginTop: -8,
+  },
+  brandMissionBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    backgroundColor: "rgba(255,255,255,0.1)",
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.1)",
+  },
+  brandMissionMock: {
+    flex: 1,
     fontSize: 13,
-    color: "rgba(255,255,255,0.5)",
+    color: "rgba(255,255,255,0.85)",
+    lineHeight: 19,
+  },
+  brandValuesList: {
+    gap: 10,
+    width: "100%",
+  },
+  brandValueRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  brandDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  brandValueText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#FFFFFF",
+  },
+  brandCtaMock: {
+    backgroundColor: "#FFFFFF",
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  brandCtaText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#118AB2",
+  },
+  brandPriceLine: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.55)",
   },
 });
