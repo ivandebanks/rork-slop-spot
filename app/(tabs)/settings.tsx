@@ -11,13 +11,28 @@ import {
   Pressable,
   Platform,
   Alert,
+  LayoutAnimation,
+  UIManager,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, X, Sparkles, Crown, Users, ExternalLink } from "lucide-react-native";
+import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, ChevronDown, X, Sparkles, Crown, Users, ExternalLink, Accessibility, Grid3X3 } from "lucide-react-native";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
+
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+const OTHER_APPS = [
+  { name: "MOG - Face Analysis", id: "6757218071" },
+  { name: "Snap It: Kosher Check", id: "6757688071" },
+  { name: "Aura Check", id: "6757377930" },
+  { name: "Peptide Hub", id: "6759482842" },
+  { name: "Snap It: Regrow", id: "6758930237" },
+  { name: "Snap It: Math", id: "6757666027" },
+];
 
 type ThemeMode = "light" | "dark" | "system";
 
@@ -273,6 +288,15 @@ export default function SettingsScreen() {
   const { themeMode, changeThemeMode, theme, textSizeMode, changeTextSizeMode, scaleFont } = useTheme();
   const { hasPremium, scansRemaining } = usePurchases();
   const [modalContent, setModalContent] = useState<ModalContent>(null);
+  const [accessibilityExpanded, setAccessibilityExpanded] = useState(false);
+
+  const toggleAccessibility = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setAccessibilityExpanded(!accessibilityExpanded);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
 
   const handleContactUs = () => {
     Linking.openURL("mailto:snapit.foranything@gmail.com");
@@ -361,65 +385,94 @@ export default function SettingsScreen() {
           </Text>
 
           <View style={[styles.card, { backgroundColor: theme.card }]}>
-            <View style={[styles.switchOption, { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-              <View style={styles.switchOptionLeft}>
-                <Type size={18} color={theme.primary} />
+            <TouchableOpacity
+              style={styles.accessibilityToggle}
+              onPress={toggleAccessibility}
+              activeOpacity={0.7}
+            >
+              <View style={styles.legalOptionLeft}>
+                <Accessibility size={20} color={theme.primary} />
                 <View style={styles.switchOptionText}>
                   <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
-                    Medium Text Mode
+                    Text Size
                   </Text>
-                  <Text style={[styles.optionDescription, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
-                    Increases all font sizes by 1.25x
-                  </Text>
+                  {textSizeMode !== "normal" && (
+                    <Text style={[styles.optionDescription, { color: theme.primary, fontSize: scaleFont(12) }]}>
+                      {textSizeMode === "medium" ? "Medium" : textSizeMode === "large" ? "Large" : "Extra Large"} active
+                    </Text>
+                  )}
                 </View>
               </View>
-              <Switch
-                value={textSizeMode === "medium"}
-                onValueChange={(value) => changeTextSizeMode(value ? "medium" : "normal")}
-                trackColor={{ false: theme.border, true: theme.primary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
+              {accessibilityExpanded ? (
+                <ChevronDown size={20} color={theme.textSecondary} />
+              ) : (
+                <ChevronRight size={20} color={theme.textSecondary} />
+              )}
+            </TouchableOpacity>
 
-            <View style={[styles.switchOption, { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
-              <View style={styles.switchOptionLeft}>
-                <Type size={20} color={theme.primary} strokeWidth={2} />
-                <View style={styles.switchOptionText}>
-                  <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
-                    Large Text Mode
-                  </Text>
-                  <Text style={[styles.optionDescription, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
-                    Increases all font sizes by 1.5x
-                  </Text>
+            {accessibilityExpanded && (
+              <>
+                <View style={[styles.switchOption, { borderTopWidth: 1, borderTopColor: theme.border, borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                  <View style={styles.switchOptionLeft}>
+                    <Type size={18} color={theme.primary} />
+                    <View style={styles.switchOptionText}>
+                      <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                        Medium Text Mode
+                      </Text>
+                      <Text style={[styles.optionDescription, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+                        Increases all font sizes by 1.25x
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={textSizeMode === "medium"}
+                    onValueChange={(value) => changeTextSizeMode(value ? "medium" : "normal")}
+                    trackColor={{ false: theme.border, true: theme.primary }}
+                    thumbColor="#FFFFFF"
+                  />
                 </View>
-              </View>
-              <Switch
-                value={textSizeMode === "large"}
-                onValueChange={(value) => changeTextSizeMode(value ? "large" : "normal")}
-                trackColor={{ false: theme.border, true: theme.primary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
 
-            <View style={styles.switchOption}>
-              <View style={styles.switchOptionLeft}>
-                <Type size={24} color={theme.primary} strokeWidth={2.5} />
-                <View style={styles.switchOptionText}>
-                  <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
-                    Extra Large Text Mode
-                  </Text>
-                  <Text style={[styles.optionDescription, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
-                    Increases all font sizes by 2x
-                  </Text>
+                <View style={[styles.switchOption, { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
+                  <View style={styles.switchOptionLeft}>
+                    <Type size={20} color={theme.primary} strokeWidth={2} />
+                    <View style={styles.switchOptionText}>
+                      <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                        Large Text Mode
+                      </Text>
+                      <Text style={[styles.optionDescription, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+                        Increases all font sizes by 1.5x
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={textSizeMode === "large"}
+                    onValueChange={(value) => changeTextSizeMode(value ? "large" : "normal")}
+                    trackColor={{ false: theme.border, true: theme.primary }}
+                    thumbColor="#FFFFFF"
+                  />
                 </View>
-              </View>
-              <Switch
-                value={textSizeMode === "extraLarge"}
-                onValueChange={(value) => changeTextSizeMode(value ? "extraLarge" : "normal")}
-                trackColor={{ false: theme.border, true: theme.primary }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
+
+                <View style={styles.switchOption}>
+                  <View style={styles.switchOptionLeft}>
+                    <Type size={24} color={theme.primary} strokeWidth={2.5} />
+                    <View style={styles.switchOptionText}>
+                      <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                        Extra Large Text Mode
+                      </Text>
+                      <Text style={[styles.optionDescription, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+                        Increases all font sizes by 2x
+                      </Text>
+                    </View>
+                  </View>
+                  <Switch
+                    value={textSizeMode === "extraLarge"}
+                    onValueChange={(value) => changeTextSizeMode(value ? "extraLarge" : "normal")}
+                    trackColor={{ false: theme.border, true: theme.primary }}
+                    thumbColor="#FFFFFF"
+                  />
+                </View>
+              </>
+            )}
           </View>
         </View>
 
@@ -520,6 +573,39 @@ export default function SettingsScreen() {
               </View>
               <ExternalLink size={18} color={theme.textSecondary} />
             </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+            OUR OTHER APPS
+          </Text>
+
+          <View style={[styles.card, { backgroundColor: theme.card }]}>
+            {OTHER_APPS.map((app, index) => (
+              <TouchableOpacity
+                key={app.id}
+                style={[
+                  styles.legalOption,
+                  index !== OTHER_APPS.length - 1 && { borderBottomWidth: 1, borderBottomColor: theme.border },
+                ]}
+                onPress={() => {
+                  if (Platform.OS !== "web") {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                  Linking.openURL(`https://apps.apple.com/app/id${app.id}`);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={styles.legalOptionLeft}>
+                  <Grid3X3 size={18} color={theme.primary} />
+                  <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(15) }]}>
+                    {app.name}
+                  </Text>
+                </View>
+                <ExternalLink size={16} color={theme.textSecondary} />
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
@@ -683,6 +769,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center" as const,
     justifyContent: "center" as const,
+  },
+  accessibilityToggle: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "space-between" as const,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
   },
   switchOption: {
     flexDirection: "row" as const,
