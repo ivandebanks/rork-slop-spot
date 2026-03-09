@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Purchases, { PurchasesOfferings } from "react-native-purchases";
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 
 const REFERRAL_PREMIUM_KEY = "@kiwi_referral_premium";
 const REFERRAL_PREMIUM_EXPIRY_KEY = "@kiwi_referral_premium_expiry";
@@ -15,8 +16,21 @@ const PREMIUM_KEY = "@slop_spot_premium";
 let isRevenueCatConfigured = false;
 let configurePromise: Promise<boolean> | null = null;
 
+// Detect if running inside Expo Go (native store unavailable)
+// Check multiple signals since appOwnership varies across SDK versions
+const isExpoGo =
+  Constants.appOwnership === "expo" ||
+  Constants.executionEnvironment === "storeClient" ||
+  !Constants.isDevice;
+
 const configureRevenueCat = async (): Promise<boolean> => {
   if (isRevenueCatConfigured) return true;
+
+  // RevenueCat native store is not available in Expo Go
+  if (isExpoGo) {
+    console.log("RevenueCat skipped: running in Expo Go (use a development build for purchases)");
+    return false;
+  }
 
   try {
     let apiKey = "";
@@ -35,10 +49,12 @@ const configureRevenueCat = async (): Promise<boolean> => {
       console.log("RevenueCat configured successfully");
       return true;
     }
-    console.warn("RevenueCat API key not found for platform:", Platform.OS);
+    console.log("RevenueCat API key not found for platform:", Platform.OS);
     return false;
-  } catch (error) {
-    console.error("Failed to configure RevenueCat:", error);
+  } catch (error: any) {
+    // Never use console.error here — it triggers the red error overlay in dev mode.
+    // RevenueCat failures in Expo Go / missing native modules are expected.
+    console.log("RevenueCat configure skipped:", error?.message || error);
     return false;
   }
 };
@@ -83,7 +99,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
         await AsyncStorage.setItem(PREMIUM_KEY, isPremium.toString());
         return isPremium;
       } catch (error) {
-        console.error("Failed to get customer info:", error);
+        console.log("Failed to get customer info:", error);
         const stored = await AsyncStorage.getItem(PREMIUM_KEY);
         return stored === "true";
       }
@@ -120,7 +136,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
 
         return offerings;
       } catch (error) {
-        console.error("Failed to get offerings:", error);
+        console.log("Failed to get offerings:", error);
         return null;
       }
     },
@@ -195,7 +211,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
         const customerInfo = await Purchases.restorePurchases();
         return customerInfo;
       } catch (error) {
-        console.error("Failed to restore purchases:", error);
+        console.log("Failed to restore purchases:", error);
         throw error;
       }
     },
