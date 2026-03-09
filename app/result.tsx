@@ -16,18 +16,19 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useScans } from "@/contexts/ScanContext";
-import { getGradeColor } from "@/types/scan";
+import { getGradeColor, Citation } from "@/types/scan";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Trash2, Info, ExternalLink, X, Share2 } from "lucide-react-native";
+import { ArrowLeft, Trash2, Info, ExternalLink, X, Share2, Building2, ChevronRight, ArrowUpRight, Lock, Crown, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
+import { usePurchases } from "@/contexts/PurchaseContext";
 import { useState, useRef, useEffect } from "react";
-import { Citation } from "@/types/scan";
 
 export default function ResultScreen() {
   const { scanId, isNewScan } = useLocalSearchParams<{ scanId: string; isNewScan?: string }>();
   const { scans, deleteScan } = useScans();
   const { theme, scaleFont } = useTheme();
+  const { hasPremium } = usePurchases();
   const [citationsModalVisible, setCitationsModalVisible] = useState(false);
   const [selectedCitations, setSelectedCitations] = useState<Citation[]>([]);
   const [citationTitle, setCitationTitle] = useState("");
@@ -226,6 +227,138 @@ Scanned with Kiwi - Better Health Scanner`;
               );
             })}
           </View>
+
+          {/* BEHIND IT - Premium Feature */}
+          {scan.behindIt && (
+            <View style={styles.premiumSection}>
+              <View style={styles.premiumSectionHeader}>
+                <Building2 size={20} color={theme.text} />
+                <Text style={[styles.sectionTitle, { color: theme.text, fontSize: scaleFont(18) }]}>
+                  Behind It
+                </Text>
+                {!hasPremium && (
+                  <View style={styles.premiumBadge}>
+                    <Crown size={10} color="#FFFFFF" />
+                    <Text style={styles.premiumBadgeText}>PRO</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.premiumContentWrapper}>
+                <View style={[styles.behindItCard, { backgroundColor: theme.surface }]}>
+                  <View style={styles.companyRow}>
+                    <View style={[styles.companyDot, { backgroundColor: theme.primary }]} />
+                    <View style={styles.companyInfo}>
+                      <Text style={[styles.companyLabel, { color: theme.textSecondary, fontSize: scaleFont(11) }]}>Made by</Text>
+                      <Text style={[styles.companyName, { color: theme.text, fontSize: scaleFont(15) }]}>{scan.behindIt.company}</Text>
+                    </View>
+                  </View>
+                  {scan.behindIt.parentCompany && (
+                    <>
+                      <View style={styles.ownershipArrow}>
+                        <ChevronRight size={14} color={theme.textSecondary} />
+                      </View>
+                      <View style={styles.companyRow}>
+                        <View style={[styles.companyDot, { backgroundColor: "#F77F00" }]} />
+                        <View style={styles.companyInfo}>
+                          <Text style={[styles.companyLabel, { color: theme.textSecondary, fontSize: scaleFont(11) }]}>Owned by</Text>
+                          <Text style={[styles.companyName, { color: theme.text, fontSize: scaleFont(15) }]}>{scan.behindIt.parentCompany}</Text>
+                        </View>
+                      </View>
+                    </>
+                  )}
+                  {scan.behindIt.ultimateParent && (
+                    <>
+                      <View style={styles.ownershipArrow}>
+                        <ChevronRight size={14} color={theme.textSecondary} />
+                      </View>
+                      <View style={styles.companyRow}>
+                        <View style={[styles.companyDot, { backgroundColor: "#E63946" }]} />
+                        <View style={styles.companyInfo}>
+                          <Text style={[styles.companyLabel, { color: theme.textSecondary, fontSize: scaleFont(11) }]}>Ultimate Parent</Text>
+                          <Text style={[styles.companyName, { color: theme.text, fontSize: scaleFont(15) }]}>{scan.behindIt.ultimateParent}</Text>
+                        </View>
+                      </View>
+                    </>
+                  )}
+                </View>
+
+                {/* Blur overlay for non-premium users */}
+                {!hasPremium && (
+                  <View style={styles.blurOverlay}>
+                    <View style={[styles.blurBackground, { backgroundColor: theme.card }]} />
+                    <TouchableOpacity
+                      style={styles.unlockButton}
+                      onPress={() => router.push("/paywall" as any)}
+                    >
+                      <Lock size={18} color="#D4AF37" />
+                      <Text style={styles.unlockText}>Unlock with Premium</Text>
+                      <ArrowUpRight size={14} color="#D4AF37" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* ALTERNATIVE SUGGESTIONS - Premium Feature */}
+          {scan.alternatives && scan.alternatives.length > 0 && (
+            <View style={styles.premiumSection}>
+              <View style={styles.premiumSectionHeader}>
+                <Sparkles size={20} color={theme.text} />
+                <Text style={[styles.sectionTitle, { color: theme.text, fontSize: scaleFont(18) }]}>
+                  Healthier Alternatives
+                </Text>
+                {!hasPremium && (
+                  <View style={styles.premiumBadge}>
+                    <Crown size={10} color="#FFFFFF" />
+                    <Text style={styles.premiumBadgeText}>PRO</Text>
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.premiumContentWrapper}>
+                <View style={styles.alternativesList}>
+                  {scan.alternatives.map((alt, index) => {
+                    const altColor = getGradeColor(alt.estimatedScore);
+                    return (
+                      <View key={index} style={[styles.alternativeCard, { backgroundColor: theme.surface }]}>
+                        <View style={[styles.altScoreBadge, { backgroundColor: altColor }]}>
+                          <Text style={styles.altScoreText}>{alt.estimatedScore}</Text>
+                        </View>
+                        <View style={styles.altInfo}>
+                          <Text style={[styles.altProductName, { color: theme.text, fontSize: scaleFont(14) }]} numberOfLines={1}>
+                            {alt.productName}
+                          </Text>
+                          <Text style={[styles.altReason, { color: theme.textSecondary, fontSize: scaleFont(12) }]} numberOfLines={2}>
+                            {alt.reason}
+                          </Text>
+                        </View>
+                        <View style={[styles.altArrow, { backgroundColor: altColor + "15" }]}>
+                          <ArrowUpRight size={14} color={altColor} />
+                        </View>
+                      </View>
+                    );
+                  })}
+                </View>
+
+                {/* Blur overlay for non-premium users */}
+                {!hasPremium && (
+                  <View style={styles.blurOverlay}>
+                    <View style={[styles.blurBackground, { backgroundColor: theme.card }]} />
+                    <TouchableOpacity
+                      style={styles.unlockButton}
+                      onPress={() => router.push("/paywall" as any)}
+                    >
+                      <Lock size={18} color="#D4AF37" />
+                      <Text style={styles.unlockText}>Unlock with Premium</Text>
+                      <ArrowUpRight size={14} color="#D4AF37" />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          )}
 
           <View style={styles.actionButtons}>
             <TouchableOpacity style={[styles.shareButton, { backgroundColor: theme.primary }]} onPress={handleShare}>
@@ -614,5 +747,148 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF6347", // Tomato red
     zIndex: 9999,
     elevation: 100,
+  },
+  // Premium sections
+  premiumSection: {
+    width: "100%",
+    marginTop: 24,
+    gap: 12,
+  },
+  premiumSectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  premiumBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "#D4AF37",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginLeft: "auto",
+  },
+  premiumBadgeText: {
+    fontSize: 9,
+    fontWeight: "800" as const,
+    color: "#FFFFFF",
+    letterSpacing: 0.5,
+  },
+  premiumContentWrapper: {
+    position: "relative",
+    overflow: "hidden",
+    borderRadius: 12,
+  },
+  // Behind It
+  behindItCard: {
+    borderRadius: 12,
+    padding: 16,
+    gap: 6,
+  },
+  companyRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  companyDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  companyInfo: {
+    flex: 1,
+    gap: 1,
+  },
+  companyLabel: {
+    fontSize: 11,
+    fontWeight: "500" as const,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  companyName: {
+    fontSize: 15,
+    fontWeight: "600" as const,
+  },
+  ownershipArrow: {
+    paddingLeft: 24,
+  },
+  // Alternatives
+  alternativesList: {
+    gap: 8,
+  },
+  alternativeCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 12,
+    padding: 12,
+    gap: 12,
+  },
+  altScoreBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  altScoreText: {
+    fontSize: 14,
+    fontWeight: "700" as const,
+    color: "#FFFFFF",
+  },
+  altInfo: {
+    flex: 1,
+    gap: 2,
+  },
+  altProductName: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+  },
+  altReason: {
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  altArrow: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  // Blur overlay for premium gate
+  blurOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  blurBackground: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.85,
+  },
+  unlockButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "rgba(212, 175, 55, 0.15)",
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: "#D4AF37",
+  },
+  unlockText: {
+    fontSize: 14,
+    fontWeight: "700" as const,
+    color: "#D4AF37",
   },
 });

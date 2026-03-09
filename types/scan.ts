@@ -12,6 +12,18 @@ export interface Ingredient {
   citations?: Citation[]; // Add citations for each ingredient's health claims
 }
 
+export interface CompanyOwnership {
+  company: string;
+  parentCompany?: string;
+  ultimateParent?: string;
+}
+
+export interface AlternativeSuggestion {
+  productName: string;
+  estimatedScore: number;
+  reason: string;
+}
+
 export interface ScanResult {
   id: string;
   productName: string;
@@ -22,6 +34,8 @@ export interface ScanResult {
   timestamp: number;
   citations?: Citation[]; // Overall citations for general health information
   isFavorite?: boolean;
+  behindIt?: CompanyOwnership;
+  alternatives?: AlternativeSuggestion[];
 }
 
 export function getGradeLabel(score: number): string {

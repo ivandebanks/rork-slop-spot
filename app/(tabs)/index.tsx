@@ -20,7 +20,7 @@ import { z } from "zod";
 import { useScans } from "@/contexts/ScanContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { router } from "expo-router";
-import { getGradeLabel, ScanResult } from "@/types/scan";
+import { getGradeLabel, ScanResult, CompanyOwnership, AlternativeSuggestion } from "@/types/scan";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -42,10 +42,24 @@ const ingredientSchema = z.object({
   citations: z.array(citationSchema).optional(),
 });
 
+const companyOwnershipSchema = z.object({
+  company: z.string(),
+  parentCompany: z.string().optional(),
+  ultimateParent: z.string().optional(),
+});
+
+const alternativeSuggestionSchema = z.object({
+  productName: z.string(),
+  estimatedScore: z.number().min(0).max(100),
+  reason: z.string(),
+});
+
 const analysisSchema = z.object({
   productName: z.string(),
   ingredients: z.array(ingredientSchema),
   overallScore: z.number().min(0).max(100),
+  behindIt: companyOwnershipSchema.optional(),
+  alternatives: z.array(alternativeSuggestionSchema).optional(),
 });
 
 const tutorialSteps = [
@@ -246,7 +260,7 @@ export default function ScannerScreen() {
               },
               {
                 type: "text",
-                text: `Analyze this food/beverage/product label. Extract the product name and all ingredients. 
+                text: `Analyze this food/beverage/product label. Extract the product name and all ingredients.
 
 For each ingredient:
 1. Rate it from 0-100 based on health impact (100 = excellent, 0 = very harmful)
@@ -257,6 +271,10 @@ For each ingredient:
    - source: The organization name (e.g., "FDA", "NIH", "WHO", "Mayo Clinic", "PubMed")
 
 Then calculate an overall score (average of all ingredient ratings).
+
+Also provide:
+- behindIt: The company that makes this product. Include "company" (the brand/manufacturer), "parentCompany" (if owned by a larger company), and "ultimateParent" (if there's a top-level conglomerate, e.g. Nestlé, PepsiCo, Unilever). Only include parent levels that exist.
+- alternatives: 2-4 similar products in the same category that would score higher on health. For each, include "productName", "estimatedScore" (0-100), and "reason" (brief explanation of why it's healthier).
 
 Ensure all health claims are backed by credible scientific sources.`,
               },
@@ -274,6 +292,8 @@ Ensure all health claims are backed by credible scientific sources.`,
         overallScore: result.overallScore,
         gradeLabel: getGradeLabel(result.overallScore),
         timestamp: Date.now(),
+        behindIt: result.behindIt,
+        alternatives: result.alternatives,
       };
 
       addScan(scanResult);
