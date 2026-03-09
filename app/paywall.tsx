@@ -25,10 +25,10 @@ export default function PaywallScreen() {
     if (offerings?.current) {
       const packages = offerings.current.availablePackages;
       const monthly = packages.find((p: any) =>
-        p.packageType === "MONTHLY" || p.product?.identifier?.includes("monthly")
+        p.product?.identifier === "kiwi_monthly_v2" || p.packageType === "MONTHLY"
       );
       const yearly = packages.find((p: any) =>
-        p.packageType === "ANNUAL" || p.product?.identifier?.includes("yearly")
+        p.product?.identifier === "kiwi_yearly_v2" || p.packageType === "ANNUAL"
       );
       setMonthlyPackage(monthly || null);
       setYearlyPackage(yearly || null);
