@@ -17,7 +17,11 @@ let isRevenueCatConfigured = false;
 let configurePromise: Promise<boolean> | null = null;
 
 // Detect if running inside Expo Go (native store unavailable)
-const isExpoGo = Constants.appOwnership === "expo";
+// Check multiple signals since appOwnership varies across SDK versions
+const isExpoGo =
+  Constants.appOwnership === "expo" ||
+  Constants.executionEnvironment === "storeClient" ||
+  !Constants.isDevice;
 
 const configureRevenueCat = async (): Promise<boolean> => {
   if (isRevenueCatConfigured) return true;
@@ -45,15 +49,12 @@ const configureRevenueCat = async (): Promise<boolean> => {
       console.log("RevenueCat configured successfully");
       return true;
     }
-    console.warn("RevenueCat API key not found for platform:", Platform.OS);
+    console.log("RevenueCat API key not found for platform:", Platform.OS);
     return false;
   } catch (error: any) {
-    // Gracefully handle native store unavailability
-    if (error?.message?.includes("native store") || error?.message?.includes("Expo Go")) {
-      console.log("RevenueCat unavailable in this environment (expected in Expo Go)");
-    } else {
-      console.error("Failed to configure RevenueCat:", error);
-    }
+    // Never use console.error here — it triggers the red error overlay in dev mode.
+    // RevenueCat failures in Expo Go / missing native modules are expected.
+    console.log("RevenueCat configure skipped:", error?.message || error);
     return false;
   }
 };
@@ -98,7 +99,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
         await AsyncStorage.setItem(PREMIUM_KEY, isPremium.toString());
         return isPremium;
       } catch (error) {
-        console.error("Failed to get customer info:", error);
+        console.log("Failed to get customer info:", error);
         const stored = await AsyncStorage.getItem(PREMIUM_KEY);
         return stored === "true";
       }
@@ -135,7 +136,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
 
         return offerings;
       } catch (error) {
-        console.error("Failed to get offerings:", error);
+        console.log("Failed to get offerings:", error);
         return null;
       }
     },
@@ -210,7 +211,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
         const customerInfo = await Purchases.restorePurchases();
         return customerInfo;
       } catch (error) {
-        console.error("Failed to restore purchases:", error);
+        console.log("Failed to restore purchases:", error);
         throw error;
       }
     },
