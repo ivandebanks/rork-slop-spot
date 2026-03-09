@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Purchases, { PurchasesOfferings } from "react-native-purchases";
 import { Platform } from "react-native";
+import Constants from "expo-constants";
 
 const REFERRAL_PREMIUM_KEY = "@kiwi_referral_premium";
 const REFERRAL_PREMIUM_EXPIRY_KEY = "@kiwi_referral_premium_expiry";
@@ -19,9 +20,14 @@ const configureRevenueCat = async (): Promise<boolean> => {
   if (isRevenueCatConfigured) return true;
 
   try {
+    const isExpoGo = Constants.appOwnership === "expo";
     let apiKey = "";
 
-    if (Platform.OS === "ios") {
+    if (isExpoGo) {
+      // Expo Go doesn't have native store access — must use RevenueCat Test Store key
+      apiKey = process.env.EXPO_PUBLIC_REVENUECAT_TEST_API_KEY || "";
+      console.log("Expo Go detected — using Test Store API key");
+    } else if (Platform.OS === "ios") {
       apiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || "";
     } else if (Platform.OS === "android") {
       apiKey = process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY || "";
@@ -32,10 +38,10 @@ const configureRevenueCat = async (): Promise<boolean> => {
     if (apiKey) {
       await Purchases.configure({ apiKey });
       isRevenueCatConfigured = true;
-      console.log("RevenueCat configured successfully for platform:", Platform.OS);
+      console.log("RevenueCat configured successfully for platform:", Platform.OS, isExpoGo ? "(Expo Go)" : "(Dev Build)");
       return true;
     }
-    console.log("RevenueCat API key not found for platform:", Platform.OS);
+    console.log("RevenueCat API key not found. Platform:", Platform.OS, "ExpoGo:", isExpoGo);
     return false;
   } catch (error: any) {
     // Log but don't use console.error — it triggers the red error overlay in dev mode.
@@ -103,19 +109,19 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
       // Wait for RevenueCat to be configured before fetching offerings
       const configured = await ensureConfigured();
       if (!configured) {
-        console.log("RevenueCat not configured — cannot fetch offerings");
-        throw new Error("RevenueCat not configured");
+        return null;
       }
-      const offerings = await Purchases.getOfferings();
-      console.log("Offerings fetched:", offerings?.current?.identifier, "packages:", offerings?.current?.availablePackages?.length);
-      if (!offerings?.current) {
-        throw new Error("No current offering found in RevenueCat");
+      try {
+        const offerings = await Purchases.getOfferings();
+        return offerings;
+      } catch (error) {
+        console.log("Failed to get offerings:", error);
+        return null;
       }
-      return offerings;
     },
     enabled: configAttempted,
-    retry: 3,
-    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const dailyScansQuery = useQuery({
@@ -234,7 +240,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
     scansRemaining: getScansRemaining(),
     dailyScansUsed,
     offerings: offeringsQuery.data ?? null,
-    isLoadingOfferings: offeringsQuery.isLoading || offeringsQuery.isFetching || !configAttempted,
+    isLoadingOfferings: offeringsQuery.isLoading || !configAttempted,
     offeringsError: offeringsQuery.error,
     refetchOfferings: offeringsQuery.refetch,
     purchaseMutation,
