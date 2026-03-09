@@ -32,7 +32,7 @@ const configureRevenueCat = async (): Promise<boolean> => {
     if (apiKey) {
       await Purchases.configure({ apiKey });
       isRevenueCatConfigured = true;
-      console.log("RevenueCat configured successfully");
+      console.log("RevenueCat configured successfully for platform:", Platform.OS);
       return true;
     }
     console.log("RevenueCat API key not found for platform:", Platform.OS);
@@ -45,10 +45,16 @@ const configureRevenueCat = async (): Promise<boolean> => {
   }
 };
 
-// Ensure configure only runs once and all callers await the same promise
+// Ensure configure only runs once per attempt; reset on failure so retries work
 const ensureConfigured = (): Promise<boolean> => {
   if (!configurePromise) {
-    configurePromise = configureRevenueCat();
+    configurePromise = configureRevenueCat().then((result) => {
+      if (!result) {
+        // Reset so next call will retry
+        configurePromise = null;
+      }
+      return result;
+    });
   }
   return configurePromise;
 };
@@ -97,19 +103,19 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
       // Wait for RevenueCat to be configured before fetching offerings
       const configured = await ensureConfigured();
       if (!configured) {
-        return null;
+        console.log("RevenueCat not configured — cannot fetch offerings");
+        throw new Error("RevenueCat not configured");
       }
-      try {
-        const offerings = await Purchases.getOfferings();
-        return offerings;
-      } catch (error) {
-        console.log("Failed to get offerings:", error);
-        return null;
+      const offerings = await Purchases.getOfferings();
+      console.log("Offerings fetched:", offerings?.current?.identifier, "packages:", offerings?.current?.availablePackages?.length);
+      if (!offerings?.current) {
+        throw new Error("No current offering found in RevenueCat");
       }
+      return offerings;
     },
     enabled: configAttempted,
-    retry: 2,
-    retryDelay: 1000,
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 8000),
   });
 
   const dailyScansQuery = useQuery({
@@ -227,8 +233,10 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
     canScan: canScan(),
     scansRemaining: getScansRemaining(),
     dailyScansUsed,
-    offerings: offeringsQuery.data,
-    isLoadingOfferings: offeringsQuery.isLoading || !configAttempted,
+    offerings: offeringsQuery.data ?? null,
+    isLoadingOfferings: offeringsQuery.isLoading || offeringsQuery.isFetching || !configAttempted,
+    offeringsError: offeringsQuery.error,
+    refetchOfferings: offeringsQuery.refetch,
     purchaseMutation,
     restoreMutation,
   };

@@ -7,7 +7,7 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
 
 export default function PaywallScreen() {
-  const { scansRemaining, offerings, isLoadingOfferings, purchaseMutation, restoreMutation } = usePurchases();
+  const { scansRemaining, offerings, isLoadingOfferings, offeringsError, refetchOfferings, purchaseMutation, restoreMutation } = usePurchases();
   const { theme, scaleFont } = useTheme();
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [monthlyPackage, setMonthlyPackage] = useState<any>(null);
@@ -123,13 +123,17 @@ export default function PaywallScreen() {
             Offers Unavailable
           </Text>
           <Text style={[styles.errorText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
-            Unable to load premium offers. Please check your connection and try again.
+            {offeringsError?.message || "Unable to load premium offers. Please check your connection and try again."}
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.retryButton, { backgroundColor: theme.primary }]}
-            onPress={handleClose}
+            onPress={() => refetchOfferings()}
           >
-            <Text style={[styles.retryButtonText, { fontSize: scaleFont(16) }]}>OK</Text>
+            <RefreshCw size={16} color="#FFFFFF" />
+            <Text style={[styles.retryButtonText, { fontSize: scaleFont(16) }]}>Retry</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleClose}>
+            <Text style={[{ color: theme.textSecondary, fontSize: scaleFont(14), marginTop: 8 }]}>Dismiss</Text>
           </TouchableOpacity>
         </View>
       </View>
