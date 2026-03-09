@@ -622,7 +622,39 @@ Ensure all health claims are backed by credible scientific sources.`,
 
   return (
     <View style={styles.container}>
-      {capturedPhoto ? (
+      {!permission?.granted && !capturedPhoto ? (
+        <View style={[styles.permissionContainer, { backgroundColor: theme.background }]}>
+          <Sparkles size={48} color={theme.primary} />
+          <Text style={[styles.permissionTitle, { color: theme.text, fontSize: scaleFont(24) }]}>
+            Camera Access Needed
+          </Text>
+          <Text style={[styles.permissionText, { color: theme.textSecondary, fontSize: scaleFont(15) }]}>
+            Kiwi needs camera access to scan product labels and ingredients for health analysis.
+          </Text>
+          <TouchableOpacity
+            style={[styles.permissionButton, { backgroundColor: theme.primary }]}
+            onPress={async () => {
+              const result = await requestPermission();
+              if (!result?.granted) {
+                Linking.openSettings();
+              }
+            }}
+          >
+            <Text style={[styles.permissionButtonText, { fontSize: scaleFont(16) }]}>
+              Enable Camera
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.galleryFallbackButton}
+            onPress={pickImageFromGallery}
+          >
+            <ImageIcon size={18} color={theme.textSecondary} />
+            <Text style={[styles.galleryFallbackText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
+              Or pick from gallery
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : capturedPhoto ? (
         <View style={styles.photoPreviewContainer}>
           <Image source={{ uri: capturedPhoto }} style={styles.photoPreview} resizeMode="contain" />
           
@@ -836,6 +868,16 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600" as const,
+  },
+  galleryFallbackButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 20,
+    padding: 12,
+  },
+  galleryFallbackText: {
+    fontWeight: "500" as const,
   },
   camera: {
     flex: 1,
