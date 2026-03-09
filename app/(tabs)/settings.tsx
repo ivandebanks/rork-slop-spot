@@ -13,7 +13,7 @@ import {
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, X, Sparkles, Crown } from "lucide-react-native";
+import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, X, Sparkles, Crown, Users, ExternalLink } from "lucide-react-native";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { router } from "expo-router";
@@ -462,6 +462,64 @@ export default function SettingsScreen() {
                 <ChevronRight size={20} color={theme.textSecondary} />
               </TouchableOpacity>
             )}
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+            REFERRALS
+          </Text>
+
+          <View style={[styles.card, { backgroundColor: theme.card }]}>
+            <TouchableOpacity
+              style={styles.legalOption}
+              onPress={() => router.push("/referral" as any)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.legalOptionLeft}>
+                <Users size={20} color={theme.primary} />
+                <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                  Refer Friends
+                </Text>
+              </View>
+              <ChevronRight size={20} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+            FOLLOW US
+          </Text>
+
+          <View style={[styles.card, { backgroundColor: theme.card }]}>
+            <TouchableOpacity
+              style={[styles.legalOption, { borderBottomWidth: 1, borderBottomColor: theme.border }]}
+              onPress={() => Linking.openURL("https://twitter.com/KiwiHealthScan")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.legalOptionLeft}>
+                <Text style={{ fontSize: 18 }}>𝕏</Text>
+                <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                  @KiwiHealthScan
+                </Text>
+              </View>
+              <ExternalLink size={18} color={theme.textSecondary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.legalOption}
+              onPress={() => Linking.openURL("https://instagram.com/kiwi_betterhealthscanner")}
+              activeOpacity={0.7}
+            >
+              <View style={styles.legalOptionLeft}>
+                <Text style={{ fontSize: 18 }}>📷</Text>
+                <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                  @kiwi_betterhealthscanner
+                </Text>
+              </View>
+              <ExternalLink size={18} color={theme.textSecondary} />
+            </TouchableOpacity>
           </View>
         </View>
 

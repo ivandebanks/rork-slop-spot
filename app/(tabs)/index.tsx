@@ -94,6 +94,20 @@ const tutorialSteps = [
     image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gwbb9y93ep6lhc77n3j8k",
   },
   {
+    title: "Go Premium",
+    description: "Unlock unlimited scans, company ownership details, healthier alternatives, and priority AI analysis.",
+    icon: "👑",
+    image: null,
+    action: "premium",
+  },
+  {
+    title: "Follow Us",
+    description: "Stay updated with tips, new features, and the latest health insights from Kiwi.",
+    icon: "📱",
+    image: null,
+    action: "socials",
+  },
+  {
     title: "Rate Us",
     description: "Enjoying the app? Please leave a review on the App Store. It helps us a lot!",
     icon: "⭐",
@@ -493,8 +507,42 @@ Ensure all health claims are backed by credible scientific sources.`,
             {step.description}
           </Text>
 
+          {/* Action buttons for premium and socials steps */}
+          {(step as any).action === "premium" && (
+            <TouchableOpacity
+              style={[styles.tutorialActionButton, { backgroundColor: "#D4AF37" }]}
+              onPress={() => {
+                completeTutorial();
+                router.push("/paywall" as any);
+              }}
+            >
+              <Text style={[styles.tutorialActionText, { fontSize: scaleFont(16) }]}>
+                View Premium
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {(step as any).action === "socials" && (
+            <View style={styles.tutorialSocialsRow}>
+              <TouchableOpacity
+                style={[styles.tutorialSocialButton, { backgroundColor: "#1A1A1A" }]}
+                onPress={() => Linking.openURL("https://twitter.com/KiwiHealthScan")}
+              >
+                <Text style={styles.tutorialSocialIcon}>𝕏</Text>
+                <Text style={[styles.tutorialSocialText, { fontSize: scaleFont(14) }]}>@KiwiHealthScan</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tutorialSocialButton, { backgroundColor: "#E1306C" }]}
+                onPress={() => Linking.openURL("https://instagram.com/kiwi_betterhealthscanner")}
+              >
+                <Text style={styles.tutorialSocialIcon}>📷</Text>
+                <Text style={[styles.tutorialSocialText, { fontSize: scaleFont(14) }]}>@kiwi_betterhealthscanner</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           {/* Swipe hint - only show on first few steps */}
-          {currentStep < tutorialSteps.length - 1 && (
+          {currentStep < tutorialSteps.length - 1 && !(step as any).action && (
             <Animated.View style={[styles.swipeHint, { opacity: swipeHintOpacity }]}>
               <ChevronLeft size={20} color={theme.textSecondary} />
               <Text style={[styles.swipeHintText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
@@ -725,7 +773,7 @@ Ensure all health claims are backed by credible scientific sources.`,
               </View>
             </View>
 
-            <View style={styles.scanFrame} />
+            <View style={{ flex: 1 }} />
 
             <View style={styles.controls}>
               <TouchableOpacity
@@ -835,12 +883,6 @@ const styles = StyleSheet.create({
   },
   scanFrame: {
     flex: 1,
-    marginHorizontal: 32,
-    marginVertical: 100,
-    borderWidth: 3,
-    borderColor: "#FFFFFF",
-    borderRadius: 20,
-    borderStyle: "dashed",
   },
   controls: {
     flexDirection: "row",
@@ -1103,6 +1145,41 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 24,
     maxWidth: 320,
+  },
+  tutorialActionButton: {
+    marginTop: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  tutorialActionText: {
+    color: "#FFFFFF",
+    fontWeight: "700" as const,
+    fontSize: 16,
+  },
+  tutorialSocialsRow: {
+    marginTop: 20,
+    gap: 10,
+    width: "100%",
+    maxWidth: 300,
+  },
+  tutorialSocialButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+  },
+  tutorialSocialIcon: {
+    fontSize: 18,
+  },
+  tutorialSocialText: {
+    color: "#FFFFFF",
+    fontWeight: "600" as const,
+    fontSize: 14,
   },
   swipeHint: {
     flexDirection: "row",

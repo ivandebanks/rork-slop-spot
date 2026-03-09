@@ -5,6 +5,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Purchases, { PurchasesOfferings } from "react-native-purchases";
 import { Platform } from "react-native";
 
+const REFERRAL_PREMIUM_KEY = "@kiwi_referral_premium";
+const REFERRAL_PREMIUM_EXPIRY_KEY = "@kiwi_referral_premium_expiry";
+
 const DAILY_SCANS_KEY = "@slop_spot_daily_scans";
 const LAST_RESET_KEY = "@slop_spot_last_reset";
 const PREMIUM_KEY = "@slop_spot_premium";
@@ -146,14 +149,35 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
     },
   });
 
+  // Check referral premium too
+  const [hasReferralPremium, setHasReferralPremium] = useState(false);
+
+  useEffect(() => {
+    const checkReferralPremium = async () => {
+      try {
+        const premiumStr = await AsyncStorage.getItem(REFERRAL_PREMIUM_KEY);
+        const expiryStr = await AsyncStorage.getItem(REFERRAL_PREMIUM_EXPIRY_KEY);
+        if (premiumStr === "true" && expiryStr) {
+          const expiry = parseInt(expiryStr, 10);
+          setHasReferralPremium(Date.now() < expiry);
+        }
+      } catch {}
+    };
+    checkReferralPremium();
+    const interval = setInterval(checkReferralPremium, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const effectivePremium = hasPremiumAccess || hasReferralPremium;
+
   const canScan = (): boolean => {
-    if (hasPremiumAccess) return true;
+    if (effectivePremium) return true;
     if (dailyScansUsed < 2) return true;
     return false;
   };
 
   const getScansRemaining = (): string => {
-    if (hasPremiumAccess) return "Unlimited";
+    if (effectivePremium) return "Unlimited";
     const remaining = Math.max(0, 2 - dailyScansUsed);
     return `${remaining} free today`;
   };
@@ -161,7 +185,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
   return {
     isLoading: premiumQuery.isLoading || dailyScansQuery.isLoading,
     useScanMutation,
-    hasPremium: hasPremiumAccess,
+    hasPremium: effectivePremium,
     canScan: canScan(),
     scansRemaining: getScansRemaining(),
     dailyScansUsed,
