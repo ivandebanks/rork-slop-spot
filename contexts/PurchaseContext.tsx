@@ -13,13 +13,14 @@ const LAST_RESET_KEY = "@slop_spot_last_reset";
 const PREMIUM_KEY = "@slop_spot_premium";
 
 let isRevenueCatConfigured = false;
+let configurePromise: Promise<boolean> | null = null;
 
-const configureRevenueCat = async () => {
-  if (isRevenueCatConfigured) return;
-  
+const configureRevenueCat = async (): Promise<boolean> => {
+  if (isRevenueCatConfigured) return true;
+
   try {
     let apiKey = "";
-    
+
     if (Platform.OS === "ios") {
       apiKey = process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY || "";
     } else if (Platform.OS === "android") {
@@ -32,24 +33,45 @@ const configureRevenueCat = async () => {
       await Purchases.configure({ apiKey });
       isRevenueCatConfigured = true;
       console.log("RevenueCat configured successfully");
+      return true;
     }
+    console.warn("RevenueCat API key not found for platform:", Platform.OS);
+    return false;
   } catch (error) {
     console.error("Failed to configure RevenueCat:", error);
+    return false;
   }
+};
+
+// Ensure configure only runs once and all callers await the same promise
+const ensureConfigured = (): Promise<boolean> => {
+  if (!configurePromise) {
+    configurePromise = configureRevenueCat();
+  }
+  return configurePromise;
 };
 
 export const [PurchaseProvider, usePurchases] = createContextHook(() => {
   const queryClient = useQueryClient();
   const [dailyScansUsed, setDailyScansUsed] = useState(0);
   const [hasPremiumAccess, setHasPremiumAccess] = useState(false);
+  const [isConfigured, setIsConfigured] = useState(false);
 
   useEffect(() => {
-    configureRevenueCat();
+    ensureConfigured().then((configured) => {
+      setIsConfigured(configured);
+    });
   }, []);
 
   const premiumQuery = useQuery({
     queryKey: ["premium"],
     queryFn: async () => {
+      // Wait for RevenueCat to be configured before querying
+      const configured = await ensureConfigured();
+      if (!configured) {
+        const stored = await AsyncStorage.getItem(PREMIUM_KEY);
+        return stored === "true";
+      }
       try {
         const customerInfo = await Purchases.getCustomerInfo();
         const isPremium = customerInfo.entitlements.active["premium"] !== undefined;
@@ -61,11 +83,17 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
         return stored === "true";
       }
     },
+    enabled: isConfigured,
   });
 
   const offeringsQuery = useQuery({
     queryKey: ["offerings"],
     queryFn: async () => {
+      // Wait for RevenueCat to be configured before fetching offerings
+      const configured = await ensureConfigured();
+      if (!configured) {
+        return null;
+      }
       try {
         const offerings = await Purchases.getOfferings();
         return offerings;
@@ -74,6 +102,9 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
         return null;
       }
     },
+    enabled: isConfigured,
+    retry: 2,
+    retryDelay: 1000,
   });
 
   const dailyScansQuery = useQuery({
@@ -81,13 +112,13 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
     queryFn: async () => {
       const lastReset = await AsyncStorage.getItem(LAST_RESET_KEY);
       const today = new Date().toDateString();
-      
+
       if (lastReset !== today) {
         await AsyncStorage.setItem(LAST_RESET_KEY, today);
         await AsyncStorage.setItem(DAILY_SCANS_KEY, "0");
         return 0;
       }
-      
+
       const used = await AsyncStorage.getItem(DAILY_SCANS_KEY);
       return used ? parseInt(used, 10) : 0;
     },
@@ -119,6 +150,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
 
   const purchaseMutation = useMutation({
     mutationFn: async (packageToPurchase: any) => {
+      await ensureConfigured();
       try {
         const { customerInfo } = await Purchases.purchasePackage(packageToPurchase);
         return customerInfo;
@@ -136,6 +168,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
 
   const restoreMutation = useMutation({
     mutationFn: async () => {
+      await ensureConfigured();
       try {
         const customerInfo = await Purchases.restorePurchases();
         return customerInfo;
@@ -190,7 +223,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
     scansRemaining: getScansRemaining(),
     dailyScansUsed,
     offerings: offeringsQuery.data,
-    isLoadingOfferings: offeringsQuery.isLoading,
+    isLoadingOfferings: offeringsQuery.isLoading || !isConfigured,
     purchaseMutation,
     restoreMutation,
   };

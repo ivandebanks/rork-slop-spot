@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
-import { ArrowLeft, Copy, Share2, Gift, Users, Crown, Clock, CheckCircle, Send } from "lucide-react-native";
+import { ArrowLeft, Copy, Share2, Gift, Users, Crown, Clock, CheckCircle, Send, AlertTriangle } from "lucide-react-native";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useReferral } from "@/contexts/ReferralContext";
 import * as Haptics from "expo-haptics";
@@ -26,6 +26,9 @@ export default function ReferralScreen() {
     redeemInviteCode,
     redeemConfirmationCode,
     getReferralPremiumDaysLeft,
+    failCount,
+    isLockedOut,
+    getLockoutTimeLeft,
   } = useReferral();
 
   const [inputCode, setInputCode] = useState("");
@@ -181,38 +184,62 @@ export default function ReferralScreen() {
         {/* Enter Code */}
         <View style={[styles.sectionCard, { backgroundColor: theme.card }]}>
           <View style={styles.sectionHeader}>
-            <Gift size={18} color={theme.primary} />
+            <Gift size={18} color={isLockedOut ? "#E63946" : theme.primary} />
             <Text style={[styles.sectionTitle, { color: theme.text, fontSize: scaleFont(16) }]}>
               Enter a Code
             </Text>
           </View>
-          <Text style={[styles.sectionDesc, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
-            Paste a friend's referral code (KW-...) or a confirmation code (KC-...) they sent back.
-          </Text>
 
-          <View style={styles.inputRow}>
-            <TextInput
-              style={[styles.codeInput, {
-                backgroundColor: theme.surface,
-                color: theme.text,
-                borderColor: theme.border,
-                fontSize: scaleFont(14),
-              }]}
-              value={inputCode}
-              onChangeText={setInputCode}
-              placeholder="Paste code here..."
-              placeholderTextColor={theme.textSecondary}
-              autoCapitalize="characters"
-              autoCorrect={false}
-            />
-            <TouchableOpacity
-              style={[styles.redeemBtn, { backgroundColor: theme.primary, opacity: inputCode.trim() && !isProcessing ? 1 : 0.5 }]}
-              onPress={handleRedeemCode}
-              disabled={!inputCode.trim() || isProcessing}
-            >
-              <CheckCircle size={18} color="#FFFFFF" />
-            </TouchableOpacity>
-          </View>
+          {isLockedOut ? (
+            <View style={styles.lockoutBox}>
+              <AlertTriangle size={20} color="#E63946" />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.lockoutTitle, { fontSize: scaleFont(14) }]}>Too Many Failed Attempts</Text>
+                <Text style={[styles.lockoutDesc, { fontSize: scaleFont(12) }]}>
+                  Try again in {getLockoutTimeLeft()}
+                </Text>
+              </View>
+            </View>
+          ) : (
+            <>
+              <Text style={[styles.sectionDesc, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+                Paste a friend's referral code (KW-...) or a confirmation code (KC-...) they sent back.
+              </Text>
+
+              {failCount > 0 && failCount < 3 && (
+                <View style={styles.failWarning}>
+                  <AlertTriangle size={14} color="#F77F00" />
+                  <Text style={[styles.failWarningText, { color: "#F77F00", fontSize: scaleFont(12) }]}>
+                    {3 - failCount} attempt{3 - failCount !== 1 ? "s" : ""} remaining before 36-hour lockout
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.inputRow}>
+                <TextInput
+                  style={[styles.codeInput, {
+                    backgroundColor: theme.surface,
+                    color: theme.text,
+                    borderColor: theme.border,
+                    fontSize: scaleFont(14),
+                  }]}
+                  value={inputCode}
+                  onChangeText={setInputCode}
+                  placeholder="Paste code here..."
+                  placeholderTextColor={theme.textSecondary}
+                  autoCapitalize="characters"
+                  autoCorrect={false}
+                />
+                <TouchableOpacity
+                  style={[styles.redeemBtn, { backgroundColor: theme.primary, opacity: inputCode.trim() && !isProcessing ? 1 : 0.5 }]}
+                  onPress={handleRedeemCode}
+                  disabled={!inputCode.trim() || isProcessing}
+                >
+                  <CheckCircle size={18} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
         </View>
 
         {/* Confirmation code to send back */}
@@ -402,4 +429,36 @@ const styles = StyleSheet.create({
   stepDesc: { flex: 1, lineHeight: 18 },
   expiryNote: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 4, opacity: 0.7 },
   expiryText: {},
+
+  // Lockout styles
+  lockoutBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "rgba(230, 57, 70, 0.08)",
+    borderRadius: 10,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "rgba(230, 57, 70, 0.2)",
+  },
+  lockoutTitle: {
+    fontWeight: "700" as const,
+    color: "#E63946",
+  },
+  lockoutDesc: {
+    color: "#E63946",
+    marginTop: 2,
+  },
+  failWarning: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(247, 127, 0, 0.08)",
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+  },
+  failWarningText: {
+    fontWeight: "500" as const,
+  },
 });

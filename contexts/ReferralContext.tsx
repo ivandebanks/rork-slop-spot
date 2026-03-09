@@ -1,19 +1,55 @@
 import { useEffect, useState, useCallback } from "react";
 import createContextHook from "@nkzw/create-context-hook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
+import { Platform, Dimensions } from "react-native";
 
 const REFERRAL_SECRET_KEY = "@kiwi_referral_secret";
 const REFERRAL_COUNT_KEY = "@kiwi_referral_count";
 const REFERRAL_PREMIUM_KEY = "@kiwi_referral_premium";
 const REFERRAL_PREMIUM_EXPIRY_KEY = "@kiwi_referral_premium_expiry";
 const REFERRAL_USED_CODES_KEY = "@kiwi_referral_used_codes";
+const REFERRAL_DEVICE_KEY = "@kiwi_device_fingerprint";
+const REFERRAL_FAIL_COUNT_KEY = "@kiwi_referral_fails";
+const REFERRAL_LOCKOUT_KEY = "@kiwi_referral_lockout";
 
 // Code validity window: 2 days in milliseconds
 const CODE_EXPIRY_MS = 2 * 24 * 60 * 60 * 1000;
+// Lockout duration: 36 hours in milliseconds
+const LOCKOUT_MS = 36 * 60 * 60 * 1000;
+// Max failed attempts before lockout
+const MAX_FAILS = 3;
 
-// Generate a random 6-char alphanumeric string
+// Generate a stable device fingerprint that survives reinstalls
+function generateDeviceFingerprint(): string {
+  const parts: string[] = [];
+
+  // Installation ID from expo-constants (changes on reinstall but good as component)
+  if (Constants.installationId) {
+    parts.push(Constants.installationId);
+  }
+
+  // Device characteristics that don't change
+  const screen = Dimensions.get("screen");
+  parts.push(`${screen.width}x${screen.height}`);
+  parts.push(`${screen.scale}`);
+  parts.push(Platform.OS);
+  parts.push(Platform.Version?.toString() || "");
+
+  // Simple hash of the combined string
+  const combined = parts.join("|");
+  let hash = 0;
+  for (let i = 0; i < combined.length; i++) {
+    const char = combined.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return Math.abs(hash).toString(36).toUpperCase();
+}
+
+// Generate a random alphanumeric string
 function randomString(length: number): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // No I/O/0/1 to avoid confusion
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let result = "";
   for (let i = 0; i < length; i++) {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -21,7 +57,7 @@ function randomString(length: number): string {
   return result;
 }
 
-// Simple obfuscation: XOR-based encode with a static key, then base32-ish
+// XOR-based encode with a static key
 function encodePayload(data: string): string {
   const key = "KIWI";
   let encoded = "";
@@ -42,54 +78,52 @@ function decodePayload(encoded: string): string {
   return decoded;
 }
 
-// Generate an invite code: contains sender's secret + timestamp
-// Format: SECRET|TIMESTAMP encoded
-export function generateInviteCode(secret: string): string {
+// Invite code: SECRET|DEVICEFP|TIMESTAMP
+export function generateInviteCode(secret: string, deviceFp: string): string {
   const timestamp = Date.now().toString(36);
-  const payload = `${secret}|${timestamp}`;
+  const payload = `${secret}|${deviceFp}|${timestamp}`;
   const encoded = encodePayload(payload);
   return `KW-${encoded}`;
 }
 
-// Parse an invite code to extract sender secret and timestamp
-export function parseInviteCode(code: string): { senderSecret: string; timestamp: number } | null {
+export function parseInviteCode(code: string): { senderSecret: string; senderDevice: string; timestamp: number } | null {
   try {
     if (!code.startsWith("KW-")) return null;
     const encoded = code.substring(3);
     const decoded = decodePayload(encoded);
     const parts = decoded.split("|");
-    if (parts.length !== 2) return null;
+    if (parts.length !== 3) return null;
     const senderSecret = parts[0];
-    const timestamp = parseInt(parts[1], 36);
+    const senderDevice = parts[1];
+    const timestamp = parseInt(parts[2], 36);
     if (isNaN(timestamp)) return null;
-    return { senderSecret, timestamp };
+    return { senderSecret, senderDevice, timestamp };
   } catch {
     return null;
   }
 }
 
-// Generate a confirmation code: contains sender's secret + receiver's secret + timestamp
-// This is what Person B sends back to Person A
-export function generateConfirmationCode(senderSecret: string, receiverSecret: string): string {
+// Confirmation code: SENDER_SECRET|RECEIVER_SECRET|RECEIVER_DEVICE|TIMESTAMP
+export function generateConfirmationCode(senderSecret: string, receiverSecret: string, receiverDevice: string): string {
   const timestamp = Date.now().toString(36);
-  const payload = `${senderSecret}|${receiverSecret}|${timestamp}`;
+  const payload = `${senderSecret}|${receiverSecret}|${receiverDevice}|${timestamp}`;
   const encoded = encodePayload(payload);
   return `KC-${encoded}`;
 }
 
-// Parse a confirmation code
-export function parseConfirmationCode(code: string): { senderSecret: string; receiverSecret: string; timestamp: number } | null {
+export function parseConfirmationCode(code: string): { senderSecret: string; receiverSecret: string; receiverDevice: string; timestamp: number } | null {
   try {
     if (!code.startsWith("KC-")) return null;
     const encoded = code.substring(3);
     const decoded = decodePayload(encoded);
     const parts = decoded.split("|");
-    if (parts.length !== 3) return null;
+    if (parts.length !== 4) return null;
     const senderSecret = parts[0];
     const receiverSecret = parts[1];
-    const timestamp = parseInt(parts[2], 36);
+    const receiverDevice = parts[2];
+    const timestamp = parseInt(parts[3], 36);
     if (isNaN(timestamp)) return null;
-    return { senderSecret, receiverSecret, timestamp };
+    return { senderSecret, receiverSecret, receiverDevice, timestamp };
   } catch {
     return null;
   }
@@ -97,13 +131,16 @@ export function parseConfirmationCode(code: string): { senderSecret: string; rec
 
 export const [ReferralProvider, useReferral] = createContextHook(() => {
   const [mySecret, setMySecret] = useState<string>("");
+  const [myDeviceFp, setMyDeviceFp] = useState<string>("");
   const [referralCount, setReferralCount] = useState(0);
   const [hasReferralPremium, setHasReferralPremium] = useState(false);
   const [referralPremiumExpiry, setReferralPremiumExpiry] = useState<number | null>(null);
   const [usedCodes, setUsedCodes] = useState<string[]>([]);
+  const [usedDevices, setUsedDevices] = useState<string[]>([]);
+  const [failCount, setFailCount] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize on mount
   useEffect(() => {
     initializeReferral();
   }, []);
@@ -120,12 +157,19 @@ export const [ReferralProvider, useReferral] = createContextHook(() => {
       }
     };
     check();
-    const interval = setInterval(check, 60000); // check every minute
+    const interval = setInterval(check, 60000);
     return () => clearInterval(interval);
   }, [referralPremiumExpiry]);
 
   const initializeReferral = async () => {
     try {
+      // Generate device fingerprint
+      const deviceFp = generateDeviceFingerprint();
+      setMyDeviceFp(deviceFp);
+
+      // Store device fingerprint (for cross-reference)
+      await AsyncStorage.setItem(REFERRAL_DEVICE_KEY, deviceFp);
+
       // Get or create secret
       let secret = await AsyncStorage.getItem(REFERRAL_SECRET_KEY);
       if (!secret) {
@@ -147,16 +191,41 @@ export const [ReferralProvider, useReferral] = createContextHook(() => {
           setHasReferralPremium(true);
           setReferralPremiumExpiry(expiry);
         } else {
-          // Expired
           await AsyncStorage.removeItem(REFERRAL_PREMIUM_KEY);
           await AsyncStorage.removeItem(REFERRAL_PREMIUM_EXPIRY_KEY);
         }
       }
 
-      // Load used codes
+      // Load used codes and devices
       const usedStr = await AsyncStorage.getItem(REFERRAL_USED_CODES_KEY);
       if (usedStr) {
-        setUsedCodes(JSON.parse(usedStr));
+        const parsed = JSON.parse(usedStr);
+        // Support both old format (string[]) and new format ({codes, devices})
+        if (Array.isArray(parsed)) {
+          setUsedCodes(parsed);
+          setUsedDevices([]);
+        } else {
+          setUsedCodes(parsed.codes || []);
+          setUsedDevices(parsed.devices || []);
+        }
+      }
+
+      // Load fail count and lockout
+      const failStr = await AsyncStorage.getItem(REFERRAL_FAIL_COUNT_KEY);
+      if (failStr) setFailCount(parseInt(failStr, 10));
+
+      const lockStr = await AsyncStorage.getItem(REFERRAL_LOCKOUT_KEY);
+      if (lockStr) {
+        const lockTime = parseInt(lockStr, 10);
+        if (Date.now() < lockTime) {
+          setLockoutUntil(lockTime);
+        } else {
+          // Lockout expired, reset fails
+          await AsyncStorage.removeItem(REFERRAL_LOCKOUT_KEY);
+          await AsyncStorage.removeItem(REFERRAL_FAIL_COUNT_KEY);
+          setFailCount(0);
+          setLockoutUntil(null);
+        }
       }
     } catch (error) {
       console.error("Failed to initialize referral:", error);
@@ -165,27 +234,86 @@ export const [ReferralProvider, useReferral] = createContextHook(() => {
     }
   };
 
-  // Get my invite code to share with friends
-  const getMyInviteCode = useCallback((): string => {
-    if (!mySecret) return "";
-    return generateInviteCode(mySecret);
-  }, [mySecret]);
+  const saveUsedData = async (codes: string[], devices: string[]) => {
+    await AsyncStorage.setItem(REFERRAL_USED_CODES_KEY, JSON.stringify({ codes, devices }));
+  };
 
-  // When Person B enters Person A's invite code
-  // Returns a confirmation code to send back, or an error
+  const recordFail = async () => {
+    const newFails = failCount + 1;
+    setFailCount(newFails);
+    await AsyncStorage.setItem(REFERRAL_FAIL_COUNT_KEY, newFails.toString());
+
+    if (newFails >= MAX_FAILS) {
+      const lockTime = Date.now() + LOCKOUT_MS;
+      setLockoutUntil(lockTime);
+      await AsyncStorage.setItem(REFERRAL_LOCKOUT_KEY, lockTime.toString());
+    }
+  };
+
+  const resetFailsOnSuccess = async () => {
+    setFailCount(0);
+    await AsyncStorage.removeItem(REFERRAL_FAIL_COUNT_KEY);
+    await AsyncStorage.removeItem(REFERRAL_LOCKOUT_KEY);
+    setLockoutUntil(null);
+  };
+
+  const isLockedOut = useCallback((): boolean => {
+    if (!lockoutUntil) return false;
+    if (Date.now() >= lockoutUntil) {
+      // Auto-clear expired lockout
+      setLockoutUntil(null);
+      setFailCount(0);
+      AsyncStorage.removeItem(REFERRAL_LOCKOUT_KEY);
+      AsyncStorage.removeItem(REFERRAL_FAIL_COUNT_KEY);
+      return false;
+    }
+    return true;
+  }, [lockoutUntil]);
+
+  const getLockoutTimeLeft = useCallback((): string => {
+    if (!lockoutUntil) return "";
+    const remaining = lockoutUntil - Date.now();
+    if (remaining <= 0) return "";
+    const hours = Math.floor(remaining / (60 * 60 * 1000));
+    const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+    return `${hours}h ${minutes}m`;
+  }, [lockoutUntil]);
+
+  // Get my invite code to share
+  const getMyInviteCode = useCallback((): string => {
+    if (!mySecret || !myDeviceFp) return "";
+    return generateInviteCode(mySecret, myDeviceFp);
+  }, [mySecret, myDeviceFp]);
+
+  // Person B enters Person A's invite code
   const redeemInviteCode = useCallback(async (code: string): Promise<{ confirmationCode: string } | { error: string }> => {
+    // Check lockout
+    if (isLockedOut()) {
+      return { error: `Too many failed attempts. Try again in ${getLockoutTimeLeft()}.` };
+    }
+
     const parsed = parseInviteCode(code);
     if (!parsed) {
-      return { error: "Invalid referral code." };
+      await recordFail();
+      const remaining = MAX_FAILS - failCount - 1;
+      return { error: `Invalid referral code.${remaining > 0 ? ` ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.` : " You are now locked out for 36 hours."}` };
     }
 
     // Check expiry
     if (Date.now() - parsed.timestamp > CODE_EXPIRY_MS) {
+      await recordFail();
       return { error: "This referral code has expired (2-day limit)." };
     }
 
-    // Check if it's own code
+    // Check if it's own code (by secret)
     if (parsed.senderSecret === mySecret) {
+      await recordFail();
+      return { error: "You can't use your own referral code." };
+    }
+
+    // Check if same device fingerprint (reinstall detection)
+    if (parsed.senderDevice === myDeviceFp) {
+      await recordFail();
       return { error: "You can't use your own referral code." };
     }
 
@@ -194,42 +322,73 @@ export const [ReferralProvider, useReferral] = createContextHook(() => {
       return { error: "You've already used a code from this person." };
     }
 
-    // Mark as used
-    const newUsed = [...usedCodes, parsed.senderSecret];
-    setUsedCodes(newUsed);
-    await AsyncStorage.setItem(REFERRAL_USED_CODES_KEY, JSON.stringify(newUsed));
+    // Check if already used this sender's device
+    if (usedDevices.includes(parsed.senderDevice)) {
+      return { error: "You've already used a code from this device." };
+    }
 
-    // Generate confirmation code for Person B to send back to Person A
-    const confirmCode = generateConfirmationCode(parsed.senderSecret, mySecret);
+    // Success — mark as used
+    const newCodes = [...usedCodes, parsed.senderSecret];
+    const newDevices = [...usedDevices, parsed.senderDevice];
+    setUsedCodes(newCodes);
+    setUsedDevices(newDevices);
+    await saveUsedData(newCodes, newDevices);
+    await resetFailsOnSuccess();
+
+    const confirmCode = generateConfirmationCode(parsed.senderSecret, mySecret, myDeviceFp);
     return { confirmationCode: confirmCode };
-  }, [mySecret, usedCodes]);
+  }, [mySecret, myDeviceFp, usedCodes, usedDevices, failCount, isLockedOut, getLockoutTimeLeft]);
 
-  // When Person A enters the confirmation code from Person B
+  // Person A enters the confirmation code from Person B
   const redeemConfirmationCode = useCallback(async (code: string): Promise<{ success: boolean; newCount: number } | { error: string }> => {
+    // Check lockout
+    if (isLockedOut()) {
+      return { error: `Too many failed attempts. Try again in ${getLockoutTimeLeft()}.` };
+    }
+
     const parsed = parseConfirmationCode(code);
     if (!parsed) {
-      return { error: "Invalid confirmation code." };
+      await recordFail();
+      const remaining = MAX_FAILS - failCount - 1;
+      return { error: `Invalid confirmation code.${remaining > 0 ? ` ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.` : " You are now locked out for 36 hours."}` };
     }
 
     // Check expiry
     if (Date.now() - parsed.timestamp > CODE_EXPIRY_MS) {
+      await recordFail();
       return { error: "This confirmation code has expired (2-day limit)." };
     }
 
     // Verify the sender secret matches ours
     if (parsed.senderSecret !== mySecret) {
-      return { error: "This confirmation code wasn't generated for you." };
+      await recordFail();
+      const remaining = MAX_FAILS - failCount - 1;
+      return { error: `This confirmation code wasn't generated for you.${remaining > 0 ? ` ${remaining} attempt${remaining !== 1 ? "s" : ""} remaining.` : " You are now locked out for 36 hours."}` };
     }
 
-    // Check if we already counted this referrer
+    // Check if receiver's device matches our device (same device gaming)
+    if (parsed.receiverDevice === myDeviceFp) {
+      await recordFail();
+      return { error: "This referral came from the same device." };
+    }
+
+    // Check if we already counted this referrer (by secret)
     if (usedCodes.includes(parsed.receiverSecret)) {
       return { error: "You've already counted this referral." };
     }
 
-    // Mark receiver as counted
-    const newUsed = [...usedCodes, parsed.receiverSecret];
-    setUsedCodes(newUsed);
-    await AsyncStorage.setItem(REFERRAL_USED_CODES_KEY, JSON.stringify(newUsed));
+    // Check if we already counted this device
+    if (usedDevices.includes(parsed.receiverDevice)) {
+      return { error: "You've already counted a referral from this device." };
+    }
+
+    // Success — mark receiver as counted
+    const newCodes = [...usedCodes, parsed.receiverSecret];
+    const newDevices = [...usedDevices, parsed.receiverDevice];
+    setUsedCodes(newCodes);
+    setUsedDevices(newDevices);
+    await saveUsedData(newCodes, newDevices);
+    await resetFailsOnSuccess();
 
     // Increment referral count
     const newCount = referralCount + 1;
@@ -240,15 +399,15 @@ export const [ReferralProvider, useReferral] = createContextHook(() => {
     await checkAndGrantPremium(newCount);
 
     return { success: true, newCount };
-  }, [mySecret, usedCodes, referralCount]);
+  }, [mySecret, myDeviceFp, usedCodes, usedDevices, referralCount, failCount, isLockedOut, getLockoutTimeLeft]);
 
   const checkAndGrantPremium = async (count: number) => {
     let daysToGrant = 0;
 
     if (count >= 5) {
-      daysToGrant = 30; // 1 month
+      daysToGrant = 30;
     } else if (count >= 2) {
-      daysToGrant = 7; // 1 week
+      daysToGrant = 7;
     }
 
     if (daysToGrant > 0) {
@@ -272,6 +431,9 @@ export const [ReferralProvider, useReferral] = createContextHook(() => {
     mySecret,
     referralCount,
     hasReferralPremium,
+    failCount,
+    isLockedOut: isLockedOut(),
+    getLockoutTimeLeft,
     getMyInviteCode,
     redeemInviteCode,
     redeemConfirmationCode,
