@@ -38,10 +38,10 @@ type ThemeMode = "light" | "dark" | "system";
 
 const PRIVACY_POLICY = `Privacy Policy
 Kiwi - Better Health Scanner
-Last Updated: January 18, 2026
+Last Updated: March 9, 2026
 
 Overview
-Kiwi - Better Health Scanner ("we," "us," or "our") respects your privacy. This Privacy Policy explains how information is handled when you use our mobile application.
+Kiwi - Better Health Scanner ("we," "us," or "our") respects your privacy. This Privacy Policy explains how information is collected, used, and handled when you use our mobile application.
 
 By using Kiwi, you agree to the practices described in this policy.
 
@@ -50,98 +50,123 @@ IMPORTANT: Our app uses your device camera to scan product labels for ingredient
 
 What We Collect
 • Temporary camera access to capture photos of product labels, barcodes, and ingredient lists
-• On-device image capture to extract photos from food and beverage packaging
-• The app scans product labels to read ingredient information
+• Photos you take or select from your photo library for ingredient analysis
 
 How We Use It
-• All image scanning and analysis occurs entirely on your device using on-device AI processing
-• We extract product names and ingredient lists from photos to calculate health ratings
+• Photos are transmitted over encrypted (HTTPS) connections to our AI processing service (Rork AI) for ingredient analysis
+• Our AI service extracts product names, ingredient lists, and calculates health ratings from your photos
 • The ratings are provided for informational and entertainment purposes only
-• No images, photos, or scanned data are uploaded to any server
-• Photos are processed in real-time on your device and immediately discarded after analysis
-• No biometric identification, facial recognition, or personally identifiable data is extracted
+• Photos are not permanently stored on our servers and are deleted after analysis is complete
+• A thumbnail of your scanned image is saved locally on your device for scan history
+• No biometric identification, facial recognition, or personally identifiable data is extracted from your photos
 
 What We DON'T Do
-• We do NOT upload photos or scanned images to any server
-• We do NOT share camera data or images with third parties
-• We do NOT store photos on your device or our servers beyond the scan session
-• We do NOT use images for any purpose beyond displaying ingredient ratings
-• We do NOT retain any image data after analysis is complete
+• We do NOT permanently store your photos on any server
+• We do NOT use your photos for AI training, advertising, or any purpose beyond providing your scan results
 • We do NOT sell or share your photos with anyone
+• We do NOT extract personal or identifying information from your images
 
 Data Retention for Images
-• Images are captured and processed in real-time entirely on your device
-• All image data is immediately discarded from device memory after the ingredient analysis is displayed (typically within seconds)
-• No image data persists on your device or anywhere else after analysis
-• The app does not maintain any history of your photos
+• Photos are transmitted to Rork AI for processing and are deleted from the server immediately after analysis (typically within seconds)
+• A thumbnail copy is stored locally on your device as part of your scan history
+• You can delete any scan (including its thumbnail) at any time
+• Uninstalling the app permanently removes all locally stored images
 
 Your Control
 • You must grant camera permission to use the scanning feature
+• You can also pick images from your photo library instead of using the camera
 • You can revoke camera access at any time through your device settings
 • Each scan requires you to actively capture or select a new photo
 • No photos are taken without your explicit action
 
+How Ingredient Analysis Works
+When you scan a product:
+1. You take a photo or select one from your gallery
+2. The photo is sent over an encrypted connection to Rork AI's servers
+3. Rork AI analyzes the image to extract ingredients and calculate health ratings
+4. Results (product name, ingredient ratings, scores, citations, company info, and alternatives) are returned to your device
+5. The photo is deleted from Rork AI's servers after processing
+6. Results are stored locally on your device for your scan history
+
 Scan History and Local Storage
 
 What We Store Locally
-• Scan results only (product names, ingredient lists, and text-based ratings) are stored on your device using local storage (AsyncStorage)
-• A thumbnail of your scanned product image is stored locally on your device so you can view your scan history
-• Your sorting preferences for viewing scan history (e.g., sort by date, name, or rating)
-• The number of free scans you have used today (resets daily)
+All of the following data is stored only on your device using local storage (AsyncStorage). We do not have access to any of it.
+
+• Scan results: product names, ingredient lists, health ratings, scores, scientific citations, company ownership information, and suggested alternatives
+• A thumbnail image of each scanned product
+• Your sorting preferences for scan history (e.g., sort by date, name, or rating)
+• Favorite scans you have marked
+• The number of free scans used today (resets daily)
 • A record of whether you have completed the in-app tutorial
+• Your theme preference (light, dark, or system)
+• Your text size accessibility preference
 
 Your Control Over Scan History
-• You can delete individual scans at any time using the delete button
-• You can sort and organize your scan history using the sorting settings
+• You can delete individual scans at any time using the delete button or swipe to delete
+• You can clear all scan history at once
 • All scan history and preferences are stored locally on your device only
 • Uninstalling the app will permanently delete all stored scan results and settings
 • We have no access to your locally stored scan history
 • No locally stored scan history is uploaded to servers or shared with anyone
 
-Tutorial and App Features
-The app includes a tutorial to help you understand how to use the scanning and analysis features. The tutorial:
-• Runs locally on your device
-• Records locally whether you have completed it (so it does not show again)
-• Does not send any information to external servers
-• Can be replayed at any time from the Settings screen
+Referral System
+Kiwi includes a peer-to-peer referral system that works without any server or account.
+
+What We Store for Referrals (locally on your device only):
+• A randomly generated 8-character referral secret (your referral identity)
+• A device fingerprint derived from your screen dimensions, display scale, operating system, and OS version (used for fraud prevention)
+• A count of successful referrals
+• A record of referral codes you have used (to prevent duplicates)
+• A record of device fingerprints you have interacted with (to prevent same-device gaming)
+• Failed attempt count and lockout timestamp (3 failed attempts triggers a 36-hour lockout)
+• Referral premium status and expiry date (if earned)
+
+How Referral Codes Work:
+• Referral and confirmation codes are generated locally on your device
+• Codes are shared directly between users (peer-to-peer) via text, messaging apps, or other means
+• Codes contain your referral secret, device fingerprint, and a timestamp, encoded with a simple cipher
+• No referral data is sent to our servers or any third party
+• All referral validation happens locally on each user's device
+
+Device Fingerprint:
+• We generate a non-unique device fingerprint from your screen size, display scale, platform, and OS version
+• This is used solely to prevent referral fraud (e.g., uninstalling and reinstalling to re-use codes)
+• This fingerprint cannot identify you personally and is stored only on your device
 
 Personal Information
 We do NOT collect personal information such as:
 • Names, email addresses, phone numbers, or account credentials
 • User accounts or profiles
 • Login or registration information
-
-How Ingredient Analysis Works
-The app uses on-device AI processing to:
-• Capture a photo of a product label using your camera or photo library
-• Analyze the image entirely on your device to extract ingredient names
-• Calculate health ratings based on the extracted ingredients
-• Display the results to you within the app
-
-All processing happens on your device. No photos or ingredient data are sent to external servers.
+• Location data
+• Contacts or call history
+• Advertising identifiers (IDFA or Android Ad ID)
 
 Third-Party Services
 Kiwi uses the following third-party services:
 
-1. RevenueCat (In-App Purchases)
-   • Purpose: Manages premium subscription purchases and restores
-   • Data shared: Anonymous purchase transaction data and device identifiers as required to validate purchases
+1. Rork AI (Ingredient Analysis)
+   • Purpose: Processes photos of product labels to extract ingredients and calculate health ratings
+   • Data shared: The photo you scan (transmitted over HTTPS)
+   • Data retained: Photos are deleted immediately after processing; no permanent storage
+   • Rork AI does NOT receive your scan history, personal information, or any data beyond the individual photo being analyzed
+
+2. RevenueCat (In-App Purchases)
+   • Purpose: Manages premium subscription purchases and purchase restoration
+   • Data shared: Anonymous purchase transaction data and platform device identifiers as required to validate purchases
    • Data retained: Per RevenueCat's data retention policies
+   • RevenueCat does NOT receive your photos, scan results, or scan history
    • Privacy policy: https://www.revenuecat.com/privacy
 
-2. Expo (App Platform and Crash Reporting)
+3. Expo (App Platform)
    • Purpose: Provides the app runtime and may collect anonymous crash and diagnostic data
    • Data shared: Anonymous crash logs and device diagnostics (no personal data or scan content)
    • Privacy policy: https://expo.dev/privacy
 
-These third-party services do NOT receive:
-• Your photos or images
-• Scan results or ingredient data
-• Your scan history
-• Any personally identifying information
-
 No Social Features or Data Sharing
-• The app does NOT include social features, voting, or sharing capabilities beyond the native OS share sheet
+• The app does NOT include social features, voting, or user-generated content sharing
+• Referral codes are shared directly between users using the native OS share sheet
 • Scan results are private to you
 • We do not maintain a server-side database of your scan results
 
@@ -155,36 +180,39 @@ DISCLAIMER: Ingredient ratings and health scores provided by Kiwi are for inform
 Always consult qualified healthcare professionals and registered dietitians for dietary decisions and health concerns.
 
 Children's Privacy
-Kiwi is rated 4+ and is appropriate for users of all ages. We do not knowingly collect personal information from anyone, including children. If you are a parent or guardian and have questions about your child's use of the app, please contact us.
+Kiwi is rated 4+ and is appropriate for users of all ages. We do not collect personal information from anyone, including children. The app does not require an account, login, or any personal details. The device fingerprint used for the referral system is non-identifying and stored only on-device. If you are a parent or guardian and have questions about your child's use of the app, please contact us.
 
 Data Security
 We take reasonable measures to protect your data:
-• Photos are transmitted over encrypted (HTTPS) connections to our AI processing service
-• Scan results are stored only on your device using secure local storage
-• We do not maintain a server-side database of your personal scan history
+• Photos are transmitted over encrypted (HTTPS) connections to Rork AI for analysis
+• Photos are deleted from Rork AI's servers immediately after processing
+• Scan results are stored only on your device using local storage
+• We do not maintain a server-side database of your scan history or personal data
 • RevenueCat handles all payment processing using industry-standard security
+• Referral codes use encoding to prevent casual tampering (not cryptographic-grade security)
 
 Your Rights
-• We do not collect or store personal data or scan results on Kiwi's own servers
-• Once you delete the app, all local scan history is permanently removed from your device
-• You control scan data through your device and the in-app delete functions
-• For questions about data held by third-party services (RevenueCat, Rork AI), please refer to their respective privacy policies
+• You can delete any or all scan history at any time within the app
+• Once you delete the app, all local data (scans, preferences, referral data) is permanently removed from your device
+• You control all scan and referral data through the app's built-in functions
+• For questions about data held by third-party services (RevenueCat, Rork AI, Expo), please refer to their respective privacy policies
 
 International Data Transfers
-• All scanning and analysis occurs on your device with no data transfers for image processing
-• Your photos and scan results never leave your device
+• Photos are transmitted to Rork AI's servers for processing. These servers may be located outside your country of residence
+• Photos are not permanently stored and are deleted after analysis
+• Scan results and all other app data remain on your device
 • RevenueCat's servers may be located outside your country of residence for purchase processing
 
 Region-Specific Information
 
 California Residents (CCPA)
-We do not sell personal information. Since all image processing occurs on-device, no scan data leaves your device. Scan data is stored locally on your device under your control. For data processed by RevenueCat in connection with your use of the app, please refer to their privacy policy and CCPA disclosures.
+We do not sell personal information. Photos are transmitted to Rork AI solely for ingredient analysis and are not retained. Scan data is stored locally on your device under your control. For data processed by RevenueCat in connection with your use of the app, please refer to their privacy policy and CCPA disclosures.
 
 European Economic Area Residents (GDPR)
-Our legal basis for processing camera images is your consent (camera permission and your explicit action of taking a photo). Your legal basis for in-app purchase processing is the performance of a contract. Since all image analysis happens on-device, no image data is transferred outside your device. You can withdraw camera consent by revoking access in device settings. For GDPR inquiries related to RevenueCat, please refer to their privacy policy.
+Our legal basis for processing your photos is your consent (camera permission and your explicit action of taking or selecting a photo). Photos are transmitted to Rork AI for processing under a legitimate interest basis (providing the service you requested) and are deleted immediately after analysis. Your legal basis for in-app purchase processing is the performance of a contract. You can withdraw camera consent by revoking access in device settings. For GDPR inquiries related to RevenueCat or Rork AI, please refer to their respective privacy policies.
 
 Australian Residents
-We comply with the Australian Privacy Principles. Since all image analysis occurs on-device with no data transfers, APP requirements for cross-border data handling do not apply to scan data. For details on RevenueCat's data handling, please refer to their privacy policy.
+We comply with the Australian Privacy Principles. Photos are transmitted to Rork AI for processing and are not retained. For details on RevenueCat's and Rork AI's data handling, please refer to their respective privacy policies.
 
 Changes to This Policy
 We may update this Privacy Policy from time to time. Any changes will be reflected by updating the "Last Updated" date at the top of this policy. We will notify you of material changes through the app or other reasonable means. Continued use of the app after changes constitutes acceptance of the updated policy.
@@ -194,7 +222,7 @@ If you have questions about this Privacy Policy or how your data is handled, you
 
 Email: snapit.foranything@gmail.com
 
-By using the Kiwi app, you acknowledge that you have read and understood this Privacy Policy, including the on-device processing of images and the entertainment-only nature of ingredient ratings.`;
+By using the Kiwi app, you acknowledge that you have read and understood this Privacy Policy, including the transmission of photos to Rork AI for analysis and the entertainment-only nature of ingredient ratings.`;
 
 const TERMS_OF_SERVICE = `Terms of Service
 Kiwi - Better Health Scanner
