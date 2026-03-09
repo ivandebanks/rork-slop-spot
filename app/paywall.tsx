@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, ActivityIndicator, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, ActivityIndicator, Alert, ScrollView } from "react-native";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { router } from "expo-router";
@@ -10,6 +10,8 @@ export default function PaywallScreen() {
   const { scansRemaining, offerings, isLoadingOfferings, purchaseMutation, restoreMutation } = usePurchases();
   const { theme, scaleFont } = useTheme();
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
+  const [monthlyPackage, setMonthlyPackage] = useState<any>(null);
+  const [yearlyPackage, setYearlyPackage] = useState<any>(null);
 
   const starSpin = useRef(new Animated.Value(0)).current;
 
@@ -21,8 +23,17 @@ export default function PaywallScreen() {
 
   useEffect(() => {
     if (offerings?.current) {
-      const pkg = offerings.current.availablePackages[0];
-      setSelectedPackage(pkg);
+      const packages = offerings.current.availablePackages;
+      const monthly = packages.find((p: any) =>
+        p.packageType === "MONTHLY" || p.product?.identifier?.includes("monthly")
+      );
+      const yearly = packages.find((p: any) =>
+        p.packageType === "ANNUAL" || p.product?.identifier?.includes("yearly")
+      );
+      setMonthlyPackage(monthly || null);
+      setYearlyPackage(yearly || null);
+      // Default to yearly (best value)
+      setSelectedPackage(yearly || monthly || packages[0]);
     }
   }, [offerings]);
 
@@ -125,8 +136,6 @@ export default function PaywallScreen() {
     );
   }
 
-  const priceString = selectedPackage.product.priceString;
-
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
@@ -135,7 +144,7 @@ export default function PaywallScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.mainContent}>
+      <ScrollView contentContainerStyle={styles.mainContent} showsVerticalScrollIndicator={false}>
         <View style={styles.topSection}>
           <Animated.View style={{ transform: [{ rotate: spinInterpolation }] }}>
             <Crown size={48} color="#D4AF37" fill="#D4AF37" />
@@ -150,6 +159,81 @@ export default function PaywallScreen() {
             Currently: {scansRemaining}
           </Text>
         </View>
+
+        {/* Plan Selector */}
+        {(monthlyPackage || yearlyPackage) && (
+          <View style={styles.planSelector}>
+            {yearlyPackage && (
+              <TouchableOpacity
+                style={[
+                  styles.planOption,
+                  {
+                    backgroundColor: isDark ? "#1C1A14" : "#FFFDF5",
+                    borderColor: selectedPackage === yearlyPackage ? "#D4AF37" : (isDark ? "#2A2720" : "#E0D8C0"),
+                    borderWidth: selectedPackage === yearlyPackage ? 2.5 : 1.5,
+                  },
+                ]}
+                onPress={() => {
+                  setSelectedPackage(yearlyPackage);
+                  if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+              >
+                <View style={styles.planBestValue}>
+                  <Text style={styles.planBestValueText}>BEST VALUE</Text>
+                </View>
+                <View style={styles.planRadio}>
+                  <View style={[
+                    styles.planRadioOuter,
+                    { borderColor: selectedPackage === yearlyPackage ? "#D4AF37" : (isDark ? "#444" : "#CCC") }
+                  ]}>
+                    {selectedPackage === yearlyPackage && <View style={styles.planRadioInner} />}
+                  </View>
+                </View>
+                <View style={styles.planDetails}>
+                  <Text style={[styles.planTitle, { color: theme.text, fontSize: scaleFont(16) }]}>Yearly</Text>
+                  <Text style={[styles.planPrice, { color: theme.text, fontSize: scaleFont(14) }]}>
+                    {yearlyPackage.product.priceString}/year
+                  </Text>
+                  <Text style={[styles.planSavings, { color: "#D4AF37", fontSize: scaleFont(12) }]}>
+                    Save 33% vs monthly
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+
+            {monthlyPackage && (
+              <TouchableOpacity
+                style={[
+                  styles.planOption,
+                  {
+                    backgroundColor: isDark ? "#1C1A14" : "#FFFDF5",
+                    borderColor: selectedPackage === monthlyPackage ? "#D4AF37" : (isDark ? "#2A2720" : "#E0D8C0"),
+                    borderWidth: selectedPackage === monthlyPackage ? 2.5 : 1.5,
+                  },
+                ]}
+                onPress={() => {
+                  setSelectedPackage(monthlyPackage);
+                  if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }}
+              >
+                <View style={styles.planRadio}>
+                  <View style={[
+                    styles.planRadioOuter,
+                    { borderColor: selectedPackage === monthlyPackage ? "#D4AF37" : (isDark ? "#444" : "#CCC") }
+                  ]}>
+                    {selectedPackage === monthlyPackage && <View style={styles.planRadioInner} />}
+                  </View>
+                </View>
+                <View style={styles.planDetails}>
+                  <Text style={[styles.planTitle, { color: theme.text, fontSize: scaleFont(16) }]}>Monthly</Text>
+                  <Text style={[styles.planPrice, { color: theme.text, fontSize: scaleFont(14) }]}>
+                    {monthlyPackage.product.priceString}/month
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
 
         <View style={styles.cardWrapper}>
           <View style={[
@@ -223,7 +307,7 @@ export default function PaywallScreen() {
           </View>
         </View>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.buyButton, { opacity: purchaseMutation.isPending ? 0.7 : 1 }]}
           onPress={handlePurchase}
           disabled={purchaseMutation.isPending}
@@ -233,14 +317,15 @@ export default function PaywallScreen() {
           ) : (
             <>
               <Text style={[styles.buyButtonText, { fontSize: scaleFont(18) }]}>
-                Get Premium for {priceString}
+                Get Premium for {selectedPackage?.product?.priceString}
+                {selectedPackage === yearlyPackage ? "/yr" : selectedPackage === monthlyPackage ? "/mo" : ""}
               </Text>
               <Crown size={20} color="#FFFFFF" />
             </>
           )}
         </TouchableOpacity>
 
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.restoreButton}
           onPress={handleRestore}
           disabled={restoreMutation.isPending}
@@ -256,7 +341,7 @@ export default function PaywallScreen() {
             </>
           )}
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -311,7 +396,7 @@ const styles = StyleSheet.create({
     fontWeight: "600" as const,
   },
   mainContent: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 24,
@@ -498,6 +583,68 @@ const styles = StyleSheet.create({
   },
   restoreText: {
     letterSpacing: 0.3,
+  },
+  // Plan selector
+  planSelector: {
+    width: "100%",
+    maxWidth: 360,
+    gap: 10,
+    marginBottom: 20,
+  },
+  planOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    position: "relative",
+    overflow: "hidden",
+  },
+  planBestValue: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    backgroundColor: "#D4AF37",
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderBottomLeftRadius: 10,
+  },
+  planBestValueText: {
+    color: "#FFFFFF",
+    fontSize: 10,
+    fontWeight: "800" as const,
+    letterSpacing: 0.8,
+  },
+  planRadio: {
+    marginRight: 14,
+  },
+  planRadioOuter: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  planRadioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#D4AF37",
+  },
+  planDetails: {
+    flex: 1,
+  },
+  planTitle: {
+    fontWeight: "700" as const,
+  },
+  planPrice: {
+    fontWeight: "500" as const,
+    marginTop: 2,
+  },
+  planSavings: {
+    fontWeight: "600" as const,
+    marginTop: 2,
   },
   // Comparison table
   comparisonTable: {
