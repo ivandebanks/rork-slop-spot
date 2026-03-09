@@ -4,7 +4,6 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Purchases, { PurchasesOfferings } from "react-native-purchases";
 import { Platform } from "react-native";
-import Constants from "expo-constants";
 
 const REFERRAL_PREMIUM_KEY = "@kiwi_referral_premium";
 const REFERRAL_PREMIUM_EXPIRY_KEY = "@kiwi_referral_premium_expiry";
@@ -16,21 +15,8 @@ const PREMIUM_KEY = "@slop_spot_premium";
 let isRevenueCatConfigured = false;
 let configurePromise: Promise<boolean> | null = null;
 
-// Detect if running inside Expo Go (native store unavailable)
-// appOwnership === "expo" means Expo Go; "standalone"/"guest" means dev/prod build
-// executionEnvironment === "storeClient" means a real build, NOT Expo Go
-const isExpoGo =
-  Constants.appOwnership === "expo" ||
-  (!Constants.isDevice && Constants.executionEnvironment !== "storeClient");
-
 const configureRevenueCat = async (): Promise<boolean> => {
   if (isRevenueCatConfigured) return true;
-
-  // RevenueCat native store is not available in Expo Go
-  if (isExpoGo) {
-    console.log("RevenueCat skipped: running in Expo Go (use a development build for purchases)");
-    return false;
-  }
 
   try {
     let apiKey = "";
@@ -52,7 +38,7 @@ const configureRevenueCat = async (): Promise<boolean> => {
     console.log("RevenueCat API key not found for platform:", Platform.OS);
     return false;
   } catch (error: any) {
-    // Never use console.error here — it triggers the red error overlay in dev mode.
+    // Log but don't use console.error — it triggers the red error overlay in dev mode.
     // RevenueCat failures in Expo Go / missing native modules are expected.
     console.log("RevenueCat configure skipped:", error?.message || error);
     return false;
