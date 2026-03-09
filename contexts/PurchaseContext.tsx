@@ -17,11 +17,11 @@ let isRevenueCatConfigured = false;
 let configurePromise: Promise<boolean> | null = null;
 
 // Detect if running inside Expo Go (native store unavailable)
-// Check multiple signals since appOwnership varies across SDK versions
+// appOwnership === "expo" means Expo Go; "standalone"/"guest" means dev/prod build
+// executionEnvironment === "storeClient" means a real build, NOT Expo Go
 const isExpoGo =
   Constants.appOwnership === "expo" ||
-  Constants.executionEnvironment === "storeClient" ||
-  !Constants.isDevice;
+  (!Constants.isDevice && Constants.executionEnvironment !== "storeClient");
 
 const configureRevenueCat = async (): Promise<boolean> => {
   if (isRevenueCatConfigured) return true;
