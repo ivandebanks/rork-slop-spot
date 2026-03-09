@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ScanProvider } from "@/contexts/ScanContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { PurchaseProvider } from "@/contexts/PurchaseContext";
+import { ReferralProvider } from "@/contexts/ReferralContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -23,12 +24,20 @@ function RootLayoutNav() {
           presentation: "card"
         }} 
       />
-      <Stack.Screen 
-        name="paywall" 
-        options={{ 
+      <Stack.Screen
+        name="paywall"
+        options={{
           title: "Upgrade",
           presentation: "modal"
-        }} 
+        }}
+      />
+      <Stack.Screen
+        name="referral"
+        options={{
+          title: "Refer Friends",
+          presentation: "modal",
+          headerShown: false,
+        }}
       />
     </Stack>
   );
@@ -43,11 +52,13 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
         <PurchaseProvider>
-          <ScanProvider>
-            <GestureHandlerRootView>
-              <RootLayoutNav />
-            </GestureHandlerRootView>
-          </ScanProvider>
+          <ReferralProvider>
+            <ScanProvider>
+              <GestureHandlerRootView>
+                <RootLayoutNav />
+              </GestureHandlerRootView>
+            </ScanProvider>
+          </ReferralProvider>
         </PurchaseProvider>
       </ThemeProvider>
     </QueryClientProvider>
