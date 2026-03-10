@@ -226,7 +226,7 @@ function Slide4() {
                 <Text style={[styles.scoreNumMock, { fontSize: 28 }]}>32</Text>
                 <Text style={styles.scoreOfMock}>/100</Text>
               </View>
-              <Text style={[styles.gradeLabelMock, { color: "#E63946" }]}>Slop</Text>
+              <Text style={[styles.gradeLabelMock, { color: "#E63946" }]}>Avoid At All Cost</Text>
               <Text style={styles.productNameMock}>Mountain Dew Code Red</Text>
 
               {/* Ingredient detail */}
@@ -250,6 +250,38 @@ function Slide4() {
                 </View>
               </View>
 
+              {/* Behind It - Company Ownership */}
+              <View style={styles.behindItMock}>
+                <View style={styles.behindItHeader}>
+                  <Award size={14} color="#118AB2" />
+                  <Text style={styles.behindItTitle}>Behind It</Text>
+                </View>
+                <View style={styles.behindItChain}>
+                  <View style={styles.behindItRow}>
+                    <View style={[styles.ingDot, { backgroundColor: "#118AB2" }]} />
+                    <View>
+                      <Text style={styles.behindItLabel}>Made by</Text>
+                      <Text style={styles.behindItCompany}>Mtn Dew</Text>
+                    </View>
+                  </View>
+                  <ChevronRight size={12} color="#CCC" />
+                  <View style={styles.behindItRow}>
+                    <View style={[styles.ingDot, { backgroundColor: "#E63946" }]} />
+                    <View>
+                      <Text style={styles.behindItLabel}>Ultimate Parent</Text>
+                      <Text style={styles.behindItCompany}>PepsiCo</Text>
+                    </View>
+                  </View>
+                </View>
+                <View style={styles.repBarBg}>
+                  <View style={[styles.repBarFill, { width: "38%", backgroundColor: "#E63946" }]} />
+                </View>
+                <View style={styles.repFooter}>
+                  <Text style={[styles.repLabel, { color: "#E63946" }]}>Poor</Text>
+                  <Text style={styles.repScore}>38/100</Text>
+                </View>
+              </View>
+
               {/* Disclaimer */}
               <View style={styles.disclaimerMock}>
                 <Info size={14} color="#FFA500" />
@@ -269,10 +301,10 @@ function Slide4() {
 function Slide5() {
   const scans = [
     { name: "Organic Granola Bar", score: 82, color: "#06D6A0", grade: "B Grade", time: "Today", count: 8 },
-    { name: "Coca-Cola Classic", score: 18, color: "#E63946", grade: "Health Hazard", time: "Today", count: 12 },
+    { name: "Coca-Cola Classic", score: 18, color: "#E63946", grade: "Avoid At All Cost", time: "Today", count: 12 },
     { name: "Greek Yogurt", score: 91, color: "#118AB2", grade: "A Grade", time: "Yesterday", count: 6 },
-    { name: "Doritos Nacho Cheese", score: 28, color: "#E63946", grade: "Health Hazard", time: "Yesterday", count: 15 },
-    { name: "Kind Protein Bar", score: 65, color: "#FCBF49", grade: "Premium Slop", time: "Mar 5", count: 10 },
+    { name: "Doritos Nacho Cheese", score: 28, color: "#E63946", grade: "Avoid At All Cost", time: "Yesterday", count: 15 },
+    { name: "Kind Protein Bar", score: 65, color: "#FCBF49", grade: "Find Alternatives", time: "Mar 5", count: 10 },
   ];
 
   return (
@@ -336,7 +368,7 @@ function Slide5() {
 // Caption: "Your Privacy Comes First"
 function Slide6() {
   const trustPoints = [
-    { icon: <Lock size={22} color="#118AB2" />, title: "100% On-Device", desc: "Photos never leave your phone" },
+    { icon: <Lock size={22} color="#118AB2" />, title: "No Data Stored", desc: "Photos deleted after analysis" },
     { icon: <BookOpen size={22} color="#06D6A0" />, title: "Real Citations", desc: "FDA, NIH, WHO & PubMed sources" },
     { icon: <Eye size={22} color="#9B59B6" />, title: "Full Transparency", desc: "See why each score was given" },
     { icon: <Users size={22} color="#F77F00" />, title: "No Account Needed", desc: "Download and start scanning" },
@@ -901,6 +933,70 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: "#888",
     flex: 1,
+  },
+
+  // ─── Slide 4: Behind It ───
+  behindItMock: {
+    width: "100%",
+    backgroundColor: "#F8F9FA",
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 12,
+    gap: 8,
+  },
+  behindItHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  behindItTitle: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#118AB2",
+  },
+  behindItChain: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  behindItRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  behindItLabel: {
+    fontSize: 9,
+    color: "#999",
+  },
+  behindItCompany: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#1A1A1A",
+  },
+  repBarBg: {
+    width: "100%",
+    height: 6,
+    backgroundColor: "rgba(128,128,128,0.15)",
+    borderRadius: 3,
+    overflow: "hidden",
+  },
+  repBarFill: {
+    height: "100%",
+    borderRadius: 3,
+  },
+  repFooter: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  repLabel: {
+    fontSize: 11,
+    fontWeight: "600",
+  },
+  repScore: {
+    fontSize: 11,
+    fontWeight: "700",
+    color: "#1A1A1A",
   },
 
   // ─── Slide 5: History ───
