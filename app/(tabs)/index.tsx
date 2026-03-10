@@ -46,6 +46,7 @@ const companyOwnershipSchema = z.object({
   company: z.string(),
   parentCompany: z.string().optional(),
   ultimateParent: z.string().optional(),
+  reputationScore: z.number().min(0).max(100),
 });
 
 const alternativeSuggestionSchema = z.object({
@@ -287,7 +288,7 @@ For each ingredient:
 Then calculate an overall score (average of all ingredient ratings).
 
 Also provide:
-- behindIt: The company that makes this product. Include "company" (the brand/manufacturer), "parentCompany" (if owned by a larger company), and "ultimateParent" (if there's a top-level conglomerate, e.g. Nestlé, PepsiCo, Unilever). Only include parent levels that exist.
+- behindIt: The company that makes this product. Include "company" (the brand/manufacturer), "parentCompany" (if owned by a larger company), "ultimateParent" (if there's a top-level conglomerate, e.g. Nestlé, PepsiCo, Unilever), and "reputationScore" (0-100, based on the company's track record with health, transparency, recalls, lawsuits, and ethical practices). Only include parent levels that exist.
 - alternatives: 2-4 similar products in the same category that would score higher on health. For each, include "productName", "estimatedScore" (0-100), and "reason" (brief explanation of why it's healthier).
 
 Ensure all health claims are backed by credible scientific sources.`,

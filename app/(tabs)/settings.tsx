@@ -84,7 +84,7 @@ When you scan a product:
 1. You take a photo or select one from your gallery
 2. The photo is sent over an encrypted connection to Rork AI's servers
 3. Rork AI analyzes the image to extract ingredients and calculate health ratings
-4. Results (product name, ingredient ratings, scores, citations, company info, and alternatives) are returned to your device
+4. Results (product name, ingredient ratings, scores, citations, company info, company reputation scores, and alternatives) are returned to your device
 5. The photo is deleted from Rork AI's servers after processing
 6. Results are stored locally on your device for your scan history
 
@@ -93,7 +93,7 @@ Scan History and Local Storage
 What We Store Locally
 All of the following data is stored only on your device using local storage (AsyncStorage). We do not have access to any of it.
 
-• Scan results: product names, ingredient lists, health ratings, scores, scientific citations, company ownership information, and suggested alternatives
+• Scan results: product names, ingredient lists, health ratings, scores, scientific citations, company ownership information, company reputation scores, and suggested alternatives
 • A thumbnail image of each scanned product
 • Your sorting preferences for scan history (e.g., sort by date, name, or rating)
 • Favorite scans you have marked

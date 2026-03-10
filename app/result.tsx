@@ -16,7 +16,7 @@ import {
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { useScans } from "@/contexts/ScanContext";
-import { getGradeColor, Citation } from "@/types/scan";
+import { getGradeColor, getReputationLabel, Citation } from "@/types/scan";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Trash2, Info, ExternalLink, X, Share2, Building2, ChevronRight, ArrowUpRight, Lock, Crown, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
@@ -94,7 +94,8 @@ export default function ResultScreen() {
 Ingredients (${scan.ingredients.length}):
 ${ingredientsList}
 
-Scanned with Kiwi - Better Health Scanner`;
+Scanned with Kiwi - Better Health Scanner
+Download: https://apps.apple.com/app/id6757214914`;
 
       const result = await Share.share({
         message: message,
@@ -280,6 +281,26 @@ Scanned with Kiwi - Better Health Scanner`;
                         </View>
                       </View>
                     </>
+                  )}
+
+                  {/* Company Reputation Score */}
+                  {scan.behindIt.reputationScore != null && (
+                    <View style={styles.reputationContainer}>
+                      <View style={styles.reputationHeader}>
+                        <Text style={[styles.companyLabel, { color: theme.textSecondary, fontSize: scaleFont(11) }]}>COMPANY REPUTATION</Text>
+                      </View>
+                      <View style={styles.reputationBarBackground}>
+                        <View style={[styles.reputationBarFill, { width: `${scan.behindIt.reputationScore}%`, backgroundColor: getGradeColor(scan.behindIt.reputationScore) }]} />
+                      </View>
+                      <View style={styles.reputationFooter}>
+                        <Text style={[styles.reputationLabel, { color: getGradeColor(scan.behindIt.reputationScore), fontSize: scaleFont(13) }]}>
+                          {getReputationLabel(scan.behindIt.reputationScore)}
+                        </Text>
+                        <Text style={[styles.reputationScore, { color: theme.text, fontSize: scaleFont(14) }]}>
+                          {scan.behindIt.reputationScore}/100
+                        </Text>
+                      </View>
+                    </View>
                   )}
                 </View>
 
@@ -812,6 +833,42 @@ const styles = StyleSheet.create({
   },
   ownershipArrow: {
     paddingLeft: 24,
+  },
+  reputationContainer: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(128, 128, 128, 0.15)",
+    gap: 6,
+  },
+  reputationHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  reputationBarBackground: {
+    width: "100%",
+    height: 8,
+    backgroundColor: "rgba(128, 128, 128, 0.15)",
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  reputationBarFill: {
+    height: "100%",
+    borderRadius: 4,
+  },
+  reputationFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  reputationLabel: {
+    fontSize: 13,
+    fontWeight: "600" as const,
+  },
+  reputationScore: {
+    fontSize: 14,
+    fontWeight: "700" as const,
   },
   // Alternatives
   alternativesList: {
