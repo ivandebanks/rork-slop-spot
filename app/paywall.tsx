@@ -12,8 +12,14 @@ export default function PaywallScreen() {
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [monthlyPackage, setMonthlyPackage] = useState<any>(null);
   const [yearlyPackage, setYearlyPackage] = useState<any>(null);
+  const [showClose, setShowClose] = useState(false);
 
   const starSpin = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowClose(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     Animated.loop(
@@ -143,9 +149,11 @@ export default function PaywallScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-          <X size={24} color={theme.text} />
-        </TouchableOpacity>
+        {showClose && (
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+            <X size={24} color={theme.text} />
+          </TouchableOpacity>
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.mainContent} showsVerticalScrollIndicator={false}>
@@ -154,10 +162,15 @@ export default function PaywallScreen() {
             <Crown size={48} color="#D4AF37" fill="#D4AF37" />
           </Animated.View>
           <Text style={[styles.title, { color: theme.text, fontSize: scaleFont(30) }]}>
-            Premium Features
+            Know What You're Really Eating
           </Text>
+          <View style={styles.urgencyBadge}>
+            <Text style={[styles.urgencyBadgeText, { fontSize: scaleFont(12) }]}>
+              LIMITED: First week free, then {selectedPackage?.product?.priceString}
+            </Text>
+          </View>
           <Text style={[styles.subtitle, { color: theme.textSecondary, fontSize: scaleFont(15) }]}>
-            Unlimited scanning power
+            Scan any label. Get the truth about every ingredient.
           </Text>
           <Text style={[styles.scansInfo, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
             Currently: {scansRemaining}
@@ -238,6 +251,12 @@ export default function PaywallScreen() {
             )}
           </View>
         )}
+
+        <View style={styles.socialProof}>
+          <Text style={[styles.socialProofText, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+            Trusted by 25,000+ health-conscious families
+          </Text>
+        </View>
 
         <View style={styles.cardWrapper}>
           <View style={[
@@ -321,8 +340,7 @@ export default function PaywallScreen() {
           ) : (
             <>
               <Text style={[styles.buyButtonText, { fontSize: scaleFont(18) }]}>
-                Get Premium for {selectedPackage?.product?.priceString}
-                {selectedPackage === yearlyPackage ? "/yr" : selectedPackage === monthlyPackage ? "/mo" : ""}
+                Start 3-Day Free Trial
               </Text>
               <Crown size={20} color="#FFFFFF" />
             </>
@@ -587,6 +605,26 @@ const styles = StyleSheet.create({
   },
   restoreText: {
     letterSpacing: 0.3,
+  },
+  urgencyBadge: {
+    backgroundColor: "rgba(212, 175, 55, 0.15)",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  urgencyBadgeText: {
+    color: "#D4AF37",
+    fontWeight: "700" as const,
+    textAlign: "center" as const,
+  },
+  socialProof: {
+    marginBottom: 16,
+    alignItems: "center" as const,
+  },
+  socialProofText: {
+    fontStyle: "italic" as const,
+    textAlign: "center" as const,
   },
   // Plan selector
   planSelector: {
