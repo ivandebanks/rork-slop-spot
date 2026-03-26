@@ -231,7 +231,7 @@ export default function PaywallScreen() {
           <ReAnimated.View style={entranceStyles[2]}>
             <View style={styles.urgencyBadge}>
               <Text style={[styles.urgencyBadgeText, { fontSize: scaleFont(12) }]}>
-                LIMITED: First week free, then {selectedPackage?.product?.priceString}
+                LIMITED: Special price — {selectedPackage?.product?.priceString}
               </Text>
             </View>
           </ReAnimated.View>
@@ -432,7 +432,7 @@ export default function PaywallScreen() {
             ) : (
               <>
                 <Text style={[styles.buyButtonText, { fontSize: scaleFont(18) }]}>
-                  Start 3-Day Free Trial
+                  Get Instant Access
                 </Text>
                 <Crown size={20} color="#FFFFFF" />
               </>
