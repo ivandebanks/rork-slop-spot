@@ -30,7 +30,7 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 const OTHER_APPS = [
   { name: "MOG - Face Analysis", id: "6757218071" },
   { name: "Snap It: Kosher Check", id: "6757688071" },
-  { name: "Aura Check", id: "6757377930" },
+  { name: "Aura - Looksmax AI", id: "6757377930" },
   { name: "Peptide Hub", id: "6759482842" },
   { name: "Snap It: Regrow", id: "6758930237" },
   { name: "Snap It: Math", id: "6757666027" },
@@ -730,12 +730,6 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={styles.versionSection}>
-          <Text style={[styles.versionText, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
-            Version 2.0.1
-          </Text>
-        </View>
-
         <TouchableOpacity
           style={styles.signOutButton}
           onPress={() => {
@@ -757,6 +751,12 @@ export default function SettingsScreen() {
         >
           <Text style={styles.signOutButtonText}>Sign Out</Text>
         </TouchableOpacity>
+
+        <View style={styles.versionSection}>
+          <Text style={[styles.versionText, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+            Version 2.0.3
+          </Text>
+        </View>
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
