@@ -1,5 +1,5 @@
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -13,6 +13,7 @@ import {
   Dimensions,
   PanResponder,
 } from "react-native";
+import ReAnimated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withDelay, Easing } from "react-native-reanimated";
 import { Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
 import { generateObject } from "@rork-ai/toolkit-sdk";
@@ -120,6 +121,22 @@ export default function ScannerScreen() {
   const redFillAnim = useRef(new Animated.Value(0)).current;
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const swipeHintOpacity = useRef(new Animated.Value(1)).current;
+
+  // Reanimated pulse for capture button
+  const captureScale = useSharedValue(1);
+  useEffect(() => {
+    captureScale.value = withRepeat(
+      withSequence(
+        withTiming(1.08, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+  }, []);
+  const capturePulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: captureScale.value }],
+  }));
 
   // Handler functions - must be declared before panResponder
   const animateToStep = (step: number) => {
@@ -802,11 +819,13 @@ Ensure all health claims are backed by credible scientific sources.`,
                 <ImageIcon size={28} color="#FFFFFF" />
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-                <View style={styles.captureButtonInner}>
-                  <Sparkles size={32} color="#118AB2" />
-                </View>
-              </TouchableOpacity>
+              <ReAnimated.View style={capturePulseStyle}>
+                <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+                  <View style={styles.captureButtonInner}>
+                    <Sparkles size={32} color="#118AB2" />
+                  </View>
+                </TouchableOpacity>
+              </ReAnimated.View>
 
               <TouchableOpacity
                 style={styles.flipButton}
@@ -903,6 +922,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FFFFFF",
     marginTop: 4,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    overflow: "hidden",
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
@@ -933,6 +957,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#118AB2",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   captureButtonInner: {
     width: 72,

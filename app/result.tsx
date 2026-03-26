@@ -14,11 +14,12 @@ import {
   Dimensions,
   Easing,
 } from "react-native";
+import ReAnimated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing as REasing } from "react-native-reanimated";
 import { useLocalSearchParams, router } from "expo-router";
 import { useScans } from "@/contexts/ScanContext";
 import { getGradeColor, getReputationLabel, Citation } from "@/types/scan";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ArrowLeft, Trash2, Info, ExternalLink, X, Share2, Building2, ChevronRight, ArrowUpRight, Lock, Crown, Sparkles } from "lucide-react-native";
+import { ArrowLeft, Trash2, Info, ExternalLink, X, Share2, Building2, ChevronRight, ArrowUpRight, Lock, Crown, Sparkles, Camera } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
@@ -33,6 +34,21 @@ export default function ResultScreen() {
   const [selectedCitations, setSelectedCitations] = useState<Citation[]>([]);
   const [citationTitle, setCitationTitle] = useState("");
   const slideAnim = useRef(new Animated.Value(0)).current;
+
+  // Staggered entrance animations
+  const scoreOpacity = useSharedValue(0);
+  const scoreScale = useSharedValue(0.5);
+  const productOpacity = useSharedValue(0);
+  const productTranslateY = useSharedValue(20);
+  const ingredientsOpacity = useSharedValue(0);
+  const ingredientsTranslateY = useSharedValue(20);
+  const premiumOpacity = useSharedValue(0);
+  const premiumTranslateY = useSharedValue(20);
+
+  // Score counting animation
+  const [displayScore, setDisplayScore] = useState(0);
+
+  const scan = scans.find((s) => s.id === scanId);
 
   useEffect(() => {
     // Only animate if it's a new scan
@@ -50,7 +66,56 @@ export default function ResultScreen() {
     return () => clearTimeout(timer);
   }, [isNewScan]);
 
-  const scan = scans.find((s) => s.id === scanId);
+  useEffect(() => {
+    // Haptic on results load
+    if (scan && Platform.OS !== "web") {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
+
+    // Staggered entrance
+    const delay = isNewScan === "true" ? 3200 : 200;
+    scoreOpacity.value = withDelay(delay, withTiming(1, { duration: 500 }));
+    scoreScale.value = withDelay(delay, withTiming(1, { duration: 600, easing: REasing.out(REasing.back(1.5)) }));
+    productOpacity.value = withDelay(delay + 200, withTiming(1, { duration: 500 }));
+    productTranslateY.value = withDelay(delay + 200, withTiming(0, { duration: 500 }));
+    ingredientsOpacity.value = withDelay(delay + 400, withTiming(1, { duration: 500 }));
+    ingredientsTranslateY.value = withDelay(delay + 400, withTiming(0, { duration: 500 }));
+    premiumOpacity.value = withDelay(delay + 600, withTiming(1, { duration: 500 }));
+    premiumTranslateY.value = withDelay(delay + 600, withTiming(0, { duration: 500 }));
+
+    // Score counting animation
+    if (scan) {
+      const target = Math.round(scan.overallScore);
+      const startDelay = isNewScan === "true" ? 3400 : 400;
+      const counterTimer = setTimeout(() => {
+        let current = 0;
+        const step = Math.max(1, Math.floor(target / 40));
+        const interval = setInterval(() => {
+          current = Math.min(current + step, target);
+          setDisplayScore(current);
+          if (current >= target) clearInterval(interval);
+        }, 30);
+      }, startDelay);
+      return () => clearTimeout(counterTimer);
+    }
+  }, [scan?.id]);
+
+  const scoreAnimStyle = useAnimatedStyle(() => ({
+    opacity: scoreOpacity.value,
+    transform: [{ scale: scoreScale.value }],
+  }));
+  const productAnimStyle = useAnimatedStyle(() => ({
+    opacity: productOpacity.value,
+    transform: [{ translateY: productTranslateY.value }],
+  }));
+  const ingredientsAnimStyle = useAnimatedStyle(() => ({
+    opacity: ingredientsOpacity.value,
+    transform: [{ translateY: ingredientsTranslateY.value }],
+  }));
+  const premiumAnimStyle = useAnimatedStyle(() => ({
+    opacity: premiumOpacity.value,
+    transform: [{ translateY: premiumTranslateY.value }],
+  }));
 
   if (!scan) {
     return (
@@ -165,18 +230,22 @@ Download: https://apps.apple.com/app/id6757214914`;
         </View>
 
         <View style={[styles.resultCard, { backgroundColor: theme.card }]}>
-          <View style={[styles.scoreCircle, { backgroundColor: gradeColor }]}>
-            <Text style={[styles.scoreNumber, { fontSize: scaleFont(48) }]}>{Math.round(scan.overallScore)}</Text>
-            <Text style={[styles.scoreOutOf, { fontSize: scaleFont(16) }]}>/100</Text>
-          </View>
+          <ReAnimated.View style={scoreAnimStyle}>
+            <View style={[styles.scoreCircle, { backgroundColor: gradeColor }]}>
+              <Text style={[styles.scoreNumber, { fontSize: scaleFont(48) }]}>{displayScore}</Text>
+              <Text style={[styles.scoreOutOf, { fontSize: scaleFont(16) }]}>/100</Text>
+            </View>
+          </ReAnimated.View>
 
-          <Text style={[styles.gradeLabel, { color: gradeColor, fontSize: scaleFont(28) }]}>
-            {scan.gradeLabel}
-          </Text>
+          <ReAnimated.View style={productAnimStyle}>
+            <Text style={[styles.gradeLabel, { color: gradeColor, fontSize: scaleFont(28) }]}>
+              {scan.gradeLabel}
+            </Text>
 
-          <Text style={[styles.productName, { color: theme.text, fontSize: scaleFont(20) }]}>{scan.productName}</Text>
+            <Text style={[styles.productName, { color: theme.text, fontSize: scaleFont(20) }]}>{scan.productName}</Text>
+          </ReAnimated.View>
 
-          <View style={styles.section}>
+          <ReAnimated.View style={[styles.section, ingredientsAnimStyle]}>
             <Text style={[styles.sectionTitle, { color: theme.text, fontSize: scaleFont(18) }]}>
               Ingredients ({scan.ingredients.length})
             </Text>
@@ -227,11 +296,11 @@ Download: https://apps.apple.com/app/id6757214914`;
                 </View>
               );
             })}
-          </View>
+          </ReAnimated.View>
 
           {/* BEHIND IT - Premium Feature */}
           {scan.behindIt && (
-            <View style={styles.premiumSection}>
+            <ReAnimated.View style={[styles.premiumSection, premiumAnimStyle]}>
               <View style={styles.premiumSectionHeader}>
                 <Building2 size={20} color={theme.text} />
                 <Text style={[styles.sectionTitle, { color: theme.text, fontSize: scaleFont(18) }]}>
@@ -319,12 +388,12 @@ Download: https://apps.apple.com/app/id6757214914`;
                   </View>
                 )}
               </View>
-            </View>
+            </ReAnimated.View>
           )}
 
           {/* ALTERNATIVE SUGGESTIONS - Premium Feature */}
           {scan.alternatives && scan.alternatives.length > 0 && (
-            <View style={styles.premiumSection}>
+            <ReAnimated.View style={[styles.premiumSection, premiumAnimStyle]}>
               <View style={styles.premiumSectionHeader}>
                 <Sparkles size={20} color={theme.text} />
                 <Text style={[styles.sectionTitle, { color: theme.text, fontSize: scaleFont(18) }]}>
@@ -378,7 +447,7 @@ Download: https://apps.apple.com/app/id6757214914`;
                   </View>
                 )}
               </View>
-            </View>
+            </ReAnimated.View>
           )}
 
           <View style={styles.actionButtons}>
@@ -393,13 +462,27 @@ Download: https://apps.apple.com/app/id6757214914`;
             </TouchableOpacity>
           </View>
 
+          {/* Scan Another Button */}
+          <TouchableOpacity
+            style={[styles.scanAnotherButton, { backgroundColor: theme.primary }]}
+            onPress={() => {
+              if (Platform.OS !== "web") {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              router.replace("/(tabs)");
+            }}
+          >
+            <Camera size={20} color="#FFFFFF" />
+            <Text style={[styles.scanAnotherText, { fontSize: scaleFont(16) }]}>Scan Another</Text>
+          </TouchableOpacity>
+
           {/* ENTERTAINMENT DISCLAIMER - REQUIRED BY APPLE */}
           <View style={styles.disclaimerCard}>
             <Info size={18} color="#FFA500" strokeWidth={2.5} />
             <View style={styles.disclaimerContent}>
-              <Text style={[styles.disclaimerTitle, { fontSize: scaleFont(13) }]}>For Entertainment Only</Text>
+              <Text style={[styles.disclaimerTitle, { fontSize: scaleFont(13) }]}>AI-Generated Analysis</Text>
               <Text style={[styles.disclaimerText, { fontSize: scaleFont(12) }]}>
-                Ingredient ratings are for informational and entertainment purposes only. This is not medical advice, nutritional guidance, or professionally validated health information. Consult healthcare professionals for dietary decisions.
+                AI-generated analysis. Not medical advice. Consult healthcare professionals for dietary decisions.
               </Text>
             </View>
           </View>
@@ -546,6 +629,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
   },
   scoreNumber: {
     fontSize: 48,
@@ -582,6 +670,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     gap: 8,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   ingredientHeader: {
     flexDirection: "row",
@@ -947,5 +1040,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "700" as const,
     color: "#D4AF37",
+  },
+  scanAnotherButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    marginTop: 12,
+    width: "100%",
+  },
+  scanAnotherText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: "#FFFFFF",
   },
 });

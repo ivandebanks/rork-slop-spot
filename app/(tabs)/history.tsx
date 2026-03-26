@@ -1,12 +1,13 @@
 import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Platform, TextInput, Modal } from "react-native";
+import ReAnimated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing, FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useScans } from "@/contexts/ScanContext";
 import { router } from "expo-router";
 import { getGradeColor } from "@/types/scan";
-import { Clock, ChevronRight, Package, Search, SlidersHorizontal, X, Trash2, Star, ArrowUpDown, CheckSquare, Square } from "lucide-react-native";
+import { Clock, ChevronRight, Package, Search, SlidersHorizontal, X, Trash2, Star, ArrowUpDown, CheckSquare, Square, Camera } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Swipeable } from "react-native-gesture-handler";
 
 type SortOption = "newest" | "oldest" | "highest" | "lowest";
@@ -244,6 +245,18 @@ export default function HistoryScreen() {
           <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
             Start scanning products to see your history here
           </Text>
+          <TouchableOpacity
+            style={[styles.startScanningButton, { backgroundColor: theme.primary }]}
+            onPress={() => {
+              if (Platform.OS !== "web") {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              router.push("/(tabs)");
+            }}
+          >
+            <Camera size={20} color="#FFFFFF" />
+            <Text style={[styles.startScanningText, { fontSize: scaleFont(16) }]}>Start Scanning</Text>
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
@@ -442,7 +455,7 @@ export default function HistoryScreen() {
           maxToRenderPerBatch={10}
           updateCellsBatchingPeriod={50}
           windowSize={21}
-          renderItem={({ item }) => {
+          renderItem={({ item, index }) => {
             const date = new Date(item.timestamp);
             const formattedDate = date.toLocaleDateString("en-US", {
               month: "short",
@@ -457,6 +470,7 @@ export default function HistoryScreen() {
             const isSelected = selectedItems.has(item.id);
 
             return (
+              <ReAnimated.View entering={FadeInDown.delay(index * 60).duration(400).springify()}>
               <Swipeable
                 renderRightActions={() => renderRightActions(item.id, item.isFavorite || false)}
                 overshootRight={false}
@@ -534,6 +548,7 @@ export default function HistoryScreen() {
                   </View>
                 </TouchableOpacity>
               </Swipeable>
+              </ReAnimated.View>
             );
           }}
         />
@@ -730,10 +745,10 @@ const styles = StyleSheet.create({
     padding: 12,
     alignItems: "center",
     shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
   },
   checkbox: {
     marginRight: 12,
@@ -829,6 +844,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: "center",
     lineHeight: 24,
+  },
+  startScanningButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 12,
+    marginTop: 24,
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  startScanningText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: "#FFFFFF",
   },
   modalOverlay: {
     flex: 1,
