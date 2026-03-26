@@ -8,32 +8,60 @@ import { ScanProvider } from "@/contexts/ScanContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { PurchaseProvider, usePurchases } from "@/contexts/PurchaseContext";
 import { ReferralProvider } from "@/contexts/ReferralContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
-  const { hasPremium, isLoading } = usePurchases();
+  const { hasPremium, isLoading: isPurchaseLoading } = usePurchases();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const segments = useSegments();
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isAuthLoading) return;
+
+    const onLogin = segments[0] === "login";
+
+    if (!isAuthenticated && !onLogin) {
+      router.replace("/login");
+      return;
+    }
+
+    if (isAuthenticated && onLogin) {
+      router.replace("/");
+      return;
+    }
+  }, [isAuthenticated, isAuthLoading, segments]);
+
+  useEffect(() => {
+    if (isAuthLoading || isPurchaseLoading) return;
+    if (!isAuthenticated) return;
+
     const onPaywall = segments[0] === "paywall";
-    if (!hasPremium && !onPaywall) {
+    const onLogin = segments[0] === "login";
+    if (!hasPremium && !onPaywall && !onLogin) {
       router.replace("/paywall");
     }
-  }, [hasPremium, isLoading, segments]);
+  }, [hasPremium, isPurchaseLoading, isAuthenticated, isAuthLoading, segments]);
 
   return (
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
+      <Stack.Screen
+        name="login"
+        options={{
+          headerShown: false,
+          gestureEnabled: false,
+        }}
+      />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen 
-        name="result" 
-        options={{ 
+      <Stack.Screen
+        name="result"
+        options={{
           title: "Scan Result",
           presentation: "card"
-        }} 
+        }}
       />
       <Stack.Screen
         name="paywall"
@@ -64,15 +92,17 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <PurchaseProvider>
-          <ReferralProvider>
-            <ScanProvider>
-              <GestureHandlerRootView>
-                <RootLayoutNav />
-              </GestureHandlerRootView>
-            </ScanProvider>
-          </ReferralProvider>
-        </PurchaseProvider>
+        <AuthProvider>
+          <PurchaseProvider>
+            <ReferralProvider>
+              <ScanProvider>
+                <GestureHandlerRootView>
+                  <RootLayoutNav />
+                </GestureHandlerRootView>
+              </ScanProvider>
+            </ReferralProvider>
+          </PurchaseProvider>
+        </AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
