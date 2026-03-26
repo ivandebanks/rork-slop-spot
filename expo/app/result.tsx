@@ -106,7 +106,7 @@ export default function ResultScreen() {
     }
   }, [scan?.id]);
 
-  // Cross-promo: show 2 seconds after results load, alternating between Math and Regrow
+  // Cross-promo: show 8 seconds after results load, alternating between Math and Regrow
   useEffect(() => {
     if (!scan) return;
 
@@ -142,7 +142,7 @@ export default function ResultScreen() {
       }
     };
 
-    const timer = setTimeout(checkAndShowPromo, 2000);
+    const timer = setTimeout(checkAndShowPromo, 8000);
     return () => clearTimeout(timer);
   }, [scan?.id]);
 

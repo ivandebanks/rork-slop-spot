@@ -12,7 +12,7 @@ import { BlurView } from "expo-blur";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { router } from "expo-router";
-import { Check, Crown, Shield, Zap, Star, RefreshCw, Minus, Building2, Sparkles } from "lucide-react-native";
+import { Check, Crown, Shield, Zap, Star, RefreshCw, Building2, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
 
@@ -135,7 +135,7 @@ export default function PaywallScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       Alert.alert("Success!", "Welcome to Premium! Enjoy unlimited scans.", [
-        { text: "OK", onPress: () => router.back() }
+        { text: "OK", onPress: () => router.replace("/(tabs)") }
       ]);
     } catch (error: any) {
       if (error.message !== "Purchase cancelled") {
@@ -155,7 +155,7 @@ export default function PaywallScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
       Alert.alert("Success!", "Your purchases have been restored.", [
-        { text: "OK", onPress: () => router.back() }
+        { text: "OK", onPress: () => router.replace("/(tabs)") }
       ]);
     } catch (error: any) {
       Alert.alert("Restore Failed", "No purchases found to restore.");
@@ -364,53 +364,25 @@ export default function PaywallScreen() {
             </View>
 
             <View style={styles.cardContent}>
-              {/* Comparison Table */}
-              <View style={styles.comparisonTable}>
-                {/* Header row */}
-                <View style={styles.comparisonHeaderRow}>
-                  <View style={styles.comparisonFeatureCol} />
-                  <View style={styles.comparisonCol}>
-                    <Text style={[styles.comparisonColHeader, { color: theme.textSecondary, fontSize: scaleFont(12) }]}>Free</Text>
-                  </View>
-                  <View style={[styles.comparisonCol, styles.comparisonPremiumCol]}>
-                    <Text style={[styles.comparisonColHeaderPremium, { fontSize: scaleFont(12) }]}>Premium</Text>
-                  </View>
-                </View>
-
+              {/* Premium Features List */}
+              <View style={styles.featuresList}>
                 {[
-                  { feature: "Daily Scans", free: "2 per day", premium: "Unlimited", icon: <Zap size={14} color={theme.textSecondary} /> },
-                  { feature: "Ingredient Ratings", free: true, premium: true, icon: <Shield size={14} color={theme.textSecondary} /> },
-                  { feature: "Scientific Citations", free: true, premium: true, icon: <Star size={14} color={theme.textSecondary} /> },
-                  { feature: "Behind It", free: false, premium: true, icon: <Building2 size={14} color={theme.textSecondary} /> },
-                  { feature: "Healthier Alternatives", free: false, premium: true, icon: <Sparkles size={14} color={theme.textSecondary} /> },
-                  { feature: "Priority Analysis", free: false, premium: true, icon: <Zap size={14} color={theme.textSecondary} /> },
+                  { feature: "Unlimited Daily Scans", icon: <Zap size={14} color="#D4AF37" /> },
+                  { feature: "Ingredient Ratings", icon: <Shield size={14} color="#D4AF37" /> },
+                  { feature: "Scientific Citations", icon: <Star size={14} color="#D4AF37" /> },
+                  { feature: "Behind It — Company Details", icon: <Building2 size={14} color="#D4AF37" /> },
+                  { feature: "Healthier Alternatives", icon: <Sparkles size={14} color="#D4AF37" /> },
+                  { feature: "Priority Analysis", icon: <Zap size={14} color="#D4AF37" /> },
                 ].map((row, i) => (
-                  <View key={i} style={[styles.comparisonRow, { borderTopColor: isDark ? "#2A2720" : "#F0E8D0" }]}>
-                    <View style={styles.comparisonFeatureCol}>
-                      <View style={styles.featureIconRow}>
-                        {row.icon}
-                        <Text style={[styles.comparisonFeature, { color: theme.text, fontSize: scaleFont(13) }]} numberOfLines={1}>
-                          {row.feature}
-                        </Text>
-                      </View>
+                  <View key={i} style={styles.featureRow}>
+                    <View style={styles.featureCheckCircle}>
+                      <Check size={12} color="#FFFFFF" strokeWidth={3} />
                     </View>
-                    <View style={styles.comparisonCol}>
-                      {typeof row.free === "string" ? (
-                        <Text style={[styles.comparisonValue, { color: theme.textSecondary, fontSize: scaleFont(11) }]}>{row.free}</Text>
-                      ) : row.free ? (
-                        <Check size={16} color="#06D6A0" strokeWidth={3} />
-                      ) : (
-                        <Minus size={16} color={theme.textSecondary} />
-                      )}
-                    </View>
-                    <View style={[styles.comparisonCol, styles.comparisonPremiumCol]}>
-                      {typeof row.premium === "string" ? (
-                        <Text style={[styles.comparisonValuePremium, { fontSize: scaleFont(11) }]}>{row.premium}</Text>
-                      ) : row.premium ? (
-                        <Check size={16} color="#D4AF37" strokeWidth={3} />
-                      ) : (
-                        <Minus size={16} color={theme.textSecondary} />
-                      )}
+                    <View style={styles.featureIconRow}>
+                      {row.icon}
+                      <Text style={[styles.featureText, { color: theme.text, fontSize: scaleFont(14) }]}>
+                        {row.feature}
+                      </Text>
                     </View>
                   </View>
                 ))}
@@ -790,62 +762,33 @@ const styles = StyleSheet.create({
     fontWeight: "600" as const,
     marginTop: 2,
   },
-  // Comparison table
-  comparisonTable: {
+  // Features list
+  featuresList: {
     width: "100%",
-    marginBottom: 4,
+    gap: 14,
+    marginBottom: 16,
   },
-  comparisonHeaderRow: {
+  featureRow: {
     flexDirection: "row",
     alignItems: "center",
-    paddingBottom: 10,
-    marginBottom: 2,
+    gap: 12,
   },
-  comparisonFeatureCol: {
-    flex: 1,
-  },
-  comparisonCol: {
-    width: 64,
+  featureCheckCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#D4AF37",
     alignItems: "center",
-  },
-  comparisonPremiumCol: {
-    backgroundColor: "rgba(212, 175, 55, 0.08)",
-    borderRadius: 8,
-    paddingVertical: 2,
-  },
-  comparisonColHeader: {
-    fontWeight: "600" as const,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  comparisonColHeaderPremium: {
-    fontWeight: "700" as const,
-    color: "#D4AF37",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-  },
-  comparisonRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderTopWidth: 1,
-    paddingVertical: 10,
+    justifyContent: "center",
   },
   featureIconRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-  },
-  comparisonFeature: {
-    fontWeight: "500" as const,
     flex: 1,
   },
-  comparisonValue: {
+  featureText: {
     fontWeight: "500" as const,
-    textAlign: "center",
-  },
-  comparisonValuePremium: {
-    fontWeight: "700" as const,
-    color: "#D4AF37",
-    textAlign: "center",
+    flex: 1,
   },
 });

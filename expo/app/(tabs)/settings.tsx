@@ -19,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, ChevronDown, X, Sparkles, Crown, Users, ExternalLink, Accessibility, Grid3X3 } from "lucide-react-native";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 
@@ -316,6 +317,7 @@ type ModalContent = "privacy" | "terms" | null;
 export default function SettingsScreen() {
   const { themeMode, changeThemeMode, theme, textSizeMode, changeTextSizeMode, scaleFont } = useTheme();
   const { hasPremium, scansRemaining } = usePurchases();
+  const { signOut } = useAuth();
   const [modalContent, setModalContent] = useState<ModalContent>(null);
   const [accessibilityExpanded, setAccessibilityExpanded] = useState(false);
 
@@ -734,6 +736,28 @@ export default function SettingsScreen() {
           </Text>
         </View>
 
+        <TouchableOpacity
+          style={styles.signOutButton}
+          onPress={() => {
+            Alert.alert(
+              'Sign Out',
+              'Are you sure you want to sign out?',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Sign Out',
+                  style: 'destructive',
+                  onPress: async () => {
+                    await signOut();
+                  },
+                },
+              ]
+            );
+          }}
+        >
+          <Text style={styles.signOutButtonText}>Sign Out</Text>
+        </TouchableOpacity>
+
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
@@ -883,6 +907,19 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 40,
+  },
+  signOutButton: {
+    marginHorizontal: 20,
+    marginTop: 24,
+    paddingVertical: 16,
+    borderRadius: 14,
+    backgroundColor: '#fee2e2',
+    alignItems: 'center' as const,
+  },
+  signOutButtonText: {
+    color: '#ef4444',
+    fontSize: 16,
+    fontWeight: '700' as const,
   },
   versionSection: {
     alignItems: "center" as const,
