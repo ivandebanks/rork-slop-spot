@@ -14,6 +14,7 @@ import {
   LayoutAnimation,
   UIManager,
 } from "react-native";
+import ReAnimated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, ChevronDown, X, Sparkles, Crown, Users, ExternalLink, Accessibility, Grid3X3 } from "lucide-react-native";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -327,6 +328,9 @@ export default function SettingsScreen() {
   };
 
   const handleContactUs = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     Linking.openURL("mailto:snapit.foranything@gmail.com");
   };
 
@@ -386,7 +390,12 @@ export default function SettingsScreen() {
                     borderBottomColor: theme.border,
                   },
                 ]}
-                onPress={() => changeThemeMode(option.value)}
+                onPress={() => {
+                  if (Platform.OS !== "web") {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                  changeThemeMode(option.value);
+                }}
                 activeOpacity={0.7}
               >
                 <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
@@ -454,7 +463,10 @@ export default function SettingsScreen() {
                   </View>
                   <Switch
                     value={textSizeMode === "medium"}
-                    onValueChange={(value) => changeTextSizeMode(value ? "medium" : "normal")}
+                    onValueChange={(value) => {
+                      if (Platform.OS !== "web") { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }
+                      changeTextSizeMode(value ? "medium" : "normal");
+                    }}
                     trackColor={{ false: theme.border, true: theme.primary }}
                     thumbColor="#FFFFFF"
                   />
@@ -474,7 +486,10 @@ export default function SettingsScreen() {
                   </View>
                   <Switch
                     value={textSizeMode === "large"}
-                    onValueChange={(value) => changeTextSizeMode(value ? "large" : "normal")}
+                    onValueChange={(value) => {
+                      if (Platform.OS !== "web") { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }
+                      changeTextSizeMode(value ? "large" : "normal");
+                    }}
                     trackColor={{ false: theme.border, true: theme.primary }}
                     thumbColor="#FFFFFF"
                   />
@@ -494,7 +509,10 @@ export default function SettingsScreen() {
                   </View>
                   <Switch
                     value={textSizeMode === "extraLarge"}
-                    onValueChange={(value) => changeTextSizeMode(value ? "extraLarge" : "normal")}
+                    onValueChange={(value) => {
+                      if (Platform.OS !== "web") { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }
+                      changeTextSizeMode(value ? "extraLarge" : "normal");
+                    }}
                     trackColor={{ false: theme.border, true: theme.primary }}
                     thumbColor="#FFFFFF"
                   />
@@ -662,7 +680,10 @@ export default function SettingsScreen() {
           <View style={[styles.card, { backgroundColor: theme.card }]}>
             <TouchableOpacity
               style={[styles.legalOption, { borderBottomWidth: 1, borderBottomColor: theme.border }]}
-              onPress={() => setModalContent("privacy")}
+              onPress={() => {
+                if (Platform.OS !== "web") { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }
+                setModalContent("privacy");
+              }}
               activeOpacity={0.7}
             >
               <View style={styles.legalOptionLeft}>
@@ -676,7 +697,10 @@ export default function SettingsScreen() {
 
             <TouchableOpacity
               style={[styles.legalOption, { borderBottomWidth: 1, borderBottomColor: theme.border }]}
-              onPress={() => setModalContent("terms")}
+              onPress={() => {
+                if (Platform.OS !== "web") { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }
+                setModalContent("terms");
+              }}
               activeOpacity={0.7}
             >
               <View style={styles.legalOptionLeft}>
@@ -706,7 +730,7 @@ export default function SettingsScreen() {
 
         <View style={styles.versionSection}>
           <Text style={[styles.versionText, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
-            Version 2.0.2
+            Version 2.0.1
           </Text>
         </View>
 
@@ -775,10 +799,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: "hidden" as const,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 4,
   },
   option: {
     flexDirection: "row" as const,

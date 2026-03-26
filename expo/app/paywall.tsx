@@ -1,8 +1,18 @@
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, ActivityIndicator, Alert, ScrollView } from "react-native";
+import ReAnimated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withTiming,
+  withRepeat,
+  withSequence,
+  Easing,
+} from "react-native-reanimated";
+import { BlurView } from "expo-blur";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { router } from "expo-router";
-import { X, Check, Crown, Shield, Zap, Star, RefreshCw, Minus, Building2, Sparkles } from "lucide-react-native";
+import { Check, Crown, Shield, Zap, Star, RefreshCw, Minus, Building2, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
 
@@ -12,8 +22,83 @@ export default function PaywallScreen() {
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [monthlyPackage, setMonthlyPackage] = useState<any>(null);
   const [yearlyPackage, setYearlyPackage] = useState<any>(null);
-
   const starSpin = useRef(new Animated.Value(0)).current;
+
+  // --- Staggered entrance animations ---
+  const entranceSections = 9; // crown, title, urgency, subtitle, plans, socialProof, comparison, cta, restore
+  const entranceProgress: ReturnType<typeof useSharedValue>[] = [];
+  for (let i = 0; i < entranceSections; i++) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    entranceProgress.push(useSharedValue(0));
+  }
+
+  const makeEntranceStyle = (index: number) => {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    return useAnimatedStyle(() => ({
+      opacity: entranceProgress[index].value,
+      transform: [{ translateY: (1 - entranceProgress[index].value) * 24 }],
+    }));
+  };
+
+  const entranceStyles = entranceProgress.map((_, i) => makeEntranceStyle(i));
+
+  // Crown pulsing glow
+  const crownScale = useSharedValue(1);
+  const crownGlowStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: crownScale.value }],
+  }));
+
+  // CTA button shimmer/pulse
+  const ctaOpacity = useSharedValue(1);
+  const ctaPulseStyle = useAnimatedStyle(() => ({
+    opacity: ctaOpacity.value,
+  }));
+
+  // BEST VALUE badge pulse
+  const bestValueScale = useSharedValue(1);
+  const bestValueStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: bestValueScale.value }],
+  }));
+
+  useEffect(() => {
+    // Trigger staggered entrances
+    entranceProgress.forEach((val, i) => {
+      val.value = withDelay(
+        i * 100,
+        withTiming(1, { duration: 500, easing: Easing.out(Easing.cubic) })
+      );
+    });
+
+    // Crown pulsing glow loop
+    crownScale.value = withRepeat(
+      withSequence(
+        withTiming(1.08, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.0, { duration: 1200, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+
+    // CTA shimmer/pulse loop
+    ctaOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.88, { duration: 1000, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.0, { duration: 1000, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+
+    // BEST VALUE badge gentle pulse
+    bestValueScale.value = withRepeat(
+      withSequence(
+        withTiming(1.06, { duration: 1400, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1.0, { duration: 1400, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+  }, []);
 
   useEffect(() => {
     Animated.loop(
@@ -36,13 +121,6 @@ export default function PaywallScreen() {
       setSelectedPackage(yearly || monthly || packages[0]);
     }
   }, [offerings]);
-
-  const handleClose = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    router.back();
-  };
 
   const handlePurchase = async () => {
     if (!selectedPackage) return;
@@ -94,11 +172,7 @@ export default function PaywallScreen() {
   if (isLoadingOfferings) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <X size={24} color={theme.text} />
-          </TouchableOpacity>
-        </View>
+        <View style={styles.header} />
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={theme.primary} />
           <Text style={[styles.loadingText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
@@ -112,11 +186,7 @@ export default function PaywallScreen() {
   if (!offerings?.current || !selectedPackage) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <X size={24} color={theme.text} />
-          </TouchableOpacity>
-        </View>
+        <View style={styles.header} />
         <View style={styles.centerContent}>
           <Crown size={48} color={theme.textSecondary} />
           <Text style={[styles.errorTitle, { color: theme.text, fontSize: scaleFont(20) }]}>
@@ -132,9 +202,6 @@ export default function PaywallScreen() {
             <RefreshCw size={16} color="#FFFFFF" />
             <Text style={[styles.retryButtonText, { fontSize: scaleFont(16) }]}>Retry</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleClose}>
-            <Text style={[{ color: theme.textSecondary, fontSize: scaleFont(14), marginTop: 8 }]}>Dismiss</Text>
-          </TouchableOpacity>
         </View>
       </View>
     );
@@ -142,37 +209,53 @@ export default function PaywallScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-          <X size={24} color={theme.text} />
-        </TouchableOpacity>
-      </View>
+      <View style={styles.header} />
 
       <ScrollView contentContainerStyle={styles.mainContent} showsVerticalScrollIndicator={false}>
         <View style={styles.topSection}>
-          <Animated.View style={{ transform: [{ rotate: spinInterpolation }] }}>
-            <Crown size={48} color="#D4AF37" fill="#D4AF37" />
-          </Animated.View>
-          <Text style={[styles.title, { color: theme.text, fontSize: scaleFont(30) }]}>
-            Premium Features
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.textSecondary, fontSize: scaleFont(15) }]}>
-            Unlimited scanning power
-          </Text>
-          <Text style={[styles.scansInfo, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
-            Currently: {scansRemaining}
-          </Text>
+          {/* Crown with pulsing glow - entrance 0 */}
+          <ReAnimated.View style={[entranceStyles[0], crownGlowStyle]}>
+            <Animated.View style={{ transform: [{ rotate: spinInterpolation }] }}>
+              <Crown size={48} color="#D4AF37" fill="#D4AF37" />
+            </Animated.View>
+          </ReAnimated.View>
+
+          {/* Title - entrance 1 */}
+          <ReAnimated.View style={entranceStyles[1]}>
+            <Text style={[styles.title, { color: theme.text, fontSize: scaleFont(30) }]}>
+              Know What You're Really Eating
+            </Text>
+          </ReAnimated.View>
+
+          {/* Urgency badge - entrance 2 */}
+          <ReAnimated.View style={entranceStyles[2]}>
+            <View style={styles.urgencyBadge}>
+              <Text style={[styles.urgencyBadgeText, { fontSize: scaleFont(12) }]}>
+                LIMITED: Special price — {selectedPackage?.product?.priceString}
+              </Text>
+            </View>
+          </ReAnimated.View>
+
+          {/* Subtitle - entrance 3 */}
+          <ReAnimated.View style={entranceStyles[3]}>
+            <Text style={[styles.subtitle, { color: theme.textSecondary, fontSize: scaleFont(15) }]}>
+              Scan any label. Get the truth about every ingredient.
+            </Text>
+            <Text style={[styles.scansInfo, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+              Currently: {scansRemaining}
+            </Text>
+          </ReAnimated.View>
         </View>
 
-        {/* Plan Selector */}
+        {/* Plan Selector - entrance 4 */}
         {(monthlyPackage || yearlyPackage) && (
-          <View style={styles.planSelector}>
+          <ReAnimated.View style={[styles.planSelector, entranceStyles[4]]}>
             {yearlyPackage && (
               <TouchableOpacity
+                activeOpacity={0.8}
                 style={[
                   styles.planOption,
                   {
-                    backgroundColor: isDark ? "#1C1A14" : "#FFFDF5",
                     borderColor: selectedPackage === yearlyPackage ? "#D4AF37" : (isDark ? "#2A2720" : "#E0D8C0"),
                     borderWidth: selectedPackage === yearlyPackage ? 2.5 : 1.5,
                   },
@@ -182,9 +265,15 @@ export default function PaywallScreen() {
                   if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }}
               >
-                <View style={styles.planBestValue}>
+                <BlurView
+                  intensity={isDark ? 40 : 25}
+                  tint={isDark ? "dark" : "light"}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? "rgba(28,26,20,0.65)" : "rgba(255,253,245,0.7)" }]} />
+                <ReAnimated.View style={[styles.planBestValue, bestValueStyle]}>
                   <Text style={styles.planBestValueText}>BEST VALUE</Text>
-                </View>
+                </ReAnimated.View>
                 <View style={styles.planRadio}>
                   <View style={[
                     styles.planRadioOuter,
@@ -207,10 +296,10 @@ export default function PaywallScreen() {
 
             {monthlyPackage && (
               <TouchableOpacity
+                activeOpacity={0.8}
                 style={[
                   styles.planOption,
                   {
-                    backgroundColor: isDark ? "#1C1A14" : "#FFFDF5",
                     borderColor: selectedPackage === monthlyPackage ? "#D4AF37" : (isDark ? "#2A2720" : "#E0D8C0"),
                     borderWidth: selectedPackage === monthlyPackage ? 2.5 : 1.5,
                   },
@@ -220,6 +309,12 @@ export default function PaywallScreen() {
                   if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 }}
               >
+                <BlurView
+                  intensity={isDark ? 40 : 25}
+                  tint={isDark ? "dark" : "light"}
+                  style={StyleSheet.absoluteFill}
+                />
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? "rgba(28,26,20,0.65)" : "rgba(255,253,245,0.7)" }]} />
                 <View style={styles.planRadio}>
                   <View style={[
                     styles.planRadioOuter,
@@ -236,15 +331,28 @@ export default function PaywallScreen() {
                 </View>
               </TouchableOpacity>
             )}
-          </View>
+          </ReAnimated.View>
         )}
 
-        <View style={styles.cardWrapper}>
+        {/* Social proof - entrance 5 */}
+        <ReAnimated.View style={[styles.socialProof, entranceStyles[5]]}>
+          <Text style={[styles.socialProofText, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
+            Trusted by 25,000+ health-conscious families
+          </Text>
+        </ReAnimated.View>
+
+        {/* Comparison card - entrance 6, with soft shadows */}
+        <ReAnimated.View style={[styles.cardWrapper, entranceStyles[6]]}>
           <View style={[
             styles.card,
             {
               backgroundColor: isDark ? "#1C1A14" : "#FFFDF5",
               borderColor: "#D4AF37",
+              shadowColor: "#D4AF37",
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: isDark ? 0.35 : 0.18,
+              shadowRadius: 16,
+              elevation: 10,
             }
           ]}>
             <View style={styles.cardBadge}>
@@ -309,42 +417,48 @@ export default function PaywallScreen() {
               </View>
             </View>
           </View>
-        </View>
+        </ReAnimated.View>
 
-        <TouchableOpacity
-          style={[styles.buyButton, { opacity: purchaseMutation.isPending ? 0.7 : 1 }]}
-          onPress={handlePurchase}
-          disabled={purchaseMutation.isPending}
-        >
-          {purchaseMutation.isPending ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
-          ) : (
-            <>
-              <Text style={[styles.buyButtonText, { fontSize: scaleFont(18) }]}>
-                Get Premium for {selectedPackage?.product?.priceString}
-                {selectedPackage === yearlyPackage ? "/yr" : selectedPackage === monthlyPackage ? "/mo" : ""}
-              </Text>
-              <Crown size={20} color="#FFFFFF" />
-            </>
-          )}
-        </TouchableOpacity>
+        {/* CTA button - entrance 7 with shimmer pulse */}
+        <ReAnimated.View style={[entranceStyles[7], ctaPulseStyle, { width: "100%", maxWidth: 360 }]}>
+          <TouchableOpacity
+            style={[styles.buyButton, { opacity: purchaseMutation.isPending ? 0.7 : 1 }]}
+            onPress={handlePurchase}
+            disabled={purchaseMutation.isPending}
+            activeOpacity={0.85}
+          >
+            {purchaseMutation.isPending ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <>
+                <Text style={[styles.buyButtonText, { fontSize: scaleFont(18) }]}>
+                  Get Instant Access
+                </Text>
+                <Crown size={20} color="#FFFFFF" />
+              </>
+            )}
+          </TouchableOpacity>
+        </ReAnimated.View>
 
-        <TouchableOpacity
-          style={styles.restoreButton}
-          onPress={handleRestore}
-          disabled={restoreMutation.isPending}
-        >
-          {restoreMutation.isPending ? (
-            <ActivityIndicator size="small" color={theme.textSecondary} />
-          ) : (
-            <>
-              <RefreshCw size={14} color={theme.textSecondary} />
-              <Text style={[styles.restoreText, { color: theme.textSecondary, fontSize: scaleFont(12) }]}>
-                Restore Purchases
-              </Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {/* Restore - entrance 8 */}
+        <ReAnimated.View style={entranceStyles[8]}>
+          <TouchableOpacity
+            style={styles.restoreButton}
+            onPress={handleRestore}
+            disabled={restoreMutation.isPending}
+          >
+            {restoreMutation.isPending ? (
+              <ActivityIndicator size="small" color={theme.textSecondary} />
+            ) : (
+              <>
+                <RefreshCw size={14} color={theme.textSecondary} />
+                <Text style={[styles.restoreText, { color: theme.textSecondary, fontSize: scaleFont(12) }]}>
+                  Restore Purchases
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </ReAnimated.View>
       </ScrollView>
     </View>
   );
@@ -358,10 +472,6 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 8,
-  },
-  closeButton: {
-    alignSelf: "flex-end",
-    padding: 8,
   },
   centerContent: {
     flex: 1,
@@ -545,8 +655,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    borderBottomLeftRadius: 22,
-    borderBottomRightRadius: 22,
+    borderRadius: 22,
+    marginTop: 20,
+    shadowColor: "#D4AF37",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   buyButtonText: {
     color: "#FFFFFF",
@@ -588,6 +703,26 @@ const styles = StyleSheet.create({
   restoreText: {
     letterSpacing: 0.3,
   },
+  urgencyBadge: {
+    backgroundColor: "rgba(212, 175, 55, 0.15)",
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  urgencyBadgeText: {
+    color: "#D4AF37",
+    fontWeight: "700" as const,
+    textAlign: "center" as const,
+  },
+  socialProof: {
+    marginBottom: 16,
+    alignItems: "center" as const,
+  },
+  socialProofText: {
+    fontStyle: "italic" as const,
+    textAlign: "center" as const,
+  },
   // Plan selector
   planSelector: {
     width: "100%",
@@ -603,6 +738,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     position: "relative",
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   planBestValue: {
     position: "absolute",

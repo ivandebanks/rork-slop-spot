@@ -222,14 +222,12 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
 
   const canScan = (): boolean => {
     if (effectivePremium) return true;
-    if (dailyScansUsed < 2) return true;
     return false;
   };
 
   const getScansRemaining = (): string => {
     if (effectivePremium) return "Unlimited";
-    const remaining = Math.max(0, 2 - dailyScansUsed);
-    return `${remaining} free today`;
+    return "0 free today";
   };
 
   return {

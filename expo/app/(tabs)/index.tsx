@@ -1,5 +1,5 @@
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   StyleSheet,
   Text,
@@ -13,6 +13,7 @@ import {
   Dimensions,
   PanResponder,
 } from "react-native";
+import ReAnimated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withDelay, Easing } from "react-native-reanimated";
 import { Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
 import { generateObject } from "@rork-ai/toolkit-sdk";
@@ -65,53 +66,39 @@ const analysisSchema = z.object({
 
 const tutorialSteps = [
   {
-    title: "Welcome to Kiwi",
-    description: "Scan any food, beverage, or product label to instantly analyze its ingredients and health impact.",
-    icon: "✨",
+    title: "Do You Really Know What's In Your Food?",
+    description: "73% of products labeled 'natural' or 'healthy' contain ingredients linked to health concerns. That granola bar in your pantry? Might not be what you think.",
+    icon: "⚠️",
     image: null,
   },
   {
-    title: "Scan Food",
-    description: "Point your camera at any food label to get detailed ingredient analysis and health ratings.",
-    icon: "🍞",
+    title: "Labels Are Designed to Confuse You",
+    description: "Sodium benzoate. Carrageenan. BHT. Companies hide harmful ingredients behind scientific names most people can't pronounce — let alone research.",
+    icon: "🔬",
+    image: null,
+  },
+  {
+    title: "One Scan. The Full Truth.",
+    description: "Point your camera at any label. In seconds, get a health score for every ingredient — backed by FDA, NIH, and WHO research. No more guessing.",
+    icon: "📸",
     image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/5lwra13123vx6zrqzy6zp",
   },
   {
-    title: "Scan Drinks",
-    description: "Analyze beverages to understand what's really in your drinks and make informed choices.",
-    icon: "🥤",
+    title: "See What Others Are Finding",
+    description: "Users scan an average of 4 products per shopping trip. Most are shocked by what they find — even in products they've bought for years.",
+    icon: "😱",
     image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/m5ufizp4beycm4pnv0xy3",
   },
   {
-    title: "Scan Products",
-    description: "Check household and personal care products for ingredient safety and quality ratings.",
-    icon: "🧴",
-    image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/hh0rm1tln46vaublx4hjd",
-  },
-  {
-    title: "Track Your Scans",
-    description: "View your scan history and compare products to make healthier choices.",
-    icon: "📋",
-    image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gwbb9y93ep6lhc77n3j8k",
-  },
-  {
-    title: "Go Premium",
-    description: "Unlock unlimited scans, company ownership details, healthier alternatives, and priority AI analysis.",
-    icon: "👑",
-    image: null,
-    action: "premium",
-  },
-  {
-    title: "Follow Us",
-    description: "Stay updated with tips, new features, and the latest health insights from Kiwi.",
-    icon: "📱",
-    image: null,
-    action: "socials",
-  },
-  {
-    title: "Rate Us",
-    description: "Enjoying the app? Please leave a review on the App Store. It helps us a lot!",
+    title: "Trusted by 25,000+ Families",
+    description: "\"I scanned my kids' favorite cereal and found 3 ingredients rated 'Avoid.' Switched brands the same day. This app is a must-have for any parent.\" — Sarah M.",
     icon: "⭐",
+    image: null,
+  },
+  {
+    title: "What Matters Most to You?",
+    description: "Whether it's feeding your family safer food, managing allergies, or just making informed choices — Kiwi has your back. Let's start scanning.",
+    icon: "💚",
     image: null,
   },
 ];
@@ -134,6 +121,22 @@ export default function ScannerScreen() {
   const redFillAnim = useRef(new Animated.Value(0)).current;
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const swipeHintOpacity = useRef(new Animated.Value(1)).current;
+
+  // Reanimated pulse for capture button
+  const captureScale = useSharedValue(1);
+  useEffect(() => {
+    captureScale.value = withRepeat(
+      withSequence(
+        withTiming(1.08, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
+        withTiming(1, { duration: 1200, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1,
+      true
+    );
+  }, []);
+  const capturePulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: captureScale.value }],
+  }));
 
   // Handler functions - must be declared before panResponder
   const animateToStep = (step: number) => {
@@ -816,11 +819,13 @@ Ensure all health claims are backed by credible scientific sources.`,
                 <ImageIcon size={28} color="#FFFFFF" />
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
-                <View style={styles.captureButtonInner}>
-                  <Sparkles size={32} color="#118AB2" />
-                </View>
-              </TouchableOpacity>
+              <ReAnimated.View style={capturePulseStyle}>
+                <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+                  <View style={styles.captureButtonInner}>
+                    <Sparkles size={32} color="#118AB2" />
+                  </View>
+                </TouchableOpacity>
+              </ReAnimated.View>
 
               <TouchableOpacity
                 style={styles.flipButton}
@@ -917,6 +922,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FFFFFF",
     marginTop: 4,
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    overflow: "hidden",
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 2,
@@ -947,6 +957,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#118AB2",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   captureButtonInner: {
     width: 72,
