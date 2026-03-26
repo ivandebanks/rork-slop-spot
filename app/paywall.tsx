@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, ActivityI
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { router } from "expo-router";
-import { X, Check, Crown, Shield, Zap, Star, RefreshCw, Minus, Building2, Sparkles } from "lucide-react-native";
+import { Check, Crown, Shield, Zap, Star, RefreshCw, Minus, Building2, Sparkles } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useEffect, useRef, useState } from "react";
 
@@ -12,14 +12,7 @@ export default function PaywallScreen() {
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [monthlyPackage, setMonthlyPackage] = useState<any>(null);
   const [yearlyPackage, setYearlyPackage] = useState<any>(null);
-  const [showClose, setShowClose] = useState(false);
-
   const starSpin = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowClose(true), 3000);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     Animated.loop(
@@ -42,13 +35,6 @@ export default function PaywallScreen() {
       setSelectedPackage(yearly || monthly || packages[0]);
     }
   }, [offerings]);
-
-  const handleClose = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    router.back();
-  };
 
   const handlePurchase = async () => {
     if (!selectedPackage) return;
@@ -100,11 +86,7 @@ export default function PaywallScreen() {
   if (isLoadingOfferings) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <X size={24} color={theme.text} />
-          </TouchableOpacity>
-        </View>
+        <View style={styles.header} />
         <View style={styles.centerContent}>
           <ActivityIndicator size="large" color={theme.primary} />
           <Text style={[styles.loadingText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
@@ -118,11 +100,7 @@ export default function PaywallScreen() {
   if (!offerings?.current || !selectedPackage) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <X size={24} color={theme.text} />
-          </TouchableOpacity>
-        </View>
+        <View style={styles.header} />
         <View style={styles.centerContent}>
           <Crown size={48} color={theme.textSecondary} />
           <Text style={[styles.errorTitle, { color: theme.text, fontSize: scaleFont(20) }]}>
@@ -138,9 +116,6 @@ export default function PaywallScreen() {
             <RefreshCw size={16} color="#FFFFFF" />
             <Text style={[styles.retryButtonText, { fontSize: scaleFont(16) }]}>Retry</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={handleClose}>
-            <Text style={[{ color: theme.textSecondary, fontSize: scaleFont(14), marginTop: 8 }]}>Dismiss</Text>
-          </TouchableOpacity>
         </View>
       </View>
     );
@@ -148,13 +123,7 @@ export default function PaywallScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        {showClose && (
-          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
-            <X size={24} color={theme.text} />
-          </TouchableOpacity>
-        )}
-      </View>
+      <View style={styles.header} />
 
       <ScrollView contentContainerStyle={styles.mainContent} showsVerticalScrollIndicator={false}>
         <View style={styles.topSection}>
@@ -376,10 +345,6 @@ const styles = StyleSheet.create({
     paddingTop: 60,
     paddingHorizontal: 20,
     paddingBottom: 8,
-  },
-  closeButton: {
-    alignSelf: "flex-end",
-    padding: 8,
   },
   centerContent: {
     flex: 1,

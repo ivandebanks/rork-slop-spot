@@ -1,12 +1,12 @@
 // template
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ScanProvider } from "@/contexts/ScanContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
-import { PurchaseProvider } from "@/contexts/PurchaseContext";
+import { PurchaseProvider, usePurchases } from "@/contexts/PurchaseContext";
 import { ReferralProvider } from "@/contexts/ReferralContext";
 
 SplashScreen.preventAutoHideAsync();
@@ -14,6 +14,17 @@ SplashScreen.preventAutoHideAsync();
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  const { hasPremium, isLoading } = usePurchases();
+  const segments = useSegments();
+
+  useEffect(() => {
+    if (isLoading) return;
+    const onPaywall = segments[0] === "paywall";
+    if (!hasPremium && !onPaywall) {
+      router.replace("/paywall");
+    }
+  }, [hasPremium, isLoading, segments]);
+
   return (
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -28,7 +39,9 @@ function RootLayoutNav() {
         name="paywall"
         options={{
           title: "Upgrade",
-          presentation: "modal"
+          presentation: "modal",
+          gestureEnabled: false,
+          headerBackVisible: false,
         }}
       />
       <Stack.Screen
