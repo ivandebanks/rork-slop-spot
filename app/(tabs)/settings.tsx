@@ -730,7 +730,7 @@ export default function SettingsScreen() {
 
         <View style={styles.versionSection}>
           <Text style={[styles.versionText, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
-            Version 2.0.2
+            Version 2.0.1
           </Text>
         </View>
 
