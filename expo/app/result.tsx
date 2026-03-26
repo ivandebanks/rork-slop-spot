@@ -24,6 +24,8 @@ import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { useState, useRef, useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import CrossPromo, { shouldShowPromo } from "@/components/CrossPromo";
 
 export default function ResultScreen() {
   const { scanId, isNewScan } = useLocalSearchParams<{ scanId: string; isNewScan?: string }>();
@@ -47,6 +49,10 @@ export default function ResultScreen() {
 
   // Score counting animation
   const [displayScore, setDisplayScore] = useState(0);
+
+  // Cross-promo state
+  const [promoVisible, setPromoVisible] = useState(false);
+  const [activePromo, setActivePromo] = useState<"math" | "regrow">("math");
 
   const scan = scans.find((s) => s.id === scanId);
 
@@ -98,6 +104,46 @@ export default function ResultScreen() {
       }, startDelay);
       return () => clearTimeout(counterTimer);
     }
+  }, [scan?.id]);
+
+  // Cross-promo: show 2 seconds after results load, alternating between Math and Regrow
+  useEffect(() => {
+    if (!scan) return;
+
+    const COUNTER_KEY = "cross_promo_alt_counter";
+
+    const checkAndShowPromo = async () => {
+      try {
+        // Read alternation counter
+        const counterStr = await AsyncStorage.getItem(COUNTER_KEY);
+        const counter = counterStr ? parseInt(counterStr, 10) : 0;
+        const isMathTurn = counter % 2 === 0;
+
+        const primaryKey = isMathTurn ? "promo_math" : "promo_regrow";
+        const fallbackKey = isMathTurn ? "promo_regrow" : "promo_math";
+
+        // Try primary first, then fallback
+        let canShow = await shouldShowPromo(primaryKey);
+        let chosenPromo: "math" | "regrow" = isMathTurn ? "math" : "regrow";
+
+        if (!canShow) {
+          canShow = await shouldShowPromo(fallbackKey);
+          chosenPromo = isMathTurn ? "regrow" : "math";
+        }
+
+        if (canShow) {
+          setActivePromo(chosenPromo);
+          setPromoVisible(true);
+          // Increment counter for next time
+          await AsyncStorage.setItem(COUNTER_KEY, String(counter + 1));
+        }
+      } catch {
+        // silent
+      }
+    };
+
+    const timer = setTimeout(checkAndShowPromo, 2000);
+    return () => clearTimeout(timer);
   }, [scan?.id]);
 
   const scoreAnimStyle = useAnimatedStyle(() => ({
@@ -539,6 +585,40 @@ Download: https://apps.apple.com/app/id6757214914`;
           </View>
         </View>
       </Modal>
+
+      {/* CROSS-PROMO: Snap It Math */}
+      <CrossPromo
+        visible={promoVisible && activePromo === "math"}
+        onDismiss={() => setPromoVisible(false)}
+        appName="Snap It: Math"
+        tagline="Your kid stuck on homework? Snap It solves any problem."
+        features={[
+          "Photo-to-solution in seconds",
+          "Step-by-step explanations",
+          "ELI5 mode for tough concepts",
+        ]}
+        icon={Camera}
+        iconGradient={["#0EA5E9", "#0284C7"]}
+        appStoreId="6757666027"
+        promoKey="promo_math"
+      />
+
+      {/* CROSS-PROMO: Snap It Regrow */}
+      <CrossPromo
+        visible={promoVisible && activePromo === "regrow"}
+        onDismiss={() => setPromoVisible(false)}
+        appName="Snap It: Regrow"
+        tagline="Worried about more than food? Track your hair health."
+        features={[
+          "AI scalp analysis",
+          "Norwood stage tracking",
+          "Personalized action plans",
+        ]}
+        icon={Sparkles}
+        iconGradient={["#10b981", "#059669"]}
+        appStoreId="6758930237"
+        promoKey="promo_regrow"
+      />
     </View>
   );
 }
