@@ -2,7 +2,8 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import { AppState, AppStateStatus } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ScanProvider } from "@/contexts/ScanContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
@@ -10,6 +11,7 @@ import { PurchaseProvider, usePurchases } from "@/contexts/PurchaseContext";
 import { ReferralProvider } from "@/contexts/ReferralContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { shouldShowRecoveryPaywall } from "@/utils/abandonRecovery";
 
 const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
 
@@ -37,6 +39,33 @@ function RootLayoutNav() {
       });
     }
   }, [segments]);
+
+  // Abandon/recovery paywall: check on app foreground
+  const appState = useRef(AppState.currentState);
+
+  const checkRecoveryPaywall = useCallback(async () => {
+    if (hasPremium) return;
+    if (!isAuthenticated) return;
+    if (segments[0] === "paywall" || segments[0] === "recovery-paywall" || segments[0] === "login") return;
+
+    const shouldShow = await shouldShowRecoveryPaywall();
+    if (shouldShow) {
+      router.push("/recovery-paywall");
+    }
+  }, [hasPremium, isAuthenticated, segments]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextAppState: AppStateStatus) => {
+      if (appState.current.match(/inactive|background/) && nextAppState === "active") {
+        checkRecoveryPaywall();
+      }
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [checkRecoveryPaywall]);
 
   useEffect(() => {
     if (isAuthLoading) return;
@@ -94,6 +123,15 @@ function RootLayoutNav() {
           presentation: "modal",
           gestureEnabled: false,
           headerBackVisible: false,
+        }}
+      />
+      <Stack.Screen
+        name="recovery-paywall"
+        options={{
+          title: "Special Offer",
+          presentation: "modal",
+          headerShown: false,
+          gestureEnabled: true,
         }}
       />
       <Stack.Screen
