@@ -9,6 +9,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { PurchaseProvider, usePurchases } from "@/contexts/PurchaseContext";
 import { ReferralProvider } from "@/contexts/ReferralContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
@@ -135,9 +136,11 @@ export default function RootLayout() {
           <PurchaseProvider>
             <ReferralProvider>
               <ScanProvider>
-                <GestureHandlerRootView>
-                  <RootLayoutNav />
-                </GestureHandlerRootView>
+                <NotificationProvider>
+                  <GestureHandlerRootView>
+                    <RootLayoutNav />
+                  </GestureHandlerRootView>
+                </NotificationProvider>
               </ScanProvider>
             </ReferralProvider>
           </PurchaseProvider>

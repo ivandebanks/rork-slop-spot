@@ -24,6 +24,7 @@ import { getGradeLabel, ScanResult, CompanyOwnership, AlternativeSuggestion } fr
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as ImagePicker from "expo-image-picker";
+import { recordScanForNotifications } from "@/contexts/NotificationContext";
 
 const citationSchema = z.object({
   title: z.string(),
@@ -179,6 +180,7 @@ Ensure all health claims are backed by credible scientific sources.`,
       };
 
       addScan(scanResult);
+      recordScanForNotifications();
       return scanResult;
     },
     onSuccess: (data) => {
