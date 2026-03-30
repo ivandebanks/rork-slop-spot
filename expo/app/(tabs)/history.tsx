@@ -1,7 +1,15 @@
 import { StyleSheet, Text, View, TouchableOpacity, Platform, TextInput, Modal } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Image } from "expo-image";
-import ContextMenu from "react-native-context-menu-view";
+import React from "react";
+
+// ContextMenu is native-only — use a passthrough wrapper on web
+let ContextMenu: React.ComponentType<any>;
+if (Platform.OS === "web") {
+  ContextMenu = ({ children }: any) => <>{children}</>;
+} else {
+  ContextMenu = require("react-native-context-menu-view").default;
+}
 import ReAnimated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing, FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useScans } from "@/contexts/ScanContext";
