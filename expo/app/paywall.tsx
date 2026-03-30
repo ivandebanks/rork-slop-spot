@@ -11,7 +11,7 @@ import { usePurchases } from "@/contexts/PurchaseContext";
 import { router } from "expo-router";
 import { Check, Crown, Star, RefreshCw } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -66,25 +66,53 @@ export default function PaywallScreen() {
     );
   }, []);
 
+  const weeklyPackage = useMemo(() => {
+    if (!offerings?.current) return null;
+    const packages = offerings.current.availablePackages;
+    return (
+      packages.find((p: any) => p.product?.identifier === "kiwi_weekly_v1" || p.packageType === "WEEKLY") ||
+      null
+    );
+  }, [offerings]);
+
+  const annualPackage = useMemo(() => {
+    if (!offerings?.current) return null;
+    const packages = offerings.current.availablePackages;
+    return (
+      packages.find((p: any) => p.product?.identifier === "kiwi_annual_v1" || p.packageType === "ANNUAL") ||
+      null
+    );
+  }, [offerings]);
+
+  // Fall back to monthly if weekly/annual not yet configured in RevenueCat
   const monthlyPackage = useMemo(() => {
     if (!offerings?.current) return null;
     const packages = offerings.current.availablePackages;
     return (
       packages.find((p: any) => p.product?.identifier === "kiwi_monthly_v2" || p.packageType === "MONTHLY") ||
-      packages[0] ||
       null
     );
   }, [offerings]);
 
+  type PlanType = "weekly" | "annual";
+  const [selectedPlan, setSelectedPlan] = useState<PlanType>("weekly");
+
+  const selectedPackage = useMemo(() => {
+    if (selectedPlan === "weekly" && weeklyPackage) return weeklyPackage;
+    if (selectedPlan === "annual" && annualPackage) return annualPackage;
+    // Fallback: if selected plan isn't available, try the other, then monthly
+    return weeklyPackage || annualPackage || monthlyPackage;
+  }, [selectedPlan, weeklyPackage, annualPackage, monthlyPackage]);
+
   const handlePurchase = async () => {
-    if (!monthlyPackage) return;
+    if (!selectedPackage) return;
 
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
 
     try {
-      await purchaseMutation.mutateAsync(monthlyPackage);
+      await purchaseMutation.mutateAsync(selectedPackage);
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
@@ -129,7 +157,7 @@ export default function PaywallScreen() {
   }
 
   // --- Error state ---
-  if (!offerings?.current || !monthlyPackage) {
+  if (!offerings?.current || !selectedPackage) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.centerContent}>
@@ -198,14 +226,70 @@ export default function PaywallScreen() {
           ))}
         </View>
 
-        {/* Price framing */}
-        <View style={styles.priceSection}>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceAmount}>$4.99</Text>
-            <Text style={styles.pricePeriod}>/month</Text>
+        {/* Plan picker */}
+        {weeklyPackage && annualPackage ? (
+          <View style={styles.planPicker}>
+            {/* Annual option */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setSelectedPlan("annual")}
+              style={[
+                styles.planOption,
+                selectedPlan === "annual" && styles.planOptionSelected,
+              ]}
+            >
+              <View style={styles.planBadge}>
+                <Text style={styles.planBadgeText}>SAVE 60%</Text>
+              </View>
+              <View style={styles.planHeader}>
+                <View style={[styles.planRadio, selectedPlan === "annual" && styles.planRadioSelected]}>
+                  {selectedPlan === "annual" && <View style={styles.planRadioDot} />}
+                </View>
+                <View style={styles.planDetails}>
+                  <Text style={[styles.planName, selectedPlan === "annual" && styles.planNameSelected]}>Annual</Text>
+                  <Text style={styles.planPerWeek}>$0.96/week</Text>
+                </View>
+                <View style={styles.planPriceContainer}>
+                  <Text style={[styles.planPrice, selectedPlan === "annual" && styles.planPriceSelected]}>$49.99</Text>
+                  <Text style={styles.planPricePeriod}>/year</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Weekly option */}
+            <TouchableOpacity
+              activeOpacity={0.8}
+              onPress={() => setSelectedPlan("weekly")}
+              style={[
+                styles.planOption,
+                selectedPlan === "weekly" && styles.planOptionSelected,
+              ]}
+            >
+              <View style={styles.planHeader}>
+                <View style={[styles.planRadio, selectedPlan === "weekly" && styles.planRadioSelected]}>
+                  {selectedPlan === "weekly" && <View style={styles.planRadioDot} />}
+                </View>
+                <View style={styles.planDetails}>
+                  <Text style={[styles.planName, selectedPlan === "weekly" && styles.planNameSelected]}>Weekly</Text>
+                  <Text style={styles.planPerWeek}>Cancel anytime</Text>
+                </View>
+                <View style={styles.planPriceContainer}>
+                  <Text style={[styles.planPrice, selectedPlan === "weekly" && styles.planPriceSelected]}>$2.99</Text>
+                  <Text style={styles.planPricePeriod}>/week</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
           </View>
-          <Text style={styles.priceSubtext}>Less than the cost of one bad grocery decision</Text>
-        </View>
+        ) : (
+          /* Fallback: single price display if only monthly is available */
+          <View style={styles.priceSection}>
+            <View style={styles.priceRow}>
+              <Text style={styles.priceAmount}>$4.99</Text>
+              <Text style={styles.pricePeriod}>/month</Text>
+            </View>
+            <Text style={styles.priceSubtext}>Less than the cost of one bad grocery decision</Text>
+          </View>
+        )}
 
         {/* CTA */}
         <ReAnimated.View style={[styles.ctaWrapper, ctaPulseStyle]}>
@@ -220,7 +304,7 @@ export default function PaywallScreen() {
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <Text style={styles.ctaText}>Get Instant Access</Text>
+                  <Text style={styles.ctaText}>Start Scanning Now</Text>
                   <Crown size={20} color="#FFFFFF" />
                 </>
               )}
@@ -396,7 +480,96 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Price
+  // Plan picker
+  planPicker: {
+    width: "100%",
+    gap: 10,
+    marginBottom: 24,
+  },
+  planOption: {
+    borderWidth: 2,
+    borderColor: GRAY_DARK,
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    position: "relative",
+    overflow: "visible",
+  },
+  planOptionSelected: {
+    borderColor: GOLD,
+    backgroundColor: "rgba(212,175,55,0.08)",
+  },
+  planBadge: {
+    position: "absolute",
+    top: -11,
+    right: 14,
+    backgroundColor: GOLD,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  planBadgeText: {
+    fontSize: 11,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    letterSpacing: 0.5,
+  },
+  planHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  planRadio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: GRAY_DARK,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  planRadioSelected: {
+    borderColor: GOLD,
+  },
+  planRadioDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: GOLD,
+  },
+  planDetails: {
+    flex: 1,
+  },
+  planName: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#FFFFFF",
+  },
+  planNameSelected: {
+    color: "#FFFFFF",
+  },
+  planPerWeek: {
+    fontSize: 12,
+    color: GRAY,
+    marginTop: 1,
+  },
+  planPriceContainer: {
+    alignItems: "flex-end",
+  },
+  planPrice: {
+    fontSize: 20,
+    fontWeight: "800",
+    color: "#FFFFFF",
+  },
+  planPriceSelected: {
+    color: GOLD,
+  },
+  planPricePeriod: {
+    fontSize: 12,
+    color: GRAY,
+  },
+
+  // Price (fallback for single plan)
   priceSection: {
     alignItems: "center",
     marginBottom: 24,
