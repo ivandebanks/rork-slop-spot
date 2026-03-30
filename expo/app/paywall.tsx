@@ -9,7 +9,7 @@ import ReAnimated, {
 } from "react-native-reanimated";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { router } from "expo-router";
-import { Check, Crown, Star, RefreshCw } from "lucide-react-native";
+import { Check, Star, RefreshCw } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import { useEffect, useMemo, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
@@ -34,12 +34,6 @@ export default function PaywallScreen() {
   const { offerings, isLoadingOfferings, offeringsError, refetchOfferings, purchaseMutation, restoreMutation } = usePurchases();
   const insets = useSafeAreaInsets();
 
-  // Crown pulse animation
-  const crownScale = useSharedValue(1);
-  const crownPulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: crownScale.value }],
-  }));
-
   // CTA shimmer/pulse animation
   const ctaOpacity = useSharedValue(1);
   const ctaPulseStyle = useAnimatedStyle(() => ({
@@ -47,15 +41,6 @@ export default function PaywallScreen() {
   }));
 
   useEffect(() => {
-    crownScale.value = withRepeat(
-      withSequence(
-        withTiming(1.08, { duration: 1200, easing: Easing.inOut(Easing.ease) }),
-        withTiming(1.0, { duration: 1200, easing: Easing.inOut(Easing.ease) })
-      ),
-      -1,
-      true
-    );
-
     ctaOpacity.value = withRepeat(
       withSequence(
         withTiming(0.85, { duration: 1100, easing: Easing.inOut(Easing.ease) }),
@@ -161,7 +146,7 @@ export default function PaywallScreen() {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.centerContent}>
-          <Crown size={48} color={GRAY} />
+          <RefreshCw size={48} color={GRAY} />
           <Text style={styles.errorTitle}>Offers Unavailable</Text>
           <Text style={styles.errorText}>
             {offeringsError?.message || "Unable to load premium offers. Please check your connection and try again."}
@@ -178,28 +163,10 @@ export default function PaywallScreen() {
   // --- Main paywall ---
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header — restore only */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleRestore} disabled={restoreMutation.isPending} style={styles.headerRestore}>
-          {restoreMutation.isPending ? (
-            <ActivityIndicator size="small" color={GRAY} />
-          ) : (
-            <Text style={styles.headerRestoreText}>Restore Purchases</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
       <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20 }]}
+        contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 20, paddingTop: 20 }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Crown icon */}
-        <ReAnimated.View style={[styles.crownContainer, crownPulseStyle]}>
-          <LinearGradient colors={[GOLD, GOLD_DARK]} style={styles.crownCircle}>
-            <Crown size={28} color="#FFFFFF" fill="#FFFFFF" />
-          </LinearGradient>
-        </ReAnimated.View>
-
         {/* Headline */}
         <Text style={styles.headline}>Know What You're Really Eating</Text>
 
@@ -292,10 +259,7 @@ export default function PaywallScreen() {
               {purchaseMutation.isPending ? (
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
-                <>
-                  <Text style={styles.ctaText}>Start Scanning Now</Text>
-                  <Crown size={20} color="#FFFFFF" />
-                </>
+                <Text style={styles.ctaText}>Start Scanning Now</Text>
               )}
             </LinearGradient>
           </TouchableOpacity>
@@ -371,39 +335,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  // Header
-  header: {
-    flexDirection: "row",
-    justifyContent: "flex-end",
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-  },
-  headerRestore: {
-    padding: 4,
-  },
-  headerRestoreText: {
-    fontSize: 13,
-    color: GRAY,
-    fontWeight: "400",
-  },
-
   // Scroll content
   scrollContent: {
     alignItems: "center",
     paddingHorizontal: 24,
-  },
-
-  // Crown
-  crownContainer: {
-    marginTop: 8,
-    marginBottom: 20,
-  },
-  crownCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
   },
 
   // Headline
