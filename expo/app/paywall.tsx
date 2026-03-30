@@ -156,8 +156,8 @@ export default function PaywallScreen() {
     );
   }
 
-  // --- Error state ---
-  if (!offerings?.current || !selectedPackage) {
+  // --- Error state (only if RevenueCat completely fails) ---
+  if (!offerings?.current && offeringsError) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <View style={styles.centerContent}>
@@ -227,69 +227,58 @@ export default function PaywallScreen() {
         </View>
 
         {/* Plan picker */}
-        {weeklyPackage && annualPackage ? (
-          <View style={styles.planPicker}>
-            {/* Annual option */}
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setSelectedPlan("annual")}
-              style={[
-                styles.planOption,
-                selectedPlan === "annual" && styles.planOptionSelected,
-              ]}
-            >
-              <View style={styles.planBadge}>
-                <Text style={styles.planBadgeText}>SAVE 60%</Text>
-              </View>
-              <View style={styles.planHeader}>
-                <View style={[styles.planRadio, selectedPlan === "annual" && styles.planRadioSelected]}>
-                  {selectedPlan === "annual" && <View style={styles.planRadioDot} />}
-                </View>
-                <View style={styles.planDetails}>
-                  <Text style={[styles.planName, selectedPlan === "annual" && styles.planNameSelected]}>Annual</Text>
-                  <Text style={styles.planPerWeek}>$0.96/week</Text>
-                </View>
-                <View style={styles.planPriceContainer}>
-                  <Text style={[styles.planPrice, selectedPlan === "annual" && styles.planPriceSelected]}>$49.99</Text>
-                  <Text style={styles.planPricePeriod}>/year</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-
-            {/* Weekly option */}
-            <TouchableOpacity
-              activeOpacity={0.8}
-              onPress={() => setSelectedPlan("weekly")}
-              style={[
-                styles.planOption,
-                selectedPlan === "weekly" && styles.planOptionSelected,
-              ]}
-            >
-              <View style={styles.planHeader}>
-                <View style={[styles.planRadio, selectedPlan === "weekly" && styles.planRadioSelected]}>
-                  {selectedPlan === "weekly" && <View style={styles.planRadioDot} />}
-                </View>
-                <View style={styles.planDetails}>
-                  <Text style={[styles.planName, selectedPlan === "weekly" && styles.planNameSelected]}>Weekly</Text>
-                  <Text style={styles.planPerWeek}>Cancel anytime</Text>
-                </View>
-                <View style={styles.planPriceContainer}>
-                  <Text style={[styles.planPrice, selectedPlan === "weekly" && styles.planPriceSelected]}>$2.99</Text>
-                  <Text style={styles.planPricePeriod}>/week</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          /* Fallback: single price display if only monthly is available */
-          <View style={styles.priceSection}>
-            <View style={styles.priceRow}>
-              <Text style={styles.priceAmount}>$4.99</Text>
-              <Text style={styles.pricePeriod}>/month</Text>
+        <View style={styles.planPicker}>
+          {/* Annual option */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setSelectedPlan("annual")}
+            style={[
+              styles.planOption,
+              selectedPlan === "annual" && styles.planOptionSelected,
+            ]}
+          >
+            <View style={styles.planBadge}>
+              <Text style={styles.planBadgeText}>SAVE 60%</Text>
             </View>
-            <Text style={styles.priceSubtext}>Less than the cost of one bad grocery decision</Text>
-          </View>
-        )}
+            <View style={styles.planHeader}>
+              <View style={[styles.planRadio, selectedPlan === "annual" && styles.planRadioSelected]}>
+                {selectedPlan === "annual" && <View style={styles.planRadioDot} />}
+              </View>
+              <View style={styles.planDetails}>
+                <Text style={[styles.planName, selectedPlan === "annual" && styles.planNameSelected]}>Annual</Text>
+                <Text style={styles.planPerWeek}>$0.96/week</Text>
+              </View>
+              <View style={styles.planPriceContainer}>
+                <Text style={[styles.planPrice, selectedPlan === "annual" && styles.planPriceSelected]}>$49.99</Text>
+                <Text style={styles.planPricePeriod}>/year</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          {/* Weekly option */}
+          <TouchableOpacity
+            activeOpacity={0.8}
+            onPress={() => setSelectedPlan("weekly")}
+            style={[
+              styles.planOption,
+              selectedPlan === "weekly" && styles.planOptionSelected,
+            ]}
+          >
+            <View style={styles.planHeader}>
+              <View style={[styles.planRadio, selectedPlan === "weekly" && styles.planRadioSelected]}>
+                {selectedPlan === "weekly" && <View style={styles.planRadioDot} />}
+              </View>
+              <View style={styles.planDetails}>
+                <Text style={[styles.planName, selectedPlan === "weekly" && styles.planNameSelected]}>Weekly</Text>
+                <Text style={styles.planPerWeek}>Cancel anytime</Text>
+              </View>
+              <View style={styles.planPriceContainer}>
+                <Text style={[styles.planPrice, selectedPlan === "weekly" && styles.planPriceSelected]}>$2.99</Text>
+                <Text style={styles.planPricePeriod}>/week</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        </View>
 
         {/* CTA */}
         <ReAnimated.View style={[styles.ctaWrapper, ctaPulseStyle]}>
@@ -569,31 +558,6 @@ const styles = StyleSheet.create({
     color: GRAY,
   },
 
-  // Price (fallback for single plan)
-  priceSection: {
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "baseline",
-  },
-  priceAmount: {
-    fontSize: 36,
-    fontWeight: "800",
-    color: "#FFFFFF",
-  },
-  pricePeriod: {
-    fontSize: 16,
-    color: GRAY,
-    marginLeft: 2,
-  },
-  priceSubtext: {
-    fontSize: 13,
-    color: GRAY,
-    fontStyle: "italic",
-    marginTop: 4,
-  },
 
   // CTA
   ctaWrapper: {
