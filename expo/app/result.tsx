@@ -52,7 +52,7 @@ export default function ResultScreen() {
 
   // Cross-promo state
   const [promoVisible, setPromoVisible] = useState(false);
-  const [activePromo, setActivePromo] = useState<"math" | "regrow">("math");
+  const [activePromo, setActivePromo] = useState<"peptide" | "regrow">("peptide");
 
   const scan = scans.find((s) => s.id === scanId);
 
@@ -110,31 +110,39 @@ export default function ResultScreen() {
   useEffect(() => {
     if (!scan) return;
 
+    const SCAN_COUNT_KEY = "cross_promo_scan_count";
     const COUNTER_KEY = "cross_promo_alt_counter";
+    const SCANS_BETWEEN_PROMOS = 3;
 
     const checkAndShowPromo = async () => {
       try {
-        // Read alternation counter
+        // Increment scan count
+        const countStr = await AsyncStorage.getItem(SCAN_COUNT_KEY);
+        const scanCount = (countStr ? parseInt(countStr, 10) : 0) + 1;
+        await AsyncStorage.setItem(SCAN_COUNT_KEY, String(scanCount));
+
+        // Only show promo every few scans
+        if (scanCount % SCANS_BETWEEN_PROMOS !== 0) return;
+
+        // Alternate between Peptide Hub and Regrow
         const counterStr = await AsyncStorage.getItem(COUNTER_KEY);
         const counter = counterStr ? parseInt(counterStr, 10) : 0;
-        const isMathTurn = counter % 2 === 0;
+        const isPeptideTurn = counter % 2 === 0;
 
-        const primaryKey = isMathTurn ? "promo_math" : "promo_regrow";
-        const fallbackKey = isMathTurn ? "promo_regrow" : "promo_math";
+        const primaryKey = isPeptideTurn ? "promo_peptide" : "promo_regrow";
+        const fallbackKey = isPeptideTurn ? "promo_regrow" : "promo_peptide";
 
-        // Try primary first, then fallback
         let canShow = await shouldShowPromo(primaryKey);
-        let chosenPromo: "math" | "regrow" = isMathTurn ? "math" : "regrow";
+        let chosenPromo: "peptide" | "regrow" = isPeptideTurn ? "peptide" : "regrow";
 
         if (!canShow) {
           canShow = await shouldShowPromo(fallbackKey);
-          chosenPromo = isMathTurn ? "regrow" : "math";
+          chosenPromo = isPeptideTurn ? "regrow" : "peptide";
         }
 
         if (canShow) {
           setActivePromo(chosenPromo);
           setPromoVisible(true);
-          // Increment counter for next time
           await AsyncStorage.setItem(COUNTER_KEY, String(counter + 1));
         }
       } catch {
@@ -142,7 +150,7 @@ export default function ResultScreen() {
       }
     };
 
-    const timer = setTimeout(checkAndShowPromo, 8000);
+    const timer = setTimeout(checkAndShowPromo, 2000);
     return () => clearTimeout(timer);
   }, [scan?.id]);
 
@@ -586,21 +594,21 @@ Download: https://apps.apple.com/app/id6757214914`;
         </View>
       </Modal>
 
-      {/* CROSS-PROMO: Snap It Math */}
+      {/* CROSS-PROMO: Peptide Hub */}
       <CrossPromo
-        visible={promoVisible && activePromo === "math"}
+        visible={promoVisible && activePromo === "peptide"}
         onDismiss={() => setPromoVisible(false)}
-        appName="Snap It: Math"
-        tagline="Your kid stuck on homework? Snap It solves any problem."
+        appName="Peptide Hub"
+        tagline="Your complete guide to peptides, dosing & protocols."
         features={[
-          "Photo-to-solution in seconds",
-          "Step-by-step explanations",
-          "ELI5 mode for tough concepts",
+          "Science-backed peptide database",
+          "Dosing calculators & protocols",
+          "Track your peptide cycles",
         ]}
-        icon={Camera}
-        iconGradient={["#0EA5E9", "#0284C7"]}
-        appStoreId="6757666027"
-        promoKey="promo_math"
+        iconUrl="https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/b4/2c/63/b42c63f3-5b8d-b794-f7b2-62d0560bc4c8/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/512x512bb.jpg"
+        iconGradient={["#8B5CF6", "#7C3AED"]}
+        appStoreId="6759482842"
+        promoKey="promo_peptide"
       />
 
       {/* CROSS-PROMO: Snap It Regrow */}
@@ -614,7 +622,7 @@ Download: https://apps.apple.com/app/id6757214914`;
           "Norwood stage tracking",
           "Personalized action plans",
         ]}
-        icon={Sparkles}
+        iconUrl="https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/4e/83/d8/4e83d812-da39-69f7-8cb5-209af9e8f204/AppIcon-0-0-1x_U007epad-0-1-85-220.png/512x512bb.jpg"
         iconGradient={["#10b981", "#059669"]}
         appStoreId="6758930237"
         promoKey="promo_regrow"

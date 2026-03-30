@@ -7,6 +7,7 @@ import {
   Modal,
   Linking,
   Platform,
+  Image,
 } from "react-native";
 import ReAnimated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
@@ -21,7 +22,8 @@ interface CrossPromoProps {
   appName: string;
   tagline: string;
   features: string[];
-  icon: React.ComponentType<any>;
+  icon?: React.ComponentType<any>;
+  iconUrl?: string;
   iconGradient: [string, string];
   appStoreId: string;
   promoKey: string;
@@ -71,6 +73,7 @@ export default function CrossPromo({
   tagline,
   features,
   icon: IconComponent,
+  iconUrl,
   iconGradient,
   appStoreId,
   promoKey,
@@ -156,14 +159,18 @@ export default function CrossPromo({
               </TouchableOpacity>
 
               {/* App Icon */}
-              <LinearGradient
-                colors={iconGradient}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.appIcon}
-              >
-                <IconComponent size={40} color="#FFFFFF" strokeWidth={2} />
-              </LinearGradient>
+              {iconUrl ? (
+                <Image source={{ uri: iconUrl }} style={styles.appIcon} />
+              ) : (
+                <LinearGradient
+                  colors={iconGradient}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.appIcon}
+                >
+                  {IconComponent && <IconComponent size={40} color="#FFFFFF" strokeWidth={2} />}
+                </LinearGradient>
+              )}
 
               {/* App Name */}
               <Text style={[styles.appName, { color: theme.text }]}>

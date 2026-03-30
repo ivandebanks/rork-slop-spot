@@ -13,10 +13,11 @@ import {
   Alert,
   LayoutAnimation,
   UIManager,
+  Image,
 } from "react-native";
 import ReAnimated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, ChevronDown, X, Sparkles, Crown, Users, ExternalLink, Accessibility, Grid3X3 } from "lucide-react-native";
+import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, ChevronDown, X, Sparkles, Crown, Users, ExternalLink, Accessibility } from "lucide-react-native";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,12 +29,12 @@ if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 const OTHER_APPS = [
-  { name: "MOG - Face Analysis", id: "6757218071" },
-  { name: "Snap It: Kosher Check", id: "6757688071" },
-  { name: "Aura - Looksmax AI", id: "6757377930" },
-  { name: "Peptide Hub", id: "6759482842" },
-  { name: "Snap It: Regrow", id: "6758930237" },
-  { name: "Snap It: Math", id: "6757666027" },
+  { name: "MOG - Face Analysis", id: "6757218071", icon: "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/90/b6/c6/90b6c66d-d5bf-8300-71e6-670b87c70708/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/100x100bb.jpg" },
+  { name: "Snap It: Kosher Check", id: "6757688071", icon: "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/02/c6/57/02c657c1-614a-7ce0-4d4d-eeff14e1fb13/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/100x100bb.jpg" },
+  { name: "Aura - Looksmax AI", id: "6757377930", icon: "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/96/ff/dc/96ffdcec-c550-e9d1-37f5-26d772394086/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/100x100bb.jpg" },
+  { name: "Peptide Hub", id: "6759482842", icon: "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/b4/2c/63/b42c63f3-5b8d-b794-f7b2-62d0560bc4c8/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/100x100bb.jpg" },
+  { name: "Snap It: Regrow", id: "6758930237", icon: "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/4e/83/d8/4e83d812-da39-69f7-8cb5-209af9e8f204/AppIcon-0-0-1x_U007epad-0-1-85-220.png/100x100bb.jpg" },
+  { name: "Snap It: Math", id: "6757666027", icon: "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/6f/5f/ac/6f5facdb-e1bf-d548-9672-ebe343df81c1/AppIcon-0-0-1x_U007ephone-0-1-85-220.png/100x100bb.jpg" },
 ];
 
 type ThemeMode = "light" | "dark" | "system";
@@ -646,7 +647,7 @@ export default function SettingsScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.legalOptionLeft}>
-                  <Grid3X3 size={18} color={theme.primary} />
+                  <Image source={{ uri: app.icon }} style={styles.appIconImage} />
                   <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(15) }]}>
                     {app.name}
                   </Text>
@@ -884,6 +885,11 @@ const styles = StyleSheet.create({
     flexDirection: "row" as const,
     alignItems: "center" as const,
     gap: 12,
+  },
+  appIconImage: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
   },
   subscriptionStatus: {
     paddingVertical: 16,
