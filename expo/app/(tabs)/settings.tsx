@@ -17,7 +17,9 @@ import {
 import { Image } from "expo-image";
 import ReAnimated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, ChevronDown, X, Sparkles, Crown, Users, ExternalLink, Accessibility } from "lucide-react-native";
+import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, ChevronDown, X, Sparkles, Crown, Users, ExternalLink, Accessibility, Star } from "lucide-react-native";
+import * as StoreReview from "expo-store-review";
+import * as Device from "expo-device";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -590,6 +592,33 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.section}>
+          <View style={[styles.card, { backgroundColor: theme.card }]}>
+            <TouchableOpacity
+              style={styles.legalOption}
+              onPress={async () => {
+                if (Platform.OS !== "web") {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                if (await StoreReview.isAvailableAsync()) {
+                  await StoreReview.requestReview();
+                } else {
+                  Linking.openURL("https://apps.apple.com/app/id6757214914?action=write-review");
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              <View style={styles.legalOptionLeft}>
+                <Star size={20} color={theme.primary} />
+                <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                  Rate Us
+                </Text>
+              </View>
+              <ChevronRight size={18} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
             FOLLOW US
           </Text>
@@ -664,7 +693,7 @@ export default function SettingsScreen() {
           </Text>
 
           <View style={[styles.card, { backgroundColor: theme.card }]}>
-            <View style={styles.infoOption}>
+            <View style={[styles.infoOption, { borderBottomWidth: 1, borderBottomColor: theme.border }]}>
               <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
                 Age Rating
               </Text>
@@ -672,6 +701,16 @@ export default function SettingsScreen() {
                 4+
               </Text>
             </View>
+            {Device.modelName && (
+              <View style={styles.infoOption}>
+                <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(16) }]}>
+                  Device
+                </Text>
+                <Text style={[styles.infoValue, { color: theme.textSecondary, fontSize: scaleFont(15) }]}>
+                  {Device.modelName}
+                </Text>
+              </View>
+            )}
           </View>
         </View>
 

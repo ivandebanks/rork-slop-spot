@@ -25,6 +25,8 @@ import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as ImagePicker from "expo-image-picker";
 import { recordScanForNotifications } from "@/contexts/NotificationContext";
+import * as StoreReview from "expo-store-review";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const citationSchema = z.object({
   title: z.string(),
@@ -60,6 +62,26 @@ const analysisSchema = z.object({
   behindIt: companyOwnershipSchema.optional(),
   alternatives: z.array(alternativeSuggestionSchema).optional(),
 });
+
+const SCAN_COUNT_REVIEW_KEY = "@kiwi_scan_count_review";
+const REVIEW_PROMPTED_KEY = "@kiwi_review_prompted";
+
+async function maybePromptReview() {
+  try {
+    const prompted = await AsyncStorage.getItem(REVIEW_PROMPTED_KEY);
+    if (prompted === "true") return;
+
+    const countStr = await AsyncStorage.getItem(SCAN_COUNT_REVIEW_KEY);
+    const count = (countStr ? parseInt(countStr, 10) : 0) + 1;
+    await AsyncStorage.setItem(SCAN_COUNT_REVIEW_KEY, String(count));
+
+    // Prompt after 3rd scan
+    if (count >= 3 && (await StoreReview.isAvailableAsync())) {
+      await StoreReview.requestReview();
+      await AsyncStorage.setItem(REVIEW_PROMPTED_KEY, "true");
+    }
+  } catch {}
+}
 
 export default function ScannerScreen() {
   const [facing, setFacing] = useState<CameraType>("back");
@@ -181,6 +203,7 @@ Ensure all health claims are backed by credible scientific sources.`,
 
       addScan(scanResult);
       recordScanForNotifications();
+      maybePromptReview();
       return scanResult;
     },
     onSuccess: (data) => {

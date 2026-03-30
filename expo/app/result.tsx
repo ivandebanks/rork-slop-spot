@@ -23,6 +23,7 @@ import { ArrowLeft, Trash2, Info, ExternalLink, X, Share2, Building2, ChevronRig
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
+import * as Sharing from "expo-sharing";
 import { useState, useRef, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CrossPromo, { shouldShowPromo } from "@/components/CrossPromo";

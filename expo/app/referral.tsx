@@ -10,6 +10,8 @@ import {
   ScrollView,
   Platform,
 } from "react-native";
+import * as Clipboard from "expo-clipboard";
+import Toast from "react-native-toast-message";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { ArrowLeft, Copy, Share2, Gift, Users, Crown, Clock, CheckCircle, Send, AlertTriangle } from "lucide-react-native";
@@ -54,18 +56,16 @@ export default function ReferralScreen() {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    try {
-      await Share.share({ message: myInviteCode });
-    } catch {}
+    await Clipboard.setStringAsync(myInviteCode);
+    Toast.show({ type: "success", text1: "Copied!", text2: "Invite code copied to clipboard." });
   };
 
   const handleCopyConfirmation = async () => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    try {
-      await Share.share({ message: confirmationCodeToShow });
-    } catch {}
+    await Clipboard.setStringAsync(confirmationCodeToShow);
+    Toast.show({ type: "success", text1: "Copied!", text2: "Confirmation code copied to clipboard." });
   };
 
   const handleRedeemCode = async () => {
