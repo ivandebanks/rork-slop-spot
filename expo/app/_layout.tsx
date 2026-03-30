@@ -12,7 +12,6 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
-import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 
 const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
 
@@ -132,25 +131,23 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <AnalyticsProvider>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <AuthProvider>
-            <PurchaseProvider>
-              <ReferralProvider>
-                <ScanProvider>
-                  <NotificationProvider>
-                    <GestureHandlerRootView>
-                      <RootLayoutNav />
-                      <Toast />
-                    </GestureHandlerRootView>
-                  </NotificationProvider>
-                </ScanProvider>
-              </ReferralProvider>
-            </PurchaseProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </AnalyticsProvider>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <PurchaseProvider>
+            <ReferralProvider>
+              <ScanProvider>
+                <NotificationProvider>
+                  <GestureHandlerRootView>
+                    <RootLayoutNav />
+                    <Toast />
+                  </GestureHandlerRootView>
+                </NotificationProvider>
+              </ScanProvider>
+            </ReferralProvider>
+          </PurchaseProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }

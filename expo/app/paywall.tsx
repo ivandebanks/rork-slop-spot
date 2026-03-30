@@ -15,7 +15,6 @@ import * as Haptics from "expo-haptics";
 import { useEffect, useMemo, useState } from "react";
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAnalytics, AnalyticsEvents } from "@/contexts/AnalyticsContext";
 
 const GOLD = "#D4AF37";
 const GOLD_DARK = "#B8860B";
@@ -35,12 +34,6 @@ const BENEFITS = [
 export default function PaywallScreen() {
   const { offerings, isLoadingOfferings, offeringsError, refetchOfferings, purchaseMutation, restoreMutation } = usePurchases();
   const insets = useSafeAreaInsets();
-  const { track } = useAnalytics();
-
-  useEffect(() => {
-    track(AnalyticsEvents.PAYWALL_VIEWED);
-  }, []);
-
   // CTA shimmer/pulse animation
   const ctaOpacity = useSharedValue(1);
   const ctaPulseStyle = useAnimatedStyle(() => ({
@@ -98,8 +91,6 @@ export default function PaywallScreen() {
 
   const handlePurchase = async () => {
     if (!selectedPackage) return;
-    track(AnalyticsEvents.PAYWALL_PURCHASE_TAPPED, { plan: selectedPlan });
-
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -109,12 +100,10 @@ export default function PaywallScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      track(AnalyticsEvents.PAYWALL_PURCHASE_SUCCESS, { plan: selectedPlan });
       Toast.show({ type: "success", text1: "Welcome to Premium!", text2: "Enjoy unlimited scans." });
       router.replace("/(tabs)");
     } catch (error: any) {
       if (error.message !== "Purchase cancelled") {
-        track(AnalyticsEvents.PAYWALL_PURCHASE_FAILED, { plan: selectedPlan, error: error.message });
         Toast.show({ type: "error", text1: "Purchase Failed", text2: error.message || "Please try again later." });
       }
     }

@@ -14,7 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useAnalytics, AnalyticsEvents } from "@/contexts/AnalyticsContext";
+
 
 const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
 const { width } = Dimensions.get("window");
@@ -59,19 +59,13 @@ const STEPS = [
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const { theme, scaleFont } = useTheme();
-  const { track } = useAnalytics();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
 
-  useEffect(() => {
-    track(AnalyticsEvents.ONBOARDING_STARTED);
-  }, []);
-
   const complete = useCallback(async () => {
-    track(AnalyticsEvents.ONBOARDING_COMPLETED, { steps_viewed: currentIndex + 1 });
     await AsyncStorage.setItem(TUTORIAL_KEY, "true");
     router.replace("/paywall");
-  }, [currentIndex]);
+  }, []);
 
   const goNext = useCallback(() => {
     if (Platform.OS !== "web") {
@@ -123,7 +117,7 @@ export default function OnboardingScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background, paddingTop: insets.top }]}>
       {/* Skip */}
-      <TouchableOpacity style={styles.skipButton} onPress={() => { track(AnalyticsEvents.ONBOARDING_SKIPPED, { skipped_at_step: currentIndex }); complete(); }}>
+      <TouchableOpacity style={styles.skipButton} onPress={complete}>
         <Text style={[styles.skipText, { color: theme.textSecondary, fontSize: scaleFont(15) }]}>
           Skip
         </Text>
