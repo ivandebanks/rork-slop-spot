@@ -90,10 +90,9 @@ function RootLayoutNav() {
       <Stack.Screen
         name="paywall"
         options={{
-          title: "Upgrade",
           presentation: "modal",
           gestureEnabled: false,
-          headerBackVisible: false,
+          headerShown: false,
         }}
       />
       <Stack.Screen
