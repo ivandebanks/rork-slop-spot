@@ -24,6 +24,7 @@ import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import * as Sharing from "expo-sharing";
+import { useAnalytics, AnalyticsEvents } from "@/contexts/AnalyticsContext";
 import { useState, useRef, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CrossPromo, { shouldShowPromo } from "@/components/CrossPromo";
@@ -54,8 +55,15 @@ export default function ResultScreen() {
   // Cross-promo state
   const [promoVisible, setPromoVisible] = useState(false);
   const [activePromo, setActivePromo] = useState<"peptide" | "regrow">("peptide");
+  const { track } = useAnalytics();
 
   const scan = scans.find((s) => s.id === scanId);
+
+  useEffect(() => {
+    if (scan) {
+      track(AnalyticsEvents.RESULT_VIEWED, { score: scan.overallScore, grade: scan.gradeLabel });
+    }
+  }, [scan?.id]);
 
   useEffect(() => {
     // Only animate if it's a new scan
@@ -217,6 +225,7 @@ ${ingredientsList}
 Scanned with Kiwi - Better Health Scanner
 Download: https://apps.apple.com/app/id6757214914`;
 
+      track(AnalyticsEvents.RESULT_SHARED, { product: scan.productName, score: scan.overallScore });
       const result = await Share.share({
         message: message,
         title: `${scan.productName} Health Scan`,

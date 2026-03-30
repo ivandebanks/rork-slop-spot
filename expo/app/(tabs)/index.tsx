@@ -27,6 +27,7 @@ import * as ImagePicker from "expo-image-picker";
 import { recordScanForNotifications } from "@/contexts/NotificationContext";
 import * as StoreReview from "expo-store-review";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useAnalytics, AnalyticsEvents } from "@/contexts/AnalyticsContext";
 
 const citationSchema = z.object({
   title: z.string(),
@@ -93,6 +94,7 @@ export default function ScannerScreen() {
   const { addScan } = useScans();
   const { canScan, useScanMutation, scansRemaining } = usePurchases();
   const { theme, scaleFont } = useTheme();
+  const { track } = useAnalytics();
 
   // Animation values
   const burstAnim = useRef(new Animated.Value(0)).current;
@@ -153,6 +155,7 @@ export default function ScannerScreen() {
 
   const analyzeMutation = useMutation({
     mutationFn: async (imageUri: string) => {
+      track(AnalyticsEvents.SCAN_STARTED);
       setIsAnalyzing(true);
       const result = await generateObject({
         messages: [
@@ -204,6 +207,7 @@ Ensure all health claims are backed by credible scientific sources.`,
       addScan(scanResult);
       recordScanForNotifications();
       maybePromptReview();
+      track(AnalyticsEvents.SCAN_COMPLETED, { score: scanResult.overallScore, ingredient_count: scanResult.ingredients.length });
       return scanResult;
     },
     onSuccess: (data) => {
@@ -231,6 +235,7 @@ Ensure all health claims are backed by credible scientific sources.`,
       }, 25);
     },
     onError: () => {
+      track(AnalyticsEvents.SCAN_FAILED);
       setCapturedPhoto(null);
       setAnalysisProgress(0);
       setIsAnalyzing(false);
@@ -257,6 +262,7 @@ Ensure all health claims are backed by credible scientific sources.`,
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
 
+    track(AnalyticsEvents.SCAN_FROM_GALLERY);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: false,
