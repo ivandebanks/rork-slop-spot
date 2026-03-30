@@ -11,6 +11,7 @@ import { ReferralProvider } from "@/contexts/ReferralContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
 
 const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
 
@@ -139,6 +140,7 @@ export default function RootLayout() {
                 <NotificationProvider>
                   <GestureHandlerRootView>
                     <RootLayoutNav />
+                    <Toast />
                   </GestureHandlerRootView>
                 </NotificationProvider>
               </ScanProvider>

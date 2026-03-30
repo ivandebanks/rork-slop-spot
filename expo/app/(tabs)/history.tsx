@@ -1,4 +1,7 @@
-import { StyleSheet, Text, View, FlatList, TouchableOpacity, Image, Platform, TextInput, Modal } from "react-native";
+import { StyleSheet, Text, View, TouchableOpacity, Platform, TextInput, Modal } from "react-native";
+import { FlashList } from "@shopify/flash-list";
+import { Image } from "expo-image";
+import ContextMenu from "react-native-context-menu-view";
 import ReAnimated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing, FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useScans } from "@/contexts/ScanContext";
@@ -446,15 +449,12 @@ export default function HistoryScreen() {
           </Text>
         </View>
       ) : (
-        <FlatList
+        <FlashList
           data={filteredAndSortedScans}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
           showsVerticalScrollIndicator={false}
-          removeClippedSubviews={true}
-          maxToRenderPerBatch={10}
-          updateCellsBatchingPeriod={50}
-          windowSize={21}
+          estimatedItemSize={90}
           renderItem={({ item, index }) => {
             const date = new Date(item.timestamp);
             const formattedDate = date.toLocaleDateString("en-US", {
@@ -471,6 +471,17 @@ export default function HistoryScreen() {
 
             return (
               <ReAnimated.View entering={FadeInDown.delay(index * 60).duration(400).springify()}>
+              <ContextMenu
+                actions={[
+                  { title: item.isFavorite ? "Unfavorite" : "Favorite", systemIcon: item.isFavorite ? "star.slash" : "star.fill" },
+                  { title: "Delete", systemIcon: "trash", destructive: true },
+                ]}
+                onPress={(e: any) => {
+                  const { index: actionIndex } = e.nativeEvent;
+                  if (actionIndex === 0) handleFavorite(item.id);
+                  if (actionIndex === 1) deleteScan(item.id);
+                }}
+              >
               <Swipeable
                 renderRightActions={() => renderRightActions(item.id, item.isFavorite || false)}
                 overshootRight={false}
@@ -481,7 +492,7 @@ export default function HistoryScreen() {
                 <TouchableOpacity
                   style={[
                     styles.card,
-                    { 
+                    {
                       backgroundColor: theme.card,
                       borderLeftWidth: 4,
                       borderLeftColor: getGradeColor(item.overallScore),
@@ -501,7 +512,7 @@ export default function HistoryScreen() {
                     </View>
                   )}
 
-                  <Image source={{ uri: item.imageUri }} style={styles.thumbnail} />
+                  <Image source={item.imageUri} style={styles.thumbnail} contentFit="cover" transition={200} />
                   
                   <View style={styles.cardContent}>
                     <View style={styles.productNameRow}>
@@ -548,6 +559,7 @@ export default function HistoryScreen() {
                   </View>
                 </TouchableOpacity>
               </Swipeable>
+              </ContextMenu>
               </ReAnimated.View>
             );
           }}

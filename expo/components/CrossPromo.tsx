@@ -7,8 +7,8 @@ import {
   Modal,
   Linking,
   Platform,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import ReAnimated, { FadeInDown, FadeIn } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { BlurView } from "expo-blur";
@@ -160,7 +160,7 @@ export default function CrossPromo({
 
               {/* App Icon */}
               {iconUrl ? (
-                <Image source={{ uri: iconUrl }} style={styles.appIcon} />
+                <Image source={iconUrl} style={styles.appIcon} contentFit="cover" transition={200} />
               ) : (
                 <LinearGradient
                   colors={iconGradient}

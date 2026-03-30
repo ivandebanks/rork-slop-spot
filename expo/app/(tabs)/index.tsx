@@ -7,11 +7,11 @@ import {
   View,
   ActivityIndicator,
   Platform,
-  Image,
   Animated,
   Linking,
   Dimensions,
 } from "react-native";
+import { Image } from "expo-image";
 import ReAnimated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withDelay, Easing } from "react-native-reanimated";
 import { Sparkles, FlipHorizontal, RotateCcw, Zap, ZapOff, ImageIcon } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
@@ -345,7 +345,7 @@ Ensure all health claims are backed by credible scientific sources.`,
         </View>
       ) : capturedPhoto ? (
         <View style={styles.photoPreviewContainer}>
-          <Image source={{ uri: capturedPhoto }} style={styles.photoPreview} resizeMode="contain" />
+          <Image source={capturedPhoto} style={styles.photoPreview} contentFit="contain" transition={200} />
           
           <View style={styles.photoOverlay}>
             <View style={styles.header}>

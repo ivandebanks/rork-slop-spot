@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, Platform, ActivityIndicator, Alert, ScrollView } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Platform, ActivityIndicator, ScrollView } from "react-native";
+import Toast from "react-native-toast-message";
 import ReAnimated, {
   useSharedValue,
   useAnimatedStyle,
@@ -101,12 +102,11 @@ export default function PaywallScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      Alert.alert("Success!", "Welcome to Premium! Enjoy unlimited scans.", [
-        { text: "OK", onPress: () => router.replace("/(tabs)") },
-      ]);
+      Toast.show({ type: "success", text1: "Welcome to Premium!", text2: "Enjoy unlimited scans." });
+      router.replace("/(tabs)");
     } catch (error: any) {
       if (error.message !== "Purchase cancelled") {
-        Alert.alert("Purchase Failed", error.message || "Please try again later.");
+        Toast.show({ type: "error", text1: "Purchase Failed", text2: error.message || "Please try again later." });
       }
     }
   };
@@ -121,11 +121,10 @@ export default function PaywallScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-      Alert.alert("Success!", "Your purchases have been restored.", [
-        { text: "OK", onPress: () => router.replace("/(tabs)") },
-      ]);
+      Toast.show({ type: "success", text1: "Purchases Restored", text2: "Your purchases have been restored." });
+      router.replace("/(tabs)");
     } catch (error: any) {
-      Alert.alert("Restore Failed", "No purchases found to restore.");
+      Toast.show({ type: "error", text1: "Restore Failed", text2: "No purchases found to restore." });
     }
   };
 

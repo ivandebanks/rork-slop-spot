@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   Dimensions,
   FlatList,
   Platform,
 } from "react-native";
+import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -90,9 +90,10 @@ export default function OnboardingScreen() {
       <View style={[styles.slide, { width }]}>
         {item.image ? (
           <Image
-            source={{ uri: item.image }}
+            source={item.image}
             style={styles.slideImage}
-            resizeMode="contain"
+            contentFit="contain"
+            transition={300}
           />
         ) : (
           <Text style={styles.emoji}>{item.emoji}</Text>

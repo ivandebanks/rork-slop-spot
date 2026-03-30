@@ -3,7 +3,6 @@ import {
   Text,
   View,
   ScrollView,
-  Image,
   TouchableOpacity,
   Platform,
   Linking,
@@ -14,6 +13,7 @@ import {
   Dimensions,
   Easing,
 } from "react-native";
+import { Image } from "expo-image";
 import ReAnimated, { useSharedValue, useAnimatedStyle, withTiming, withDelay, Easing as REasing } from "react-native-reanimated";
 import { useLocalSearchParams, router } from "expo-router";
 import { useScans } from "@/contexts/ScanContext";
@@ -268,7 +268,7 @@ Download: https://apps.apple.com/app/id6757214914`;
       )}
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: scan.imageUri }} style={styles.image} />
+          <Image source={scan.imageUri} style={styles.image} contentFit="cover" transition={300} />
           <TouchableOpacity
             style={styles.backButtonFloating}
             onPress={() => router.back()}

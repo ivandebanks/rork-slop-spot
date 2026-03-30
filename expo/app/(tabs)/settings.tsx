@@ -13,8 +13,8 @@ import {
   Alert,
   LayoutAnimation,
   UIManager,
-  Image,
 } from "react-native";
+import { Image } from "expo-image";
 import ReAnimated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Settings as SettingsIcon, Check, Type, Shield, FileText, Mail, ChevronRight, ChevronDown, X, Sparkles, Crown, Users, ExternalLink, Accessibility } from "lucide-react-native";
@@ -647,7 +647,7 @@ export default function SettingsScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.legalOptionLeft}>
-                  <Image source={{ uri: app.icon }} style={styles.appIconImage} />
+                  <Image source={app.icon} style={styles.appIconImage} contentFit="cover" transition={200} />
                   <Text style={[styles.optionLabel, { color: theme.text, fontSize: scaleFont(15) }]}>
                     {app.name}
                   </Text>
