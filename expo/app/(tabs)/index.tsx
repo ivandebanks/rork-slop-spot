@@ -11,10 +11,9 @@ import {
   Animated,
   Linking,
   Dimensions,
-  PanResponder,
 } from "react-native";
 import ReAnimated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withDelay, Easing } from "react-native-reanimated";
-import { Sparkles, FlipHorizontal, X, RotateCcw, HelpCircle, Zap, ZapOff, ImageIcon, ChevronLeft, ChevronRight } from "lucide-react-native";
+import { Sparkles, FlipHorizontal, RotateCcw, Zap, ZapOff, ImageIcon } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
 import { generateObject } from "@rork-ai/toolkit-sdk";
 import { z } from "zod";
@@ -24,10 +23,7 @@ import { router } from "expo-router";
 import { getGradeLabel, ScanResult, CompanyOwnership, AlternativeSuggestion } from "@/types/scan";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
-
-const TUTORIAL_KEY = "@slop_spot_tutorial_completed";
 
 const citationSchema = z.object({
   title: z.string(),
@@ -64,51 +60,10 @@ const analysisSchema = z.object({
   alternatives: z.array(alternativeSuggestionSchema).optional(),
 });
 
-const tutorialSteps = [
-  {
-    title: "Do You Really Know What's In Your Food?",
-    description: "73% of products labeled 'natural' or 'healthy' contain ingredients linked to health concerns. That granola bar in your pantry? Might not be what you think.",
-    icon: "⚠️",
-    image: null,
-  },
-  {
-    title: "Labels Are Designed to Confuse You",
-    description: "Sodium benzoate. Carrageenan. BHT. Companies hide harmful ingredients behind scientific names most people can't pronounce — let alone research.",
-    icon: "🔬",
-    image: null,
-  },
-  {
-    title: "One Scan. The Full Truth.",
-    description: "Point your camera at any label. In seconds, get a health score for every ingredient — backed by FDA, NIH, and WHO research. No more guessing.",
-    icon: "📸",
-    image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/5lwra13123vx6zrqzy6zp",
-  },
-  {
-    title: "See What Others Are Finding",
-    description: "Users scan an average of 4 products per shopping trip. Most are shocked by what they find — even in products they've bought for years.",
-    icon: "😱",
-    image: "https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/m5ufizp4beycm4pnv0xy3",
-  },
-  {
-    title: "Trusted by 25,000+ Families",
-    description: "\"I scanned my kids' favorite cereal and found 3 ingredients rated 'Avoid.' Switched brands the same day. This app is a must-have for any parent.\" — Sarah M.",
-    icon: "⭐",
-    image: null,
-  },
-  {
-    title: "What Matters Most to You?",
-    description: "Whether it's feeding your family safer food, managing allergies, or just making informed choices — Kiwi has your back. Let's start scanning.",
-    icon: "💚",
-    image: null,
-  },
-];
-
 export default function ScannerScreen() {
   const [facing, setFacing] = useState<CameraType>("back");
   const [permission, requestPermission] = useCameraPermissions();
   const [cameraRef, setCameraRef] = useState<CameraView | null>(null);
-  const [showTutorial, setShowTutorial] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
   const [capturedPhoto, setCapturedPhoto] = useState<string | null>(null);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [flashEnabled, setFlashEnabled] = useState(false);
@@ -120,7 +75,6 @@ export default function ScannerScreen() {
   const burstAnim = useRef(new Animated.Value(0)).current;
   const redFillAnim = useRef(new Animated.Value(0)).current;
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const swipeHintOpacity = useRef(new Animated.Value(1)).current;
 
   // Reanimated pulse for capture button
   const captureScale = useSharedValue(1);
@@ -137,50 +91,6 @@ export default function ScannerScreen() {
   const capturePulseStyle = useAnimatedStyle(() => ({
     transform: [{ scale: captureScale.value }],
   }));
-
-  // Handler functions - must be declared before panResponder
-  const animateToStep = (step: number) => {
-    setCurrentStep(step);
-  };
-
-  const handleNext = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    if (currentStep < tutorialSteps.length - 1) {
-      animateToStep(currentStep + 1);
-    } else {
-      completeTutorial();
-    }
-  };
-
-  const handlePrevious = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    if (currentStep > 0) {
-      animateToStep(currentStep - 1);
-    }
-  };
-
-  // PanResponder for swipe gestures - recreated when currentStep changes so it always has the latest value
-  const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
-    onMoveShouldSetPanResponder: (_, gestureState) => {
-      return Math.abs(gestureState.dx) > 10;
-    },
-    onPanResponderRelease: (_, gestureState) => {
-      const SWIPE_THRESHOLD = 50;
-      
-      if (gestureState.dx < -SWIPE_THRESHOLD && currentStep < tutorialSteps.length - 1) {
-        // Swipe left - go to next step
-        handleNext();
-      } else if (gestureState.dx > SWIPE_THRESHOLD && currentStep > 0) {
-        // Swipe right - go to previous step
-        handlePrevious();
-      }
-    },
-  });
 
   useEffect(() => {
     if (analysisProgress >= 100) {
@@ -203,32 +113,6 @@ export default function ScannerScreen() {
     }
   }, [analysisProgress]);
 
-  useEffect(() => {
-    checkTutorialStatus();
-  }, []);
-
-  // Animate swipe hint
-  useEffect(() => {
-    if (showTutorial && currentStep < tutorialSteps.length - 1) {
-      // Reset and pulse the swipe hint
-      swipeHintOpacity.setValue(1);
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(swipeHintOpacity, {
-            toValue: 0.3,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(swipeHintOpacity, {
-            toValue: 1,
-            duration: 1500,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
-    }
-  }, [showTutorial, currentStep]);
-
   // Simulate progress when analyzing
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -243,26 +127,6 @@ export default function ScannerScreen() {
     }
     return () => clearInterval(interval);
   }, [isAnalyzing, analysisProgress]);
-
-  const checkTutorialStatus = async () => {
-    try {
-      const completed = await AsyncStorage.getItem(TUTORIAL_KEY);
-      if (!completed) {
-        setShowTutorial(true);
-      }
-    } catch (error) {
-      console.log("Error checking tutorial status:", error);
-    }
-  };
-
-  const completeTutorial = async () => {
-    try {
-      await AsyncStorage.setItem(TUTORIAL_KEY, "true");
-      setShowTutorial(false);
-    } catch (error) {
-      console.log("Error saving tutorial status:", error);
-    }
-  };
 
   const analyzeMutation = useMutation({
     mutationFn: async (imageUri: string) => {
@@ -347,14 +211,6 @@ Ensure all health claims are backed by credible scientific sources.`,
       setIsAnalyzing(false);
     },
   });
-
-  const replayTutorial = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    setCurrentStep(0);
-    setShowTutorial(true);
-  };
 
   const toggleFlash = () => {
     if (Platform.OS !== "web") {
@@ -443,183 +299,10 @@ Ensure all health claims are backed by credible scientific sources.`,
     setFacing((current) => (current === "back" ? "front" : "back"));
   };
 
-  const handleSkip = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    completeTutorial();
-  };
-
-  const handleRate = async () => {
-    try {
-      if (Platform.OS === "ios") {
-        await Linking.openURL("https://apps.apple.com/app/id6757214914?action=write-review");
-      } else {
-        const androidPackage = "app.rork.slop_spot";
-        const marketUrl = `market://details?id=${androidPackage}`;
-        
-        // Check if market URL can be opened (e.g. Play Store installed)
-        const canOpen = await Linking.canOpenURL(marketUrl);
-        
-        if (canOpen) {
-          await Linking.openURL(marketUrl);
-        } else {
-          // Fallback to web URL
-          await Linking.openURL(`https://play.google.com/store/apps/details?id=${androidPackage}`);
-        }
-      }
-    } catch (error) {
-      console.log("Error opening review link:", error);
-    } finally {
-      // Always complete tutorial so user isn't stuck
-      completeTutorial();
-    }
-  };
-
   if (!permission) {
     return (
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <ActivityIndicator size="large" color={theme.primary} />
-      </View>
-    );
-  }
-
-  if (showTutorial) {
-    const step = tutorialSteps[currentStep];
-    return (
-      <View style={[styles.tutorialContainer, { backgroundColor: theme.background }]} {...panResponder.panHandlers}>
-        <TouchableOpacity style={styles.skipButton} onPress={handleSkip}>
-          <X size={24} color={theme.textSecondary} />
-        </TouchableOpacity>
-
-        <View style={styles.tutorialContent}>
-          {step.image ? (
-            <View style={styles.tutorialImageContainer}>
-              <Image 
-                source={{ uri: step.image }} 
-                style={styles.tutorialImage} 
-                resizeMode="contain"
-              />
-            </View>
-          ) : (
-            <Text style={styles.tutorialIcon}>{step.icon}</Text>
-          )}
-          <Text style={[styles.tutorialTitle, { color: theme.text, fontSize: scaleFont(28) }]}>
-            {step.title}
-          </Text>
-          <Text style={[styles.tutorialDescription, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
-            {step.description}
-          </Text>
-
-          {/* Action buttons for premium and socials steps */}
-          {(step as any).action === "premium" && (
-            <TouchableOpacity
-              style={[styles.tutorialActionButton, { backgroundColor: "#D4AF37" }]}
-              onPress={() => {
-                completeTutorial();
-                router.push("/paywall" as any);
-              }}
-            >
-              <Text style={[styles.tutorialActionText, { fontSize: scaleFont(16) }]}>
-                View Premium
-              </Text>
-            </TouchableOpacity>
-          )}
-
-          {(step as any).action === "socials" && (
-            <View style={styles.tutorialSocialsRow}>
-              <TouchableOpacity
-                style={[styles.tutorialSocialButton, { backgroundColor: "#1A1A1A" }]}
-                onPress={() => Linking.openURL("https://twitter.com/KiwiHealthScan")}
-              >
-                <Text style={styles.tutorialSocialIcon}>𝕏</Text>
-                <Text style={[styles.tutorialSocialText, { fontSize: scaleFont(14) }]}>@KiwiHealthScan</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.tutorialSocialButton, { backgroundColor: "#E1306C" }]}
-                onPress={() => Linking.openURL("https://instagram.com/kiwi_betterhealthscanner")}
-              >
-                <Text style={styles.tutorialSocialIcon}>📷</Text>
-                <Text style={[styles.tutorialSocialText, { fontSize: scaleFont(14) }]}>@kiwi_betterhealthscanner</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Swipe hint - only show on first few steps */}
-          {currentStep < tutorialSteps.length - 1 && !(step as any).action && (
-            <Animated.View style={[styles.swipeHint, { opacity: swipeHintOpacity }]}>
-              <ChevronLeft size={20} color={theme.textSecondary} />
-              <Text style={[styles.swipeHintText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
-                Swipe to navigate
-              </Text>
-              <ChevronRight size={20} color={theme.textSecondary} />
-            </Animated.View>
-          )}
-        </View>
-
-        <View style={styles.tutorialFooter}>
-          <View style={styles.dotsContainer}>
-            {tutorialSteps.map((_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.dot,
-                  {
-                    backgroundColor: index === currentStep ? theme.primary : theme.border,
-                    width: index === currentStep ? 24 : 8,
-                  },
-                ]}
-              />
-            ))}
-          </View>
-
-          {currentStep === tutorialSteps.length - 1 ? (
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={[styles.nextButton, { backgroundColor: theme.primary }]}
-                onPress={handleRate}
-              >
-                <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
-                  Leave a Review
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.nextButton, { backgroundColor: "transparent", borderWidth: 1, borderColor: theme.border }]}
-                onPress={completeTutorial}
-              >
-                <Text style={[styles.nextButtonText, { fontSize: scaleFont(16), color: theme.text }]}>
-                  Get Started
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.navigationContainer}>
-              <TouchableOpacity
-                style={[styles.navButton, currentStep === 0 && styles.navButtonDisabled]}
-                onPress={handlePrevious}
-                disabled={currentStep === 0}
-              >
-                <ChevronLeft size={24} color={currentStep === 0 ? theme.border : theme.text} />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.nextButton, { backgroundColor: theme.primary, flex: 1 }]}
-                onPress={handleNext}
-              >
-                <Text style={[styles.nextButtonText, { fontSize: scaleFont(16) }]}>
-                  Next
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.navButton}
-                onPress={handleNext}
-              >
-                <ChevronRight size={24} color={theme.text} />
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
       </View>
     );
   }
@@ -781,14 +464,7 @@ Ensure all health claims are backed by credible scientific sources.`,
         >
           <View style={styles.overlay}>
             <View style={styles.header}>
-              <View style={styles.headerLeft}>
-                <TouchableOpacity
-                  style={styles.iconButton}
-                  onPress={replayTutorial}
-                >
-                  <HelpCircle size={24} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
+              <View style={styles.headerLeft} />
 
               <View style={styles.headerCenter}>
                 <Text style={[styles.headerTitle, { fontSize: scaleFont(32) }]}>Kiwi</Text>
@@ -1156,144 +832,6 @@ const styles = StyleSheet.create({
     borderColor: "#FFFFFF",
   },
   retakeButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600" as const,
-  },
-  tutorialContainer: {
-    flex: 1,
-    paddingTop: 60,
-  },
-  skipButton: {
-    position: "absolute",
-    top: 60,
-    right: 24,
-    zIndex: 10,
-    padding: 8,
-  },
-  tutorialContent: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 40,
-  },
-  tutorialImageContainer: {
-    width: "100%",
-    height: 320,
-    marginBottom: 24,
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  tutorialImage: {
-    width: "100%",
-    height: "100%",
-  },
-  tutorialIcon: {
-    fontSize: 80,
-    marginBottom: 32,
-  },
-  tutorialTitle: {
-    fontSize: 28,
-    fontWeight: "700" as const,
-    textAlign: "center",
-    marginBottom: 16,
-  },
-  tutorialDescription: {
-    fontSize: 16,
-    textAlign: "center",
-    lineHeight: 24,
-    maxWidth: 320,
-  },
-  tutorialActionButton: {
-    marginTop: 20,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  tutorialActionText: {
-    color: "#FFFFFF",
-    fontWeight: "700" as const,
-    fontSize: 16,
-  },
-  tutorialSocialsRow: {
-    marginTop: 20,
-    gap: 10,
-    width: "100%",
-    maxWidth: 300,
-  },
-  tutorialSocialButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 12,
-  },
-  tutorialSocialIcon: {
-    fontSize: 18,
-  },
-  tutorialSocialText: {
-    color: "#FFFFFF",
-    fontWeight: "600" as const,
-    fontSize: 14,
-  },
-  swipeHint: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginTop: 24,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    backgroundColor: "rgba(128, 128, 128, 0.1)",
-  },
-  swipeHintText: {
-    fontSize: 14,
-    fontWeight: "500" as const,
-  },
-  tutorialFooter: {
-    paddingHorizontal: 32,
-    paddingBottom: 140,
-    gap: 32,
-  },
-  dotsContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 8,
-  },
-  dot: {
-    height: 8,
-    borderRadius: 4,
-  },
-  buttonContainer: {
-    width: "100%",
-    gap: 12,
-  },
-  navigationContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    width: "100%",
-  },
-  navButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(128, 128, 128, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  navButtonDisabled: {
-    opacity: 0.3,
-  },
-  nextButton: {
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: "center",
-  },
-  nextButtonText: {
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600" as const,

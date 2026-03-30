@@ -29,15 +29,14 @@ function RootLayoutNav() {
     });
   }, []);
 
-  // Re-check tutorial status when navigating back to tabs (after tutorial completes)
+  // Re-check tutorial status when navigating (after onboarding completes)
   useEffect(() => {
-    if (segments[0] === "(tabs)") {
-      AsyncStorage.getItem(TUTORIAL_KEY).then((value) => {
-        setTutorialCompleted(value === "true");
-      });
-    }
+    AsyncStorage.getItem(TUTORIAL_KEY).then((value) => {
+      setTutorialCompleted(value === "true");
+    });
   }, [segments]);
 
+  // Auth routing
   useEffect(() => {
     if (isAuthLoading) return;
 
@@ -54,19 +53,29 @@ function RootLayoutNav() {
     }
   }, [isAuthenticated, isAuthLoading, segments]);
 
+  // Onboarding -> Paywall -> App routing
   useEffect(() => {
     if (isAuthLoading || isPurchaseLoading) return;
     if (!isAuthenticated) return;
-    if (tutorialCompleted === null) return; // Still loading tutorial state
+    if (tutorialCompleted === null) return;
 
-    const onPaywall = segments[0] === "paywall";
-    const onLogin = segments[0] === "login";
+    const currentScreen = segments[0];
+    const onLogin = currentScreen === "login";
+    const onOnboarding = currentScreen === "onboarding";
+    const onPaywall = currentScreen === "paywall";
 
-    // Don't redirect to paywall until the tutorial has been completed
-    if (!tutorialCompleted) return;
+    if (onLogin) return;
 
-    if (!hasPremium && !onPaywall && !onLogin) {
+    // Step 1: Not done onboarding? Go to onboarding
+    if (!tutorialCompleted && !onOnboarding) {
+      router.replace("/onboarding");
+      return;
+    }
+
+    // Step 2: Done onboarding but no premium? Go to paywall
+    if (tutorialCompleted && !hasPremium && !onPaywall && !onOnboarding) {
       router.replace("/paywall");
+      return;
     }
   }, [hasPremium, isPurchaseLoading, isAuthenticated, isAuthLoading, segments, tutorialCompleted]);
 
@@ -74,6 +83,13 @@ function RootLayoutNav() {
     <Stack screenOptions={{ headerBackTitle: "Back" }}>
       <Stack.Screen
         name="login"
+        options={{
+          headerShown: false,
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="onboarding"
         options={{
           headerShown: false,
           gestureEnabled: false,
