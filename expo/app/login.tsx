@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, ActivityIndicator } from "react-native";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { Crown, Sun, Moon, Leaf } from "lucide-react-native";
+import { Sun, Moon, Leaf } from "lucide-react-native";
 import * as Haptics from "expo-haptics";
 import * as AppleAuthentication from "expo-apple-authentication";
 import { useState } from "react";
@@ -90,18 +90,6 @@ export default function LoginScreen() {
 
       {/* Logo and branding */}
       <View style={styles.brandSection}>
-        <View style={styles.logoContainer}>
-          <View
-            style={[
-              styles.logoCircle,
-              {
-                backgroundColor: isDark ? "rgba(212, 175, 55, 0.15)" : "rgba(212, 175, 55, 0.1)",
-              },
-            ]}
-          >
-            <Crown size={48} color="#D4AF37" fill="#D4AF37" />
-          </View>
-        </View>
         <Text style={[styles.appName, { color: theme.text, fontSize: scaleFont(36) }]}>
           Kiwi
         </Text>
