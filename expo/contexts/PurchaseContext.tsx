@@ -178,7 +178,10 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      // Set premium immediately to prevent routing from bouncing back to paywall
+      setHasPremiumAccess(true);
+      await AsyncStorage.setItem(PREMIUM_KEY, "true");
       queryClient.invalidateQueries({ queryKey: ["premium"] });
     },
   });
@@ -194,7 +197,9 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
         throw error;
       }
     },
-    onSuccess: () => {
+    onSuccess: async () => {
+      setHasPremiumAccess(true);
+      await AsyncStorage.setItem(PREMIUM_KEY, "true");
       queryClient.invalidateQueries({ queryKey: ["premium"] });
     },
   });
