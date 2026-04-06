@@ -80,6 +80,8 @@ export default function LoginScreen() {
         ]}
         onPress={handleToggleTheme}
         activeOpacity={0.7}
+        accessibilityLabel={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        accessibilityRole="button"
       >
         {isDark ? (
           <Sun size={20} color="#D4AF37" />
@@ -193,27 +195,17 @@ const styles = StyleSheet.create({
   },
   themeToggle: {
     position: "absolute",
-    top: 60,
-    left: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    top: 58,
+    left: 18,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: "center",
     justifyContent: "center",
   },
   brandSection: {
     alignItems: "center",
     marginBottom: 60,
-  },
-  logoContainer: {
-    marginBottom: 16,
-  },
-  logoCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    alignItems: "center",
-    justifyContent: "center",
   },
   appName: {
     fontWeight: "900",

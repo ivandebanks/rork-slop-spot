@@ -161,8 +161,8 @@ export default function HistoryScreen() {
 
     // Search filter
     if (searchQuery.trim()) {
-      filtered = filtered.filter(scan => 
-        scan.productName.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(scan =>
+        scan.productName?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -264,6 +264,8 @@ export default function HistoryScreen() {
               }
               router.push("/(tabs)");
             }}
+            accessibilityLabel="Start scanning products"
+            accessibilityRole="button"
           >
             <Camera size={20} color="#FFFFFF" />
             <Text style={[styles.startScanningText, { fontSize: scaleFont(16) }]}>Start Scanning</Text>
@@ -288,7 +290,7 @@ export default function HistoryScreen() {
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery("")}>
+            <TouchableOpacity onPress={() => setSearchQuery("")} accessibilityLabel="Clear search" accessibilityRole="button">
               <X size={20} color={theme.textSecondary} />
             </TouchableOpacity>
           )}
@@ -327,6 +329,8 @@ export default function HistoryScreen() {
             <TouchableOpacity
               style={[styles.clearButton, { backgroundColor: theme.card }]}
               onPress={handleClearAll}
+              accessibilityLabel="Clear all scans"
+              accessibilityRole="button"
             >
               <Trash2 size={18} color="#EF4444" />
             </TouchableOpacity>
@@ -539,7 +543,7 @@ export default function HistoryScreen() {
                     </View>
                     <View style={styles.ingredientCount}>
                       <Text style={[styles.ingredientCountText, { color: theme.textSecondary, fontSize: scaleFont(13) }]}>
-                        {item.ingredients.length} ingredients
+                        {item.ingredients?.length ?? 0} ingredients
                       </Text>
                     </View>
                   </View>
@@ -725,7 +729,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   selectModeButton: {
-    padding: 4,
+    padding: 10,
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   selectModeCenter: {
     flex: 1,

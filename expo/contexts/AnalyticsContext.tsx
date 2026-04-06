@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-import createContextHook from "@nkzw/create-context-hook";
 import { PostHogProvider as PHProvider, usePostHog } from "posthog-react-native";
 import React from "react";
 

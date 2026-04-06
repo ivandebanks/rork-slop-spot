@@ -30,7 +30,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         }
         return { isAuthenticated: false, authMethod: null, userName: null } as AuthState;
       } catch (error) {
-        console.log("Error loading auth state:", error);
         return { isAuthenticated: false, authMethod: null, userName: null } as AuthState;
       }
     },

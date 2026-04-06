@@ -19,7 +19,6 @@ export const [ScanProvider, useScans] = createContextHook(() => {
         const parsed = JSON.parse(stored);
         return Array.isArray(parsed) ? parsed : [];
       } catch (error) {
-        console.log("Error loading scans:", error);
         await AsyncStorage.removeItem(STORAGE_KEY);
         return [];
       }

@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
   },
-  backBtn: { width: 40, height: 40, justifyContent: "center", alignItems: "center" },
+  backBtn: { width: 44, height: 44, justifyContent: "center", alignItems: "center" },
   headerTitle: { fontSize: 20, fontWeight: "700" },
   scrollContent: { flex: 1 },
   scrollInner: { paddingHorizontal: 20, gap: 16, paddingTop: 8 },

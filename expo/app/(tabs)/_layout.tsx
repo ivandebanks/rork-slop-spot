@@ -52,6 +52,7 @@ export default function TabLayout() {
         options={{
           title: "Scanner",
           tabBarIcon: ({ color }) => <Camera size={24} color={color} />,
+          tabBarAccessibilityLabel: "Scanner tab",
         }}
       />
       <Tabs.Screen
@@ -59,6 +60,7 @@ export default function TabLayout() {
         options={{
           title: "History",
           tabBarIcon: ({ color }) => <History size={24} color={color} />,
+          tabBarAccessibilityLabel: "Scan history tab",
         }}
       />
       <Tabs.Screen
@@ -66,6 +68,7 @@ export default function TabLayout() {
         options={{
           title: "Settings",
           tabBarIcon: ({ color }) => <Settings size={24} color={color} />,
+          tabBarAccessibilityLabel: "Settings tab",
         }}
       />
     </Tabs>

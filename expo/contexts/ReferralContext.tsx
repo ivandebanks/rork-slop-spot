@@ -152,8 +152,8 @@ export const [ReferralProvider, useReferral] = createContextHook(() => {
       if (Date.now() > referralPremiumExpiry) {
         setHasReferralPremium(false);
         setReferralPremiumExpiry(null);
-        AsyncStorage.removeItem(REFERRAL_PREMIUM_KEY);
-        AsyncStorage.removeItem(REFERRAL_PREMIUM_EXPIRY_KEY);
+        AsyncStorage.removeItem(REFERRAL_PREMIUM_KEY).catch(() => {});
+        AsyncStorage.removeItem(REFERRAL_PREMIUM_EXPIRY_KEY).catch(() => {});
       }
     };
     check();
@@ -228,7 +228,7 @@ export const [ReferralProvider, useReferral] = createContextHook(() => {
         }
       }
     } catch (error) {
-      console.error("Failed to initialize referral:", error);
+      // Failed to initialize referral system
     } finally {
       setIsLoading(false);
     }
@@ -263,8 +263,8 @@ export const [ReferralProvider, useReferral] = createContextHook(() => {
       // Auto-clear expired lockout
       setLockoutUntil(null);
       setFailCount(0);
-      AsyncStorage.removeItem(REFERRAL_LOCKOUT_KEY);
-      AsyncStorage.removeItem(REFERRAL_FAIL_COUNT_KEY);
+      AsyncStorage.removeItem(REFERRAL_LOCKOUT_KEY).catch(() => {});
+      AsyncStorage.removeItem(REFERRAL_FAIL_COUNT_KEY).catch(() => {});
       return false;
     }
     return true;

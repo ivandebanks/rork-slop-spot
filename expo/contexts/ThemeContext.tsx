@@ -24,7 +24,6 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
         }
         return "system";
       } catch (error) {
-        console.log("Error loading theme mode:", error);
         return "system";
       }
     },
@@ -41,7 +40,6 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
         }
         return "normal";
       } catch (error) {
-        console.log("Error loading text size mode:", error);
         return "normal";
       }
     },

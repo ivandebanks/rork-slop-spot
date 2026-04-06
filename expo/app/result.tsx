@@ -23,7 +23,6 @@ import { ArrowLeft, Trash2, Info, ExternalLink, X, Share2, Building2, ChevronRig
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
-import * as Sharing from "expo-sharing";
 import { useAnalytics, AnalyticsEvents } from "@/contexts/AnalyticsContext";
 import { useState, useRef, useEffect } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -184,7 +183,7 @@ export default function ResultScreen() {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.errorContainer}>
-          <Text style={[styles.errorText, { color: theme.textSecondary, fontSize: scaleFont(18) }]}>Scan not found</Text>
+          <Text style={[styles.errorText, { color: theme.textSecondary, fontSize: scaleFont(18) }]}>This scan is no longer available. It may have been deleted.</Text>
           <TouchableOpacity
             style={[styles.backButton, { backgroundColor: theme.primary }]}
             onPress={() => router.back()}
@@ -231,18 +230,10 @@ Download: https://apps.apple.com/app/id6757214914`;
         title: `${scan.productName} Health Scan`,
       });
 
-      if (result.action === Share.sharedAction) {
-        if (result.activityType) {
-          // Shared with activity type of result.activityType
-        } else {
-          // Shared successfully
-        }
-      } else if (result.action === Share.dismissedAction) {
-        // Dismissed
-      }
+      // Share action completed
     } catch (error: any) {
-      Alert.alert('Error', 'Failed to share the scan results');
-      console.error('Error sharing:', error);
+      Alert.alert('Unable to Share', 'Something went wrong while sharing. Please try again.');
+      // sharing failed silently
     }
   };
 
@@ -262,7 +253,7 @@ Download: https://apps.apple.com/app/id6757214914`;
         await Linking.openURL(url);
       }
     } catch (error) {
-      console.error("Error opening URL:", error);
+      // URL open failed silently
     }
   };
 
@@ -282,12 +273,16 @@ Download: https://apps.apple.com/app/id6757214914`;
           <TouchableOpacity
             style={styles.backButtonFloating}
             onPress={() => router.back()}
+            accessibilityLabel="Go back"
+            accessibilityRole="button"
           >
             <ArrowLeft size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.shareButtonFloating}
             onPress={handleShare}
+            accessibilityLabel="Share scan results"
+            accessibilityRole="button"
           >
             <Share2 size={24} color="#FFFFFF" />
           </TouchableOpacity>
@@ -311,7 +306,7 @@ Download: https://apps.apple.com/app/id6757214914`;
 
           <ReAnimated.View style={[styles.section, ingredientsAnimStyle]}>
             <Text style={[styles.sectionTitle, { color: theme.text, fontSize: scaleFont(18) }]}>
-              Ingredients ({scan.ingredients.length})
+              Ingredients ({scan.ingredients?.length ?? 0})
             </Text>
 
             {scan.ingredients.map((ingredient, index) => {

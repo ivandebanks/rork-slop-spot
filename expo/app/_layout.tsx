@@ -1,4 +1,3 @@
-// template
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack, router, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -29,14 +28,14 @@ function RootLayoutNav() {
   useEffect(() => {
     AsyncStorage.getItem(TUTORIAL_KEY).then((value) => {
       setTutorialCompleted(value === "true");
-    });
+    }).catch(() => setTutorialCompleted(false));
   }, []);
 
   // Re-check tutorial status when navigating (after onboarding completes)
   useEffect(() => {
     AsyncStorage.getItem(TUTORIAL_KEY).then((value) => {
       setTutorialCompleted(value === "true");
-    });
+    }).catch(() => setTutorialCompleted(false));
   }, [segments]);
 
   // Auth routing

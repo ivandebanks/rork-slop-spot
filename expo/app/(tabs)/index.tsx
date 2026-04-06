@@ -1,5 +1,5 @@
 import { CameraView, CameraType, useCameraPermissions } from "expo-camera";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
@@ -9,10 +9,9 @@ import {
   Platform,
   Animated,
   Linking,
-  Dimensions,
 } from "react-native";
 import { Image } from "expo-image";
-import ReAnimated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, withDelay, Easing } from "react-native-reanimated";
+import ReAnimated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence, Easing } from "react-native-reanimated";
 import { Sparkles, FlipHorizontal, RotateCcw, Zap, ZapOff, ImageIcon } from "lucide-react-native";
 import { useMutation } from "@tanstack/react-query";
 import { generateObject } from "@rork-ai/toolkit-sdk";
@@ -20,7 +19,7 @@ import { z } from "zod";
 import { useScans } from "@/contexts/ScanContext";
 import { usePurchases } from "@/contexts/PurchaseContext";
 import { router } from "expo-router";
-import { getGradeLabel, ScanResult, CompanyOwnership, AlternativeSuggestion } from "@/types/scan";
+import { getGradeLabel, ScanResult } from "@/types/scan";
 import * as Haptics from "expo-haptics";
 import { useTheme } from "@/contexts/ThemeContext";
 import * as ImagePicker from "expo-image-picker";
@@ -205,8 +204,8 @@ Ensure all health claims are backed by credible scientific sources.`,
       };
 
       addScan(scanResult);
-      recordScanForNotifications();
-      maybePromptReview();
+      recordScanForNotifications().catch(() => {});
+      maybePromptReview().catch(() => {});
       track(AnalyticsEvents.SCAN_COMPLETED, { score: scanResult.overallScore, ingredient_count: scanResult.ingredients.length });
       return scanResult;
     },
@@ -268,9 +267,9 @@ Ensure all health claims are backed by credible scientific sources.`,
       allowsEditing: false,
       quality: 0.8,
       base64: true,
-    });
+    }).catch(() => null);
 
-    if (!result.canceled && result.assets[0].base64) {
+    if (result && !result.canceled && result.assets?.[0]?.base64) {
       const imageUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
       setCapturedPhoto(imageUri);
       setAnalysisProgress(0);
@@ -303,8 +302,8 @@ Ensure all health claims are backed by credible scientific sources.`,
       const photo = await cameraRef.takePictureAsync({
         quality: 0.8,
         base64: true,
-      });
-      if (photo && photo.base64) {
+      }).catch(() => null);
+      if (photo?.base64) {
         const imageUri = `data:image/jpeg;base64,${photo.base64}`;
         setCapturedPhoto(imageUri);
         setAnalysisProgress(0);
@@ -357,6 +356,8 @@ Ensure all health claims are backed by credible scientific sources.`,
                 Linking.openSettings();
               }
             }}
+            accessibilityLabel="Enable camera access"
+            accessibilityRole="button"
           >
             <Text style={[styles.permissionButtonText, { fontSize: scaleFont(16) }]}>
               Enable Camera
@@ -365,6 +366,8 @@ Ensure all health claims are backed by credible scientific sources.`,
           <TouchableOpacity
             style={styles.galleryFallbackButton}
             onPress={pickImageFromGallery}
+            accessibilityLabel="Pick image from photo gallery"
+            accessibilityRole="button"
           >
             <ImageIcon size={18} color={theme.textSecondary} />
             <Text style={[styles.galleryFallbackText, { color: theme.textSecondary, fontSize: scaleFont(14) }]}>
@@ -477,6 +480,8 @@ Ensure all health claims are backed by credible scientific sources.`,
                 style={styles.retakeButton}
                 onPress={retakePhoto}
                 disabled={analyzeMutation.isPending}
+                accessibilityLabel="Retake photo"
+                accessibilityRole="button"
               >
                 <RotateCcw size={24} color="#FFFFFF" />
                 <Text style={[styles.retakeButtonText, { fontSize: scaleFont(16) }]}>
@@ -506,6 +511,8 @@ Ensure all health claims are backed by credible scientific sources.`,
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={toggleFlash}
+                  accessibilityLabel={flashEnabled ? "Turn off flash" : "Turn on flash"}
+                  accessibilityRole="button"
                 >
                   {flashEnabled ? (
                     <Zap size={24} color="#FFD700" fill="#FFD700" />
@@ -522,12 +529,14 @@ Ensure all health claims are backed by credible scientific sources.`,
               <TouchableOpacity
                 style={styles.flipButton}
                 onPress={pickImageFromGallery}
+                accessibilityLabel="Pick image from gallery"
+                accessibilityRole="button"
               >
                 <ImageIcon size={28} color="#FFFFFF" />
               </TouchableOpacity>
 
               <ReAnimated.View style={capturePulseStyle}>
-                <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+                <TouchableOpacity style={styles.captureButton} onPress={takePicture} accessibilityLabel="Take photo to scan" accessibilityRole="button">
                   <View style={styles.captureButtonInner}>
                     <Sparkles size={32} color="#118AB2" />
                   </View>
@@ -537,6 +546,8 @@ Ensure all health claims are backed by credible scientific sources.`,
               <TouchableOpacity
                 style={styles.flipButton}
                 onPress={toggleCameraFacing}
+                accessibilityLabel="Flip camera"
+                accessibilityRole="button"
               >
                 <FlipHorizontal size={28} color="#FFFFFF" />
               </TouchableOpacity>
@@ -639,10 +650,11 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
   },
   iconButton: {
-    padding: 4,
-  },
-  scanFrame: {
-    flex: 1,
+    padding: 10,
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: "center",
+    alignItems: "center",
   },
   controls: {
     flexDirection: "row",

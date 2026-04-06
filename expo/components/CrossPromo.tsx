@@ -154,6 +154,8 @@ export default function CrossPromo({
                 style={styles.closeButton}
                 onPress={handleNotNow}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                accessibilityLabel="Close promotion"
+                accessibilityRole="button"
               >
                 <X size={20} color={theme.textSecondary} />
               </TouchableOpacity>
@@ -287,12 +289,12 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: "absolute",
-    top: 16,
-    right: 16,
+    top: 12,
+    right: 12,
     zIndex: 10,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: "rgba(128, 128, 128, 0.15)",
     justifyContent: "center",
     alignItems: "center",
