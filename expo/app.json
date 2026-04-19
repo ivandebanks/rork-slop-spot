@@ -29,11 +29,11 @@
       },
       "package": "app.rork.slop_spot",
       "permissions": [
-        "CAMERA",
+        "android.permission.CAMERA",
         "android.permission.VIBRATE",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "POST_NOTIFICATIONS"
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.POST_NOTIFICATIONS"
       ]
     },
     "web": {
@@ -72,6 +72,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {
+        "origin": "https://rork.com/"
+      },
+      "eas": {
+        "projectId": "c0cb212a-47cb-47fd-b0cd-10f67a949f72"
+      }
+    },
+    "owner": "debanks-2"
   }
 }
