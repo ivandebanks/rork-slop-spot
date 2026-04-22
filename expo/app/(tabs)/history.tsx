@@ -256,6 +256,9 @@ export default function HistoryScreen() {
           <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(16) }]}>
             Start scanning products to see your history here
           </Text>
+          <Text style={[styles.emptyText, { color: theme.textSecondary, fontSize: scaleFont(14), marginTop: 8 }]}>
+            Scan a product label to get started
+          </Text>
           <TouchableOpacity
             style={[styles.startScanningButton, { backgroundColor: theme.primary }]}
             onPress={() => {
