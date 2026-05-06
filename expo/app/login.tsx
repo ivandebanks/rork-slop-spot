@@ -1,33 +1,31 @@
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Alert, ActivityIndicator } from "react-native";
-import { useTheme } from "@/contexts/ThemeContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { Sun, Moon, Leaf } from "lucide-react-native";
-import * as Haptics from "expo-haptics";
-import * as AppleAuthentication from "expo-apple-authentication";
-import { useState } from "react";
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ImageBackground,
+  Platform,
+  Alert,
+  ActivityIndicator,
+  Linking,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import * as AppleAuthentication from 'expo-apple-authentication';
+import { useAuth } from '@/contexts/AuthContext';
+
+const BACKGROUND_IMAGE = { uri: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1080&q=80&fit=crop' };
 
 export default function LoginScreen() {
-  const { theme, activeColorScheme, changeThemeMode, scaleFont } = useTheme();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { signInWithApple, signInAsGuest } = useAuth();
-  const [isAppleLoading, setIsAppleLoading] = useState(false);
-  const [isGuestLoading, setIsGuestLoading] = useState(false);
-
-  const isDark = activeColorScheme === "dark";
-
-  const handleToggleTheme = () => {
-    if (Platform.OS !== "web") {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-    changeThemeMode(isDark ? "light" : "dark");
-  };
+  const [loading, setLoading] = useState(false);
 
   const handleAppleSignIn = async () => {
-    if (Platform.OS === "web") {
-      Alert.alert("Unavailable", "Apple Sign In is only available on iOS devices.");
-      return;
-    }
-
-    setIsAppleLoading(true);
+    setLoading(true);
     try {
       const credential = await AppleAuthentication.signInAsync({
         requestedScopes: [
@@ -35,227 +33,146 @@ export default function LoginScreen() {
           AppleAuthentication.AppleAuthenticationScope.EMAIL,
         ],
       });
-
       const fullName = credential.fullName
-        ? [credential.fullName.givenName, credential.fullName.familyName].filter(Boolean).join(" ") || null
+        ? [credential.fullName.givenName, credential.fullName.familyName]
+            .filter(Boolean)
+            .join(' ') || null
         : null;
-
       await signInWithApple(fullName);
-
-      if (Platform.OS !== "web") {
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-    } catch (error: any) {
-      if (error.code !== "ERR_REQUEST_CANCELED") {
-        Alert.alert("Sign In Failed", "Unable to sign in with Apple. Please try again.");
+    } catch (err: any) {
+      if (err?.code !== 'ERR_REQUEST_CANCELED') {
+        Alert.alert('Sign In Failed', 'Could not sign in with Apple. Try again or continue as guest.');
       }
     } finally {
-      setIsAppleLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleGuestContinue = async () => {
-    setIsGuestLoading(true);
+  const handleGuestLogin = async () => {
+    setLoading(true);
     try {
-      if (Platform.OS !== "web") {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }
       await signInAsGuest();
-    } catch (error) {
-      Alert.alert("Error", "Something went wrong. Please try again.");
     } finally {
-      setIsGuestLoading(false);
+      setLoading(false);
     }
+  };
+
+  const handlePrivacyPolicy = () => {
+    Linking.openURL('https://example.com/privacy');
+  };
+
+  const handleTermsOfService = () => {
+    Linking.openURL('https://example.com/terms');
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {/* Theme toggle - top left */}
-      <TouchableOpacity
-        style={[
-          styles.themeToggle,
-          {
-            backgroundColor: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
-          },
-        ]}
-        onPress={handleToggleTheme}
-        activeOpacity={0.7}
-        accessibilityLabel={isDark ? "Switch to light mode" : "Switch to dark mode"}
-        accessibilityRole="button"
-      >
-        {isDark ? (
-          <Sun size={20} color="#D4AF37" />
-        ) : (
-          <Moon size={20} color="#D4AF37" />
-        )}
-      </TouchableOpacity>
+    <ImageBackground
+      source={BACKGROUND_IMAGE}
+      style={styles.container}
+      resizeMode="cover"
+    >
+      <LinearGradient
+        colors={['transparent', 'transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.88)']}
+        locations={[0, 0.35, 0.6, 1]}
+        style={StyleSheet.absoluteFill}
+      />
 
-      {/* Logo and branding */}
-      <View style={styles.brandSection}>
-        <Text style={[styles.appName, { color: theme.text, fontSize: scaleFont(36) }]}>
-          Kiwi
-        </Text>
-        <View style={styles.taglineRow}>
-          <Leaf size={14} color="#D4AF37" />
-          <Text style={[styles.tagline, { color: theme.textSecondary, fontSize: scaleFont(15) }]}>
-            Know what you're really eating
-          </Text>
+      <View style={[styles.content, { paddingBottom: insets.bottom + 24 }]}>
+        <View style={styles.spacer} />
+
+        <View style={styles.bottomSection}>
+          <Text style={styles.appName}>Slop Spot</Text>
+
+          <View style={styles.buttons}>
+            {Platform.OS === 'ios' && (
+              <AppleAuthentication.AppleAuthenticationButton
+                buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
+                buttonStyle={AppleAuthentication.AppleAuthenticationButtonStyle.WHITE}
+                cornerRadius={14}
+                style={styles.appleBtn}
+                onPress={handleAppleSignIn}
+              />
+            )}
+
+            <TouchableOpacity
+              style={styles.guestBtn}
+              onPress={handleGuestLogin}
+              disabled={loading}
+              activeOpacity={0.8}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.guestBtnText}>Continue as Guest</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.legalRow}>
+            <TouchableOpacity onPress={handlePrivacyPolicy}>
+              <Text style={styles.legalLink}>Privacy Policy</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalDot}>·</Text>
+            <TouchableOpacity onPress={handleTermsOfService}>
+              <Text style={styles.legalLink}>Terms of Service</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-
-      {/* Auth buttons */}
-      <View style={styles.authSection}>
-        {/* Apple Sign In */}
-        {Platform.OS === "ios" ? (
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_IN}
-            buttonStyle={
-              isDark
-                ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-                : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-            }
-            cornerRadius={16}
-            style={styles.appleButton}
-            onPress={handleAppleSignIn}
-          />
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.appleButtonFallback,
-              {
-                backgroundColor: isDark ? "#FFFFFF" : "#000000",
-              },
-            ]}
-            onPress={handleAppleSignIn}
-            activeOpacity={0.85}
-            disabled={isAppleLoading}
-          >
-            {isAppleLoading ? (
-              <ActivityIndicator size="small" color={isDark ? "#000000" : "#FFFFFF"} />
-            ) : (
-              <Text
-                style={[
-                  styles.appleButtonText,
-                  {
-                    color: isDark ? "#000000" : "#FFFFFF",
-                    fontSize: scaleFont(17),
-                  },
-                ]}
-              >
-                Sign in with Apple
-              </Text>
-            )}
-          </TouchableOpacity>
-        )}
-
-        {/* Continue as Guest */}
-        <TouchableOpacity
-          style={[
-            styles.guestButton,
-            {
-              borderColor: isDark ? "rgba(255,255,255,0.15)" : "rgba(0,0,0,0.12)",
-            },
-          ]}
-          onPress={handleGuestContinue}
-          activeOpacity={0.7}
-          disabled={isGuestLoading}
-        >
-          {isGuestLoading ? (
-            <ActivityIndicator size="small" color={theme.textSecondary} />
-          ) : (
-            <Text
-              style={[
-                styles.guestButtonText,
-                {
-                  color: theme.textSecondary,
-                  fontSize: scaleFont(16),
-                },
-              ]}
-            >
-              Continue as Guest
-            </Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      {/* Footer */}
-      <Text style={[styles.footerText, { color: theme.textSecondary, fontSize: scaleFont(11) }]}>
-        By continuing, you agree to our Terms of Service and Privacy Policy
-      </Text>
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1 },
+  content: { flex: 1 },
+  spacer: { flex: 2 },
+  bottomSection: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 32,
-  },
-  themeToggle: {
-    position: "absolute",
-    top: 58,
-    left: 18,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  brandSection: {
-    alignItems: "center",
-    marginBottom: 60,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 24,
+    gap: 16,
   },
   appName: {
-    fontWeight: "900",
-    letterSpacing: -1,
+    fontSize: 40,
+    fontWeight: '900',
+    color: '#ffffff',
+    letterSpacing: -0.5,
+    textShadowColor: 'rgba(0,0,0,0.5)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
   },
-  taglineRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginTop: 6,
+  buttons: { gap: 12 },
+  appleBtn: { height: 54, width: '100%' },
+  guestBtn: {
+    height: 54,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.35)',
   },
-  tagline: {
-    fontWeight: "500",
+  guestBtnText: {
+    color: '#ffffff',
+    fontSize: 17,
+    fontWeight: '600',
     letterSpacing: 0.2,
   },
-  authSection: {
-    width: "100%",
-    maxWidth: 320,
-    gap: 14,
+  legalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingBottom: 8,
   },
-  appleButton: {
-    width: "100%",
-    height: 54,
+  legalLink: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 12,
+    fontWeight: '500',
   },
-  appleButtonFallback: {
-    width: "100%",
-    height: 54,
-    borderRadius: 16,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  appleButtonText: {
-    fontWeight: "600",
-  },
-  guestButton: {
-    width: "100%",
-    height: 54,
-    borderRadius: 16,
-    borderWidth: 1.5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  guestButtonText: {
-    fontWeight: "600",
-  },
-  footerText: {
-    position: "absolute",
-    bottom: 40,
-    textAlign: "center",
-    paddingHorizontal: 40,
-    lineHeight: 16,
+  legalDot: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 12,
   },
 });
