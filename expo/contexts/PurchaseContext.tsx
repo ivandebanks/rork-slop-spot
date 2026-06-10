@@ -41,6 +41,7 @@ const configureRevenueCat = async (): Promise<boolean> => {
     }
     return false;
   } catch (error: any) {
+    if (__DEV__) console.warn('RevenueCat configure error:', error);
     return false;
   }
 };
@@ -88,6 +89,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
         await AsyncStorage.setItem(PREMIUM_KEY, isPremium.toString());
         return isPremium;
       } catch (error) {
+        if (__DEV__) console.warn('RevenueCat getCustomerInfo error:', error);
         const stored = await AsyncStorage.getItem(PREMIUM_KEY);
         return stored === "true";
       }
@@ -107,6 +109,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
         const offerings = await Purchases.getOfferings();
         return offerings;
       } catch (error) {
+        if (__DEV__) console.warn('RevenueCat getOfferings error:', error);
         return null;
       }
     },
@@ -201,7 +204,7 @@ export const [PurchaseProvider, usePurchases] = createContextHook(() => {
           const expiry = parseInt(expiryStr, 10);
           setHasReferralPremium(Date.now() < expiry);
         }
-      } catch {}
+      } catch (e) { if (__DEV__) console.warn('Referral premium check error:', e); }
     };
     checkReferralPremium();
     const interval = setInterval(checkReferralPremium, 30000);

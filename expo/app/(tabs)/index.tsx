@@ -80,7 +80,7 @@ async function maybePromptReview() {
       await StoreReview.requestReview();
       await AsyncStorage.setItem(REVIEW_PROMPTED_KEY, "true");
     }
-  } catch {}
+  } catch (e) { if (__DEV__) console.warn('Store review error:', e); }
 }
 
 export default function ScannerScreen() {
@@ -267,7 +267,7 @@ Ensure all health claims are backed by credible scientific sources.`,
       allowsEditing: false,
       quality: 0.8,
       base64: true,
-    }).catch(() => null);
+    }).catch((e) => { if (__DEV__) console.warn('Image picker error:', e); return null; });
 
     if (result && !result.canceled && result.assets?.[0]?.base64) {
       const imageUri = `data:image/jpeg;base64,${result.assets[0].base64}`;
@@ -302,7 +302,7 @@ Ensure all health claims are backed by credible scientific sources.`,
       const photo = await cameraRef.takePictureAsync({
         quality: 0.8,
         base64: true,
-      }).catch(() => null);
+      }).catch((e) => { if (__DEV__) console.warn('Camera capture error:', e); return null; });
       if (photo?.base64) {
         const imageUri = `data:image/jpeg;base64,${photo.base64}`;
         setCapturedPhoto(imageUri);
